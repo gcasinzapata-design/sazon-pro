@@ -6,3 +6,15 @@ html { scroll-behavior: smooth; }
 :root { color-scheme: light; }
 
 .input { @apply w-full rounded-xl border border-neutral-300 px-4 py-3 focus:outline-none focus:border-primary; }
+
+/* Marquee animation for partners */
+@keyframes marquee {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+.animate-marquee {
+  width: max-content;
+  min-width: 200%;
+  animation: marquee 25s linear infinite;
+  padding-left: 100%;
+}

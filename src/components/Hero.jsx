@@ -18,15 +18,15 @@ export default function Hero(){
   },[])
 
   return (
-    <section className="relative min-h-[90vh] flex items-center justify-center">
+    <section className="relative min-h-[90vh] flex items-center justify-center bg-gradient-to-b from-neutral-900 to-neutral-800">
       <video className="absolute inset-0 w-full h-full object-cover" autoPlay muted loop playsInline>
         <source src="/hero.mp4" type="video/mp4" />
       </video>
-      <div className="absolute inset-0 bg-black/50"/>
+      <div className="absolute inset-0 bg-black/55"/>
 
-      <div className="relative z-10 max-w-4xl mx-auto px-4 text-center text-white pt-24">
+      <div className="relative z-10 max-w-4xl mx-auto px-4 text-center text-white pt-28 md:pt-32">
         <h1 className="text-4xl md:text-6xl font-extrabold leading-tight">Sazón Growth Partner</h1>
-        <p className="mt-4 text-base md:text-lg opacity-90">Impulsamos marcas food-tech con estrategia, data y creatividad.</p>
+        <p className="mt-4 text-base md:text-lg opacity-95">Impulsamos marcas food-tech con estrategia, data y creatividad.</p>
 
         <div className="mt-6 h-10 md:h-12 flex items-center justify-center">
           <AnimatePresence mode="wait">

@@ -1,35 +1,71 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 
-const items = [
+const centerItems = [
   { label: 'Inicio', href: '#inicio' },
   { label: 'Servicios', href: '#servicios' },
   { label: 'Planes', href: '#planes' },
   { label: '¿Por qué Sazón?', href: '#porque' },
-  { label: 'Contacto', href: '#contacto' },
 ]
 
 export default function Navbar(){
   const [active, setActive] = useState('#inicio')
   const [open, setOpen] = useState(false)
 
+  useEffect(()=>{
+    const handler = () => {
+      const sections = ['#inicio','#servicios','#planes','#porque','#contacto']
+      let current = '#inicio'
+      sections.forEach(id=>{
+        const el = document.querySelector(id)
+        if(el && window.scrollY + 90 >= el.offsetTop) current = id
+      })
+      setActive(current)
+    }
+    window.addEventListener('scroll', handler, { passive: true })
+    handler()
+    return ()=>window.removeEventListener('scroll', handler)
+  }, [])
+
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white/80 backdrop-blur border-b border-neutral-200">
-      <nav className="max-w-7xl mx-auto px-4 md:px-6 py-3 flex items-center justify-between">
-        <a href="#inicio" className="flex items-center gap-2" onClick={()=>setActive('#inicio')}>
-          <img src="/sazon-logo.svg" alt="Sazón" className="h-8 w-auto" />
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur border-b border-neutral-200">
+      <nav className="max-w-7xl mx-auto px-4 md:px-6 py-3 grid grid-cols-3 items-center">
+        <a href="#inicio" className="flex items-center gap-2" onClick={()=>{setActive('#inicio'); setOpen(false)}}>
+          <img src="/sazon-logo.svg" alt="Sazón" className="h-10 md:h-12 w-auto" />
         </a>
-        <button className="md:hidden" onClick={()=>setOpen(!open)} aria-label="Menú">☰</button>
-        <ul className={`md:flex items-center gap-6 text-sm font-medium ${open ? 'block mt-3' : 'hidden md:flex'}`}>
-          {items.map(i => (
+        <ul className="hidden md:flex items-center justify-center gap-6 text-sm font-medium">
+          {centerItems.map(i => (
             <li key={i.href}>
               <a
                 href={i.href}
-                onClick={()=>{setActive(i.href); setOpen(false)}}
+                onClick={()=>{setActive(i.href)}}
                 className={`hover:text-primary transition-colors ${active===i.href ? 'text-primary' : 'text-neutral-900'}`}
               >{i.label}</a>
             </li>
           ))}
         </ul>
+        <div className="hidden md:flex justify-end">
+          <a href="#contacto" onClick={()=>setActive('#contacto')}
+             className="px-4 py-2 rounded-xl bg-primary text-white text-sm font-semibold shadow-soft hover:opacity-90 transition">
+            Contacto
+          </a>
+        </div>
+        <button className="md:hidden justify-self-end" onClick={()=>setOpen(!open)} aria-label="Menú">☰</button>
+        {open && (
+          <div className="col-span-3 md:hidden mt-3 rounded-2xl border border-neutral-200 bg-white p-3 shadow-soft">
+            <ul className="flex flex-col gap-2 text-sm font-medium">
+              {[...centerItems, { label: 'Contacto', href: '#contacto', cta:true }].map(i => (
+                <li key={i.href}>
+                  <a
+                    href={i.href}
+                    onClick={()=>{setActive(i.href); setOpen(false)}}
+                    className={`${i.cta ? 'bg-primary text-white px-3 py-2 rounded-lg block text-center' : ''}
+                      ${active===i.href && !i.cta ? 'text-primary' : 'text-neutral-900'} hover:text-primary`}
+                  >{i.label}</a>
+                </li>
+              ))}
+            </ul>
+          </div>
+        )}
       </nav>
     </header>
   )

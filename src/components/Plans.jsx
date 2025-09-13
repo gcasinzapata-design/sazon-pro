@@ -1,10 +1,33 @@
 import { waLink } from '../utils'
 
 const PLANS = [
-  { name: 'Básico', price: 'S/ 1,490', features: ['Setup inicial','Optimización esencial','Soporte por WhatsApp'] },
-  { name: 'Pro', price: 'S/ 2,990', features: ['Creatividad + Media','Automatizaciones clave','Reportes quincenales'] },
-  { name: 'Plus', price: 'S/ 4,990', features: ['E2E crecimiento','Producción de contenido','AB tests continuos'] },
-  { name: 'Premium', price: 'S/ 7,990', features: ['Equipo dedicado','Data avanzada','Estrategia full-funnel'] },
+  { name: 'Básico', price: '$350 /mes', features: [
+    'Auditoría inicial & diagnóstico',
+    'Gestión de apps',
+    'Campañas: Meta y Google',
+    'Tech & analítica (dashboard básico)',
+    'Sugerencias de optimización de carta.'
+  ]},
+  { name: 'Pro', price: '$600 /mes', features: [
+    'Todo lo del Básico',
+    'Gestión de apps y canal directo',
+    'Optimización de tiempos (cocina & entrega)',
+    'Campañas: Meta, Google y Delivery Apps',
+    'Reporte analítico mensual'
+  ]},
+  { name: 'Plus', price: '$950 /mes', features: [
+    'Todo lo del Pro',
+    'PR con micro-influencers',
+    'Producción de contenido mensual',
+    'eCommerce + última milla (setup adicional)'
+  ]},
+  { name: 'Premium', price: 'A medida', features: [
+    'Gestión integral de apps y canal propio',
+    'Contenido + influencers medianos/grandes',
+    'Integración completa eCommerce + última milla',
+    'Dashboards personalizados en tiempo real',
+    'Equipo dedicado'
+  ]},
 ]
 
 export default function Plans(){
@@ -29,6 +52,7 @@ export default function Plans(){
           </a>
         ))}
       </div>
+      <p className="text-xs text-neutral-500 mt-4">* La inversión publicitaria no está incluida.</p>
     </div>
   )
 }
