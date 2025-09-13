@@ -3,7 +3,7 @@ export default function Footer(){
     <footer className="bg-white text-neutral-900 mt-16 border-t border-neutral-200">
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-12 grid md:grid-cols-3 gap-8">
         <div>
-          <img src="/sazon-logo.svg" alt="Sazón" className="h-12 md:h-14 w-auto" />
+          <img src="/sazon-logo.svg" alt="Sazón" className="h-14 md:h-16 w-auto shrink-0" />
           <p className="text-sm text-neutral-600 mt-3">Impulsamos marcas con estrategia, creatividad y data.</p>
         </div>
 
