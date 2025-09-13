@@ -1,0 +1,8 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html { scroll-behavior: smooth; }
+:root { color-scheme: light; }
+
+.input { @apply w-full rounded-xl border border-neutral-300 px-4 py-3 focus:outline-none focus:border-primary; }
