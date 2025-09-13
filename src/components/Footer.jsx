@@ -3,7 +3,7 @@ export default function Footer(){
     <footer className="bg-white text-neutral-900 mt-16 border-t border-neutral-200">
       <div className="max-w-7xl mx-auto px-4 md:px-6 py-12 grid md:grid-cols-3 gap-8">
         <div>
-          <img src="/sazon-logo.svg" alt="Sazón" className="h-10 md:h-12 w-auto" />
+          <img src="/sazon-logo.svg" alt="Sazón" className="h-12 md:h-14 w-auto" />
           <p className="text-sm text-neutral-600 mt-3">Impulsamos marcas con estrategia, creatividad y data.</p>
         </div>
 
@@ -11,11 +11,11 @@ export default function Footer(){
           <div>
             <h4 className="font-semibold mb-3">Menú</h4>
             <ul className="space-y-2 text-sm text-neutral-700">
-              <li><a href="#inicio" className="hover:text-primary">Inicio</a></li>
-              <li><a href="#servicios" className="hover:text-primary">Servicios</a></li>
-              <li><a href="#planes" className="hover:text-primary">Planes</a></li>
-              <li><a href="#porque" className="hover:text-primary">¿Por qué Sazón?</a></li>
-              <li><a href="#contacto" className="hover:text-primary">Contacto</a></li>
+              <li><a href="/#inicio" className="hover:text-primary">Inicio</a></li>
+              <li><a href="/#servicios" className="hover:text-primary">Servicios</a></li>
+              <li><a href="/#planes" className="hover:text-primary">Planes</a></li>
+              <li><a href="/#porque" className="hover:text-primary">¿Por qué Sazón?</a></li>
+              <li><a href="/#contacto" className="hover:text-primary">Contacto</a></li>
             </ul>
           </div>
           <div>

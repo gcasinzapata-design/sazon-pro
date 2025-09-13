@@ -21,6 +21,8 @@ export default function Hero(){
     <section className="relative min-h-[90vh] flex items-center justify-center bg-gradient-to-b from-neutral-900 to-neutral-800">
       <video className="absolute inset-0 w-full h-full object-cover" autoPlay muted loop playsInline>
         <source src="/hero.mp4" type="video/mp4" />
+        {/* Fallback remoto (stock) por si no existe /hero.mp4 */}
+        <source src="https://cdn.coverr.co/videos/coverr-coworkers-in-a-meeting-1565/1080p.mp4" type="video/mp4" />
       </video>
       <div className="absolute inset-0 bg-black/55"/>
 

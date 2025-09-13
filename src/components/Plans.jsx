@@ -40,7 +40,7 @@ export default function Plans(){
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
         {PLANS.map((p)=> (
           <a key={p.name} href={waLink(number, msg(p.name))} target="_blank" rel="noreferrer"
-            className="group block rounded-2xl border border-neutral-200 p-6 bg-white hover:shadow-soft hover:border-primary transition">
+            className="group block rounded-2xl border border-neutral-200 p-6 bg-white hover:shadow-soft hover:border-primary transition h-full flex flex-col">
             <div className="flex items-baseline justify-between">
               <h3 className="text-lg font-semibold group-hover:text-primary transition">{p.name}</h3>
               <span className="text-sm text-neutral-500">{p.price}</span>
@@ -48,7 +48,7 @@ export default function Plans(){
             <ul className="mt-4 space-y-2 text-sm text-neutral-700">
               {p.features.map((f,i)=>(<li key={i}>• {f}</li>))}
             </ul>
-            <button className="mt-6 w-full px-4 py-2 rounded-xl bg-primary text-white font-semibold">Quiero este plan</button>
+            <button className="mt-auto w-full px-4 py-2 rounded-xl bg-primary text-white font-semibold">Quiero este plan</button>
           </a>
         ))}
       </div>

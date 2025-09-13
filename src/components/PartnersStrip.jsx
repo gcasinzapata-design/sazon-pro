@@ -12,7 +12,7 @@ export default function PartnersStrip(){
     <section className="py-6 bg-light border-y border-neutral-200 overflow-hidden">
       <div className="animate-marquee flex items-center gap-10">
         {loop.map((src,i)=> (
-          <img key={i} src={src} alt="partner" className="h-12 md:h-16 w-auto object-contain opacity-90" loading="lazy" />
+          <img key={i} src={src} alt="partner" className="h-14 md:h-20 w-auto object-contain opacity-90" loading="lazy" />
         ))}
       </div>
     </section>

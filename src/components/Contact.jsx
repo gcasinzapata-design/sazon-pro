@@ -30,7 +30,7 @@ export default function Contact(){
             <a href={waLink(number, '¡Hola! Quiero más info sobre Sazón Growth Partner!')} target="_blank" rel="noreferrer"
                className="px-5 py-3 rounded-xl bg-primary text-white text-center font-semibold">WhatsApp</a>
             <a href={calendly} target="_blank" rel="noreferrer"
-               className="px-5 py-3 rounded-xl border border-neutral-300 text-center font-semibold hover:border-primary">Calendly</a>
+               className="px-5 py-3 rounded-xl border border-neutral-300 text-center font-semibold hover:border-primary">Agenda tu cita</a>
           </div>
         </form>
       </div>

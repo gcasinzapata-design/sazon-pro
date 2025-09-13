@@ -14,7 +14,7 @@ export default function WhyUs(){
       <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
         {items.map((it, i)=> (
           <motion.div key={i} initial={{opacity:0, y:10}} whileInView={{opacity:1, y:0}} viewport={{once:true}} transition={{delay:i*0.05}}
-            className="p-6 rounded-2xl border border-neutral-200 bg-white hover:shadow-soft">
+            className="p-6 rounded-2xl border border-primary/30 bg-white hover:shadow-soft hover:border-primary">
             <h3 className="font-semibold text-lg mb-2">{it.title}</h3>
             <p className="text-sm text-neutral-600">{it.desc}</p>
           </motion.div>
