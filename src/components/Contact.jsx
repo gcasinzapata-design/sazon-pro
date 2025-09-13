@@ -5,11 +5,12 @@ export default function Contact(){
   const calendly = import.meta.env.VITE_CALENDLY_URL || 'https://calendly.com/sazon-growth-partner'
 
   return (
+    <div className="border-t border-neutral-200"/>
     <div className="max-w-3xl mx-auto px-4 md:px-6 py-16">
       <h2 className="text-2xl md:text-4xl font-bold text-center">Hablemos de tu crecimiento</h2>
       <p className="text-center text-neutral-600 mt-2">Cuéntanos sobre tu marca y objetivos.</p>
 
-      <div className="mt-8 bg-white border border-neutral-200 rounded-2xl p-6 shadow-soft">
+      <div className="mt-8 bg-white border border-neutral-200 rounded-2xl p-6 shadow-soft border-t-4 border-t-primary/30">
         <form name="contacto-sazon" method="POST" data-netlify="true" netlify-honeypot="bot-field" className="grid gap-4">
           <input type="hidden" name="form-name" value="contacto-sazon" />
           <p className="hidden">

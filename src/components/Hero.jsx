@@ -9,6 +9,8 @@ const bubbles = [
   'Automatización con IA'
 ]
 
+const FALLBACK_IMG = 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?q=80&w=1920&auto=format&fit=crop'
+
 export default function Hero(){
   const [idx, setIdx] = useState(0)
   const number = import.meta.env.VITE_WHATSAPP_NUMBER || '51978978905'
@@ -18,12 +20,17 @@ export default function Hero(){
   },[])
 
   return (
-    <section className="relative min-h-[90vh] flex items-center justify-center bg-gradient-to-b from-neutral-900 to-neutral-800">
+    <section className="relative min-h-[90vh] flex items-center justify-center bg-black">
+      {/* Static fallback image */}
+      <img src={FALLBACK_IMG} alt="" aria-hidden className="absolute inset-0 w-full h-full object-cover" />
+
+      {/* Background video (local first, then remote fallback) */}
       <video className="absolute inset-0 w-full h-full object-cover" autoPlay muted loop playsInline>
         <source src="/hero.mp4" type="video/mp4" />
-        {/* Fallback remoto (stock) por si no existe /hero.mp4 */}
         <source src="https://cdn.coverr.co/videos/coverr-coworkers-in-a-meeting-1565/1080p.mp4" type="video/mp4" />
       </video>
+
+      {/* Dark overlay for legibility */}
       <div className="absolute inset-0 bg-black/55"/>
 
       <div className="relative z-10 max-w-4xl mx-auto px-4 text-center text-white pt-28 md:pt-32">
