@@ -27,10 +27,10 @@ export default function Navbar(){
   }, [])
 
   return (
-    <header className="fixed top-0 left-0 right-0 z-50 bg-white/90 backdrop-blur border-b border-neutral-200">
+    <header className="fixed top-0 left-0 right-0 z-50 bg-white/95 border-b border-neutral-200">
       <nav className="max-w-7xl mx-auto px-4 md:px-6 py-3 grid grid-cols-3 items-center">
         <a href="/#inicio" className="flex items-center gap-2" onClick={()=>{setActive('/#inicio'); setOpen(false)}}>
-          <img src="/sazon-logo.svg" alt="Sazón" className="h-16 md:h-20 w-auto shrink-0" />
+          <img src="/sazon-logo.png" alt="Sazón" className="h-16 md:h-20 w-auto shrink-0" />
         </a>
         <ul className="hidden md:flex items-center justify-center gap-6 text-sm font-medium">
           {centerItems.map(i => (
