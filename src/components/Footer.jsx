@@ -21,7 +21,7 @@ export default function Footer(){
           <div>
             <h4 className="font-semibold mb-3">Contacto</h4>
             <ul className="space-y-2 text-sm text-neutral-700">
-              <li><a href="tel:+51978978905" className="hover:text-primary">+51 978 978 905</a></li>
+              <li><a href="tel:+51978978905" className="hover:text-primary">+51 963 200 790</a></li>
               <li><a href="mailto:comercial@sazonpartner.com" className="hover:text-primary">comercial@sazonpartner.com</a></li>
             </ul>
           </div>
