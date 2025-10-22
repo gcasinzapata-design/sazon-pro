@@ -1,7 +1,7 @@
 import { waLink } from '../utils'
 
 export default function Contact(){
-  const number = import.meta.env.VITE_WHATSAPP_NUMBER || '51978978905'
+  const number = import.meta.env.VITE_WHATSAPP_NUMBER || '51963200790'
   const calendly = import.meta.env.VITE_CALENDLY_URL || 'https://calendly.com/sazon-growth-partner'
 
   return (
