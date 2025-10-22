@@ -13,7 +13,7 @@ const FALLBACK_IMG = 'https://images.unsplash.com/photo-1551836022-d5d88e9218df?
 
 export default function Hero(){
   const [idx, setIdx] = useState(0)
-  const number = import.meta.env.VITE_WHATSAPP_NUMBER || '51978978905'
+  const number = import.meta.env.VITE_WHATSAPP_NUMBER || '51963200790'
   useEffect(()=>{
     const t = setInterval(()=> setIdx(i => (i+1)%bubbles.length), 2200)
     return ()=>clearInterval(t)
