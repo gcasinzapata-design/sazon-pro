@@ -9,7 +9,7 @@ function WhatsAppIcon(){
 }
 
 export default function WhatsAppBubble(){
-  const number = import.meta.env.VITE_WHATSAPP_NUMBER || '51978978905'
+  const number = import.meta.env.VITE_WHATSAPP_NUMBER || '51963200790'
   return (
     <a
       href={waLink(number, '¡Hola! Quiero más info sobre Sazón Growth Partner!')}
