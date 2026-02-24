@@ -1,16 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 
 const WA = import.meta.env.VITE_WHATSAPP_NUMBER || "51952363643";
 
 export default function App() {
   const [scrolled, setScrolled] = useState(false);
-  const [form, setForm] = useState({
-    name: "",
-    phone: "",
-    platforms: "Solo Rappi",
-    orders: "100-300",
-    ticket: "",
-  });
+  const [form, setForm] = useState({ name: "", restaurant: "", phone: "", platforms: "Solo Rappi", orders: "100-300", ticket: "", mensaje: "" });
   const [sent, setSent] = useState(false);
   const [formError, setFormError] = useState("");
 
@@ -23,9 +17,13 @@ export default function App() {
   useEffect(() => {
     const els = document.querySelectorAll(".reveal");
     const obs = new IntersectionObserver(
-      (entries) =>
-        entries.forEach((e) => e.isIntersecting && e.target.classList.add("visible")),
-      { threshold: 0.1 }
+      (entries) => entries.forEach((e, i) => {
+        if (e.isIntersecting) {
+          setTimeout(() => e.target.classList.add("vis"), Math.min(i * 60, 300));
+          obs.unobserve(e.target);
+        }
+      }),
+      { threshold: 0.08 }
     );
     els.forEach((el) => obs.observe(el));
     return () => obs.disconnect();
@@ -42,388 +40,327 @@ export default function App() {
 
   function submit(e) {
     e.preventDefault();
-    if (!form.name.trim()) {
-      setFormError("Escribe el nombre de tu restaurante");
-      return;
-    }
-    if (form.phone.replace(/\D/g, "").length < 9) {
-      setFormError("Ingresa un WhatsApp valido (9 digitos)");
-      return;
-    }
-    const orderMap = {
-      "50-100": 75,
-      "100-300": 200,
-      "300-1000": 650,
-      "1000+": 1000,
-    };
+    if (!form.name.trim()) { setFormError("Escribe tu nombre"); return; }
+    if (!form.restaurant.trim()) { setFormError("Escribe el nombre de tu restaurante"); return; }
+    if (form.phone.replace(/\D/g, "").length < 9) { setFormError("Ingresa un WhatsApp válido"); return; }
+    const orderMap = { "50-100": 75, "100-300": 200, "300-1000": 650, "1000+": 1000 };
     const pedidos = orderMap[form.orders] || 200;
     const ticket = parseFloat(form.ticket) || 40;
-    const roi = Math.round(pedidos * ticket * 0.28 * 12).toLocaleString();
+    const extra = Math.round(pedidos * 0.28);
+    const roi = Math.round(extra * ticket * 12).toLocaleString();
     const msg = encodeURIComponent(
-      "Hola! Quiero crecer en delivery.\n\n" +
-        "Restaurante: " + form.name + "\n" +
-        "Plataformas: " + form.platforms + "\n" +
-        "Pedidos/mes: " + form.orders + "\n" +
-        "Ticket: S/" + (form.ticket || "?") + "\n" +
-        "ROI estimado: S/" + roi + "/anio\n\n" +
-        "Me interesa el analisis gratuito."
+      "Hola! Quiero hacer crecer mi delivery.\n\n" +
+      "Nombre: " + form.name + "\n" +
+      "Restaurante: " + form.restaurant + "\n" +
+      "Plataformas: " + form.platforms + "\n" +
+      "Pedidos/mes: " + form.orders + "\n" +
+      "Ticket promedio: S/" + (form.ticket || "?") + "\n" +
+      "ROI estimado: S/" + roi + " extra por año\n\n" +
+      (form.mensaje ? "Mensaje: " + form.mensaje + "\n\n" : "") +
+      "Me interesa el diagnóstico gratuito."
     );
     window.open("https://wa.me/" + WA + "?text=" + msg, "_blank");
     setSent(true);
   }
 
-  const bg = "#120b04";
-  const bg2 = "#1e1208";
-  const bg3 = "#2a1a0c";
-  const bg4 = "#321f10";
-  const txt = "#ede0c4";
-  const txt2 = "#f5e8d0";
-  const muted = "rgba(237,224,196,.45)";
-  const dim = "rgba(237,224,196,.25)";
-  const border = "rgba(255,255,255,.07)";
-  const border2 = "rgba(255,255,255,.13)";
-  const fire = "#e8420c";
-  const gold = "#eaaa30";
-
-  const Tag = ({ children }) => (
-    <div
-      style={{
-        display: "flex",
-        alignItems: "center",
-        gap: 12,
-        marginBottom: 14,
-      }}
-    >
-      <span
-        style={{ width: 28, height: 1.5, background: fire, flexShrink: 0 }}
-      />
-      <span
-        style={{
-          fontSize: 10,
-          fontWeight: 700,
-          letterSpacing: "3.5px",
-          textTransform: "uppercase",
-          color: fire,
-        }}
-      >
-        {children}
-      </span>
-    </div>
-  );
-
-  const Label = ({ children }) => (
-    <label
-      style={{
-        display: "block",
-        fontSize: 10.5,
-        fontWeight: 700,
-        letterSpacing: ".8px",
-        textTransform: "uppercase",
-        color: muted,
-        marginBottom: 6,
-      }}
-    >
-      {children}
-    </label>
-  );
-
-  const stats = [
-    { n: "+38%", l: "pedidos en 3 meses" },
-    { n: "-4pp", l: "comision negociada" },
-    { n: "16", l: "restaurantes activos" },
-    { n: "<2min", l: "tiempo de respuesta" },
+  const services = [
+    { ico: "📊", t: "Gestión integral de plataformas", d: "Administramos tu presencia en Rappi, PedidosYa, Didi y Glovo. Configuración, operación diaria y soporte continuo." },
+    { ico: "🤝", t: "Negociación con aplicativos", d: "Acceso directo a los equipos comerciales. Negociamos comisiones y condiciones exclusivas en tu nombre." },
+    { ico: "🍽️", t: "Optimización de menú digital", d: "Rediseñamos tu carta para el canal online: fotos, descripciones persuasivas, precios ancla y estructura que incrementa el ticket." },
+    { ico: "📣", t: "Campañas dentro de las food apps", d: "Planificamos y ejecutamos tus inversiones publicitarias para maximizar visibilidad y volumen de pedidos." },
+    { ico: "📈", t: "Reportes y análisis de datos", d: "Dashboard mensual con métricas clave: ventas, conversión, calificaciones y benchmarks del sector." },
+    { ico: "🗓️", t: "Plan comercial mensual", d: "Cada mes presentamos un plan de acción basado en los resultados del período anterior." },
   ];
 
-  const testimonios = [
-    {
-      n: "+38%",
-      m: "pedidos en 3 meses",
-      q: "Pasamos de 280 a 412 pedidos al mes. Lograron bajar nuestra comision con Rappi del 27% al 24%. Eso solo ya cubre lo que les pagamos.",
-      nm: "Marco Vargas",
-      bz: "La Brasa del Barrio - Miraflores",
-      ic: "🥩",
-    },
-    {
-      n: "4.8",
-      m: "rating en todas las plataformas",
-      q: "Antes me enteraba de los problemas cuando ya era tarde. Ahora me avisan antes de que afecten los pedidos.",
-      nm: "Lucia Mendoza",
-      bz: "Green Bowl - San Isidro",
-      ic: "🥗",
-    },
-    {
-      n: "+24%",
-      m: "pedidos en 5 meses",
-      q: "Tarde 5 meses en decidirme. El analisis de mi menu solo valio el costo del primer mes.",
-      nm: "Kenji Nakashima",
-      bz: "Wok & Roll - Surco",
-      ic: "🍜",
-    },
-  ];
-
-  const pasos = [
-    {
-      n: "1",
-      t: "Analisis gratuito en 24h",
-      d: "Revisamos tu menu, metricas y competencia. Te decimos exactamente que cambiaremos y cuanto puedes crecer.",
-    },
-    {
-      n: "2",
-      t: "Setup completo en 48 horas",
-      d: "Conectamos tus plataformas y optimizamos fotos y descripciones. Sin que hagas nada tecnico.",
-    },
-    {
-      n: "3",
-      t: "Primera campana esa misma semana",
-      d: "Lanzamos una campana de arranque para impulso inmediato mientras optimizamos la base.",
-    },
-    {
-      n: "4",
-      t: "Reporte el 1 de cada mes",
-      d: "PDF con todo lo que paso y el plan del proximo mes. Sin tener que preguntar nada.",
-    },
+  const steps = [
+    { n: "01", t: "Diagnóstico profundo", d: "Auditamos tu operación en todas las plataformas. Detectamos qué frena tus ventas y dónde están las oportunidades sin explotar." },
+    { n: "02", t: "Estrategia personalizada", d: "Diseñamos un plan a medida: pricing, menú digital, campañas y negociaciones. Cada acción respaldada en datos reales." },
+    { n: "03", t: "Ejecución integral", d: "Un Growth Manager dedicado opera tu presencia en los aplicativos. Tú cocinas, nosotros hacemos que se venda." },
+    { n: "04", t: "Mejora continua", d: "Medimos ticket, conversión y recompra. Ajustamos en tiempo real para maximizar resultados cada semana." },
   ];
 
   const planes = [
     {
-      name: "Starter",
-      price: "890",
+      name: "Starter", price: "890", currency: "S/", period: "mes",
+      tag: "Para restaurantes que quieren arrancar con el pie derecho",
       plus: "+ 3% sobre el crecimiento generado",
-      features: [
-        "1 plataforma de delivery",
-        "Analisis semanal de metricas",
-        "Optimizacion de menu e imagenes",
-        "2 campanas por mes",
-        "Reporte mensual automatico",
-        "Gestion de resenas negativas",
-      ],
-      featured: false,
+      features: ["Gestión de 1 plataforma", "Diagnóstico inicial", "Optimización básica de menú", "2 campañas por mes", "Reporte mensual de métricas", "Gestión de reseñas"],
+      nofeatures: ["Growth Manager dedicado", "Negociación de comisiones"],
+      featured: false, cta: "Empezar con Starter",
     },
     {
-      name: "Growth",
-      price: "1,790",
+      name: "Growth", price: "1,790", currency: "S/", period: "mes",
+      tag: "Para restaurantes que quieren escalar rápido",
       plus: "+ 2.5% sobre el crecimiento generado",
-      features: [
-        "Todo Starter incluido",
-        "Hasta 4 plataformas",
-        "Negociacion de comisiones",
-        "Campanas ilimitadas",
-        "KAM dedicada por WhatsApp",
-        "Dashboard en tiempo real",
-      ],
-      featured: true,
+      features: ["Todo Starter incluido", "Hasta 4 plataformas", "Growth Manager dedicado", "Negociación de comisiones", "Campañas ilimitadas", "Dashboard en tiempo real", "Plan comercial mensual", "Soporte WhatsApp prioritario"],
+      nofeatures: [],
+      featured: true, cta: "Empezar con Growth",
+    },
+    {
+      name: "Pro", price: "A medida", currency: "", period: "cotización",
+      tag: "Para cadenas, multi-locales y dark kitchens",
+      plus: "Condiciones personalizadas",
+      features: ["Todo Growth incluido", "Locales ilimitados", "Equipo dedicado exclusivo", "Integración con POS y tech stack", "Estrategia de expansión", "Reunión semanal de seguimiento"],
+      nofeatures: [],
+      featured: false, cta: "Hablar con ventas",
     },
   ];
 
-  const chatMsgs = [
-    { t: "Hola! En que plataformas estan activos?", out: false },
-    { t: "Solo Rappi, unos 200 pedidos/mes", out: true },
-    { t: "Proyectamos 280-310 en 90 dias. Cual es tu ticket promedio?", out: false },
-    { t: "Como S/42", out: true },
-    { t: "Perfecto. Son ~S/3,000 extra/mes. Plan Starter ideal. Te mando el link", out: false },
+  const clients = [
+    { ic: "🍣", n: "La Picada Cebichería" },
+    { ic: "☕", n: "Buena Vista Café" },
+    { ic: "🍪", n: "Puqui Cookies House" },
+    { ic: "🍷", n: "Victoriano Taberna" },
+    { ic: "🎂", n: "La Dosis Dulce" },
+    { ic: "🍕", n: "Veggie Pizza" },
+    { ic: "🥩", n: "Más Que Bueno" },
+    { ic: "🍝", n: "Piacere Perú" },
+    { ic: "🍳", n: "Cookery Perú" },
+    { ic: "🥐", n: "Pancracia Panes" },
   ];
+
+  const red = "#C8392B";
+  const redDark = "#9B2335";
+  const cream = "#F5EFE0";
+  const creamDark = "#EDE4CE";
+  const charcoal = "#1A1A1A";
+  const charcoalMid = "#2D2D2D";
+  const gold = "#D4A547";
+  const textSoft = "#5A4E3E";
 
   return (
     <>
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,600;0,700;1,400;1,600&family=Syne:wght@400;600;700;800&display=swap');
+        @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900;1,700&family=DM+Sans:wght@300;400;500&display=swap');
         *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
         html { scroll-behavior: smooth; }
-        body { font-family: 'Syne', sans-serif; background: #120b04; color: #ede0c4; overflow-x: hidden; }
-        .sf { font-family: 'Cormorant Garamond', serif !important; }
-        .reveal { opacity: 0; transform: translateY(20px); transition: opacity .7s, transform .7s; }
-        .reveal.visible { opacity: 1; transform: none; }
-        .d1 { transition-delay: .12s; }
-        .d2 { transition-delay: .22s; }
-        .d3 { transition-delay: .32s; }
-        @keyframes mq { to { transform: translateX(-50%); } }
-        .mq { display: flex; white-space: nowrap; animation: mq 26s linear infinite; width: max-content; }
-        @keyframes glow { 0%,100% { box-shadow: 0 0 0 0 rgba(232,66,12,.5); } 50% { box-shadow: 0 0 0 10px rgba(232,66,12,0); } }
-        .glow { animation: glow 3s ease-in-out infinite; }
-        @keyframes ulanim { to { transform: scaleX(1); } }
-        .ul::after { content: ''; position: absolute; bottom: -3px; left: 0; right: 0; height: 3px; background: #e8420c; border-radius: 9px; transform: scaleX(0); transform-origin: left; animation: ulanim 1s .9s cubic-bezier(.22,1,.36,1) forwards; }
-        input, select { width: 100%; padding: 12px 16px; background: #2a1a0c; border: 1.5px solid rgba(245,230,200,.14); border-radius: 12px; color: #ede0c4; font-family: 'Syne', sans-serif; font-size: 14px; outline: none; transition: border-color .2s; -webkit-appearance: none; }
-        input:focus, select:focus { border-color: rgba(232,66,12,.5); }
-        input::placeholder { color: rgba(237,224,196,.3); }
-        select option { background: #2a1a0c; }
-        .hov { transition: transform .3s, border-color .3s; }
-        .hov:hover { transform: translateY(-3px); }
-        .hov .bar { transform: scaleX(0); transform-origin: left; transition: transform .35s; }
-        .hov:hover .bar { transform: scaleX(1); }
-        @media (max-width: 768px) {
-          .nomob { display: none !important; }
-          .gcol { grid-template-columns: 1fr !important; }
-          .pmob { padding: 64px 24px !important; }
-          .pnav { padding: 14px 24px !important; }
+        body { font-family: 'DM Sans', sans-serif; background: #F5EFE0; color: #1A1A1A; overflow-x: hidden; }
+        .pf { font-family: 'Playfair Display', serif !important; }
+        .reveal { opacity: 0; transform: translateY(24px); transition: opacity .65s ease, transform .65s ease; }
+        .reveal.vis { opacity: 1; transform: none; }
+        @keyframes fadeDown { from { opacity:0; transform:translateY(-14px); } to { opacity:1; transform:none; } }
+        @keyframes ticker { to { transform: translateX(-50%); } }
+        @keyframes pulse { 0%,100% { transform:translate(-50%,-50%) scale(1); opacity:1; } 50% { transform:translate(-50%,-50%) scale(1.2); opacity:.6; } }
+        @keyframes fadeUp { from { opacity:0; transform:translateY(24px); } to { opacity:1; transform:none; } }
+        input, select, textarea { font-family: 'DM Sans', sans-serif; font-size: .9rem; color: #1A1A1A; outline: none; }
+        select option { background: #EDE4CE; }
+        button { font-family: 'DM Sans', sans-serif; }
+        @media (max-width: 900px) {
+          .hide-mob { display: none !important; }
+          .mob-col { grid-template-columns: 1fr !important; }
+          .mob-pad { padding: 70px 24px !important; }
+          .mob-nav { padding: 14px 24px !important; }
+          .mob-wrap { flex-direction: column !important; text-align: center; }
         }
       `}</style>
 
       {/* NAV */}
-      <nav
-        className="pnav"
-        style={{
-          position: "fixed", top: 0, left: 0, right: 0, zIndex: 50,
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: scrolled ? "12px 52px" : "20px 52px",
-          background: scrolled ? "rgba(18,11,4,.92)" : "transparent",
-          backdropFilter: scrolled ? "blur(16px)" : "none",
-          borderBottom: scrolled ? "1px solid rgba(255,255,255,.05)" : "none",
-          transition: "all .3s",
-        }}
-      >
-        <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
-          <div
-            className="glow"
-            style={{ width: 32, height: 32, borderRadius: "50%", background: fire, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 14 }}
-          >
-            🌶️
-          </div>
-          <span style={{ fontWeight: 800, fontSize: 15, color: txt }}>
-            Sazon <span style={{ color: fire }}>Growth</span>
-          </span>
+      <nav style={{
+        position: "fixed", top: 0, left: 0, right: 0, zIndex: 100,
+        display: "flex", alignItems: "center", justifyContent: "space-between",
+        padding: "18px 60px",
+        background: scrolled ? "rgba(245,239,224,.95)" : "rgba(245,239,224,.95)",
+        backdropFilter: "blur(12px)",
+        borderBottom: "1px solid rgba(200,57,43,.15)",
+        animation: "fadeDown .6s ease both",
+      }} className="mob-nav">
+        <div className="pf" style={{ fontSize: "1.3rem", fontWeight: 900, color: charcoal }}>
+          Sazón<span style={{ color: red }}>.</span>
         </div>
-        <div style={{ display: "flex", gap: 24, alignItems: "center" }}>
-          <button
-            className="nomob"
-            onClick={() => goTo("como")}
-            style={{ background: "none", border: "none", color: muted, fontSize: 13, cursor: "pointer", fontFamily: "Syne, sans-serif" }}
-          >
-            Como funciona
-          </button>
-          <button
-            className="nomob"
-            onClick={() => goTo("planes")}
-            style={{ background: "none", border: "none", color: muted, fontSize: 13, cursor: "pointer", fontFamily: "Syne, sans-serif" }}
-          >
-            Planes
-          </button>
-          <button
-            onClick={() => goTo("formulario")}
-            style={{ padding: "10px 22px", borderRadius: 100, background: fire, color: "white", border: "none", fontWeight: 700, fontSize: 13, cursor: "pointer", fontFamily: "Syne, sans-serif" }}
-          >
-            Quiero crecer
-          </button>
+        <div className="hide-mob" style={{ display: "flex", gap: 32, listStyle: "none" }}>
+          {[["#how", "Cómo trabajamos"], ["#services", "Servicios"], ["#pricing", "Planes"], ["#clients", "Clientes"], ["#contact", "Contacto"]].map(([href, label]) => (
+            <a key={href} href={href} style={{ fontSize: ".82rem", fontWeight: 500, textTransform: "uppercase", letterSpacing: "1.5px", color: charcoal, textDecoration: "none" }}>{label}</a>
+          ))}
         </div>
+        <a href="#contact" style={{ background: red, color: "white", padding: "11px 26px", fontSize: ".82rem", fontWeight: 500, textTransform: "uppercase", letterSpacing: "1.5px", textDecoration: "none" }}>
+          Quiero crecer
+        </a>
       </nav>
 
       {/* HERO */}
-      <section
-        className="pmob"
-        style={{ minHeight: "100vh", display: "flex", flexDirection: "column", justifyContent: "flex-end", padding: "110px 52px 70px", position: "relative", overflow: "hidden", background: bg }}
-      >
-        <div style={{ position: "absolute", inset: 0, opacity: 0.035, backgroundImage: "repeating-linear-gradient(0deg,transparent,transparent 79px,rgba(245,230,200,.6) 79px,rgba(245,230,200,.6) 80px),repeating-linear-gradient(90deg,transparent,transparent 79px,rgba(245,230,200,.6) 79px,rgba(245,230,200,.6) 80px)" }} />
-        <div
-          className="sf nomob"
-          style={{ position: "absolute", right: -10, top: "50%", transform: "translateY(-50%)", fontSize: "clamp(160px,19vw,290px)", fontStyle: "italic", fontWeight: 700, lineHeight: 1, color: "transparent", WebkitTextStroke: "1px rgba(232,66,12,.09)", pointerEvents: "none", userSelect: "none" }}
-        >
-          +38%
-        </div>
-        <div style={{ position: "absolute", top: 130, left: 52 }}>
-          <span style={{ padding: "5px 14px", borderRadius: 100, border: "1px solid rgba(232,66,12,.3)", background: "rgba(232,66,12,.1)", fontSize: 10, fontWeight: 700, letterSpacing: "2.5px", textTransform: "uppercase", color: "#f07050" }}>
-            Lima - Delivery
-          </span>
-        </div>
-        <div className="reveal" style={{ position: "relative", zIndex: 1, maxWidth: 820 }}>
-          <h1
-            className="sf"
-            style={{ fontSize: "clamp(50px,7vw,104px)", lineHeight: 1.02, fontWeight: 600, color: txt2, marginBottom: 24 }}
-          >
-            Mas pedidos.
-            <br />
-            Menos{" "}
-            <em style={{ fontStyle: "italic", color: gold }}>comision.</em>
-            <br />
-            <span className="ul" style={{ color: fire, fontStyle: "normal", fontWeight: 700, position: "relative" }}>
-              Sin excusas.
-            </span>
-          </h1>
-          <p style={{ fontSize: 16, color: muted, lineHeight: 1.75, maxWidth: 500, marginBottom: 40 }}>
-            Gestionamos tu restaurante en Rappi, PedidosYa, Didi y Glovo para que crezcas 25-40% en los primeros 90 dias. Sin contratos de permanencia.
+      <section style={{ minHeight: "100vh", display: "grid", gridTemplateColumns: "1fr 1fr", background: charcoal, overflow: "hidden" }} className="mob-col">
+        {/* Left */}
+        <div style={{ display: "flex", flexDirection: "column", justifyContent: "center", padding: "140px 80px 100px", zIndex: 2 }} className="mob-pad">
+          <p style={{ fontSize: ".75rem", fontWeight: 500, textTransform: "uppercase", letterSpacing: "3px", color: gold, marginBottom: 28, animation: "fadeUp .8s .2s ease both", opacity: 0, animationFillMode: "both" }}>
+            Growth Partner para Restaurantes · Lima
           </p>
-          <div style={{ display: "flex", gap: 14, flexWrap: "wrap", alignItems: "center" }}>
-            <button
-              onClick={() => goTo("formulario")}
-              style={{ padding: "15px 34px", borderRadius: 100, background: fire, color: "white", border: "none", fontWeight: 800, fontSize: 14, cursor: "pointer", fontFamily: "Syne, sans-serif", boxShadow: "0 8px 32px rgba(232,66,12,.3)" }}
-            >
-              Calcular cuanto puedo crecer
-            </button>
-            <button
-              onClick={() => goTo("como")}
-              style={{ padding: "13px 28px", borderRadius: 100, border: "1.5px solid rgba(255,255,255,.2)", background: "transparent", color: muted, fontWeight: 700, fontSize: 14, cursor: "pointer", fontFamily: "Syne, sans-serif" }}
-            >
-              Ver como funciona
-            </button>
+          <h1 className="pf" style={{ fontSize: "clamp(2.8rem,5vw,5rem)", lineHeight: 1.05, color: "white", animation: "fadeUp .8s .35s ease both", opacity: 0, animationFillMode: "both" }}>
+            Tu delivery,<br />al <em style={{ fontStyle: "italic", color: red }}>máximo</em><br />rendimiento.
+          </h1>
+          <p style={{ marginTop: 28, fontSize: "1rem", lineHeight: 1.7, color: "rgba(255,255,255,.6)", maxWidth: 400, animation: "fadeUp .8s .5s ease both", opacity: 0, animationFillMode: "both" }}>
+            Somos tu equipo especializado en hacer crecer tus ventas en Rappi, PedidosYa, Didi y Glovo. No somos consultores, somos tu partner real de crecimiento.
+          </p>
+          <div style={{ display: "flex", gap: 18, alignItems: "center", marginTop: 48, flexWrap: "wrap", animation: "fadeUp .8s .65s ease both", opacity: 0, animationFillMode: "both" }}>
+            <a href="#contact" style={{ background: red, color: "white", padding: "16px 36px", fontSize: ".9rem", fontWeight: 500, letterSpacing: "1px", textDecoration: "none", textTransform: "uppercase" }}>
+              Agendar diagnóstico
+            </a>
+            <a href="#how" style={{ color: "rgba(255,255,255,.65)", fontSize: ".9rem", textDecoration: "none" }}>
+              Cómo lo hacemos →
+            </a>
           </div>
         </div>
-        <div
-          className="reveal d1"
-          style={{ position: "relative", zIndex: 1, display: "flex", flexWrap: "wrap", marginTop: 52, paddingTop: 32, borderTop: "1px solid rgba(255,255,255,.07)" }}
-        >
-          {stats.map((s, i) => (
-            <div
-              key={i}
-              style={{ paddingRight: 32, marginRight: 32, borderRight: i < 3 ? "1px solid rgba(255,255,255,.08)" : "none" }}
-            >
-              <div className="sf" style={{ fontStyle: "italic", fontWeight: 700, fontSize: 34, lineHeight: 1, color: fire, marginBottom: 4 }}>
-                {s.n}
+
+        {/* Right - Stats */}
+        <div style={{ position: "relative", display: "flex", alignItems: "flex-end", justifyContent: "center", overflow: "hidden" }} className="hide-mob">
+          <div style={{ position: "absolute", bottom: -30, right: -20, fontFamily: "'Playfair Display',serif", fontSize: "26vw", fontWeight: 900, lineHeight: 1, color: "rgba(255,255,255,.03)", pointerEvents: "none", userSelect: "none" }}>SZN</div>
+          <div style={{ position: "absolute", top: "50%", left: "50%", transform: "translate(-50%,-50%)", width: 380, height: 380, background: "radial-gradient(circle,rgba(200,57,43,.3) 0%,transparent 70%)", borderRadius: "50%", animation: "pulse 4s ease-in-out infinite" }} />
+          <div style={{ position: "relative", zIndex: 2, display: "flex", gap: 2, marginBottom: 60, animation: "fadeUp .9s .8s ease both", opacity: 0, animationFillMode: "both" }}>
+            {[{ n: "+38%", l: "Ventas promedio" }, { n: "16", l: "Restaurantes activos" }, { n: "90d", l: "Para ver resultados" }].map((s, i) => (
+              <div key={i} style={{ background: "rgba(255,255,255,.06)", border: "1px solid rgba(255,255,255,.1)", padding: "28px 32px", textAlign: "center", backdropFilter: "blur(8px)" }}>
+                <strong className="pf" style={{ display: "block", fontSize: "2.2rem", fontWeight: 700, color: "white", marginBottom: 6 }}>{s.n}</strong>
+                <span style={{ fontSize: ".7rem", textTransform: "uppercase", letterSpacing: "1.5px", color: "rgba(255,255,255,.45)" }}>{s.l}</span>
               </div>
-              <div style={{ fontSize: 11, color: dim }}>{s.l}</div>
-            </div>
-          ))}
+            ))}
+          </div>
         </div>
       </section>
 
-      {/* MARQUEE */}
-      <div style={{ borderTop: "1px solid rgba(255,255,255,.06)", borderBottom: "1px solid rgba(255,255,255,.06)", padding: "12px 0", background: bg2, overflow: "hidden" }}>
-        <div className="mq">
-          {[
-            "Rappi", "PedidosYa", "Didi Food", "Glovo",
-            "Optimizacion de menu", "Negociacion de comisiones",
-            "Campanas de crecimiento", "Reportes automaticos",
-            "Rappi", "PedidosYa", "Didi Food", "Glovo",
-            "Optimizacion de menu", "Negociacion de comisiones",
-            "Campanas de crecimiento", "Reportes automaticos",
-          ].map((item, i) => (
-            <span
-              key={i}
-              style={{ display: "inline-flex", alignItems: "center", gap: 10, padding: "0 28px", fontSize: 10, fontWeight: 700, letterSpacing: "2px", textTransform: "uppercase", color: dim }}
-            >
-              {item}
-              <span style={{ width: 4, height: 4, borderRadius: "50%", background: "rgba(232,66,12,.5)", flexShrink: 0 }} />
-            </span>
+      {/* LOGOS BELT */}
+      <div style={{ background: creamDark, borderTop: "1px solid rgba(0,0,0,.08)", borderBottom: "1px solid rgba(0,0,0,.08)", padding: "16px 0", overflow: "hidden" }}>
+        <div style={{ display: "flex", gap: 56, alignItems: "center", animation: "ticker 22s linear infinite", width: "max-content" }}>
+          {["Rappi", "·", "PedidosYa", "·", "Didi Food", "·", "Glovo", "·", "Uber Eats", "·", "iFood", "·", "Deliveroo", "·", "Just Eat",
+            "Rappi", "·", "PedidosYa", "·", "Didi Food", "·", "Glovo", "·", "Uber Eats", "·", "iFood", "·", "Deliveroo", "·", "Just Eat"].map((p, i) => (
+            <span key={i} style={{ fontSize: ".75rem", fontWeight: 500, textTransform: "uppercase", letterSpacing: "2px", color: textSoft, opacity: .65, whiteSpace: "nowrap" }}>{p}</span>
           ))}
         </div>
       </div>
 
-      {/* TESTIMONIOS */}
-      <section className="pmob" style={{ padding: "96px 52px", background: bg2 }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-          <div className="reveal"><Tag>Resultados reales</Tag></div>
-          <h2 className="sf reveal" style={{ fontSize: "clamp(28px,4vw,50px)", fontWeight: 600, lineHeight: 1.1, color: txt2, marginBottom: 10 }}>
-            Lo que dicen los restaurantes
-            <br />
-            que <em style={{ fontStyle: "italic", color: gold }}>crecieron.</em>
-          </h2>
-          <p className="reveal d1" style={{ fontSize: 15, color: muted, lineHeight: 1.7, maxWidth: 480, marginBottom: 52 }}>
-            Numeros reales. Sin retoque. Restaurantes en Lima con 2 a 8 meses usando Sazon.
-          </p>
-          <div className="gcol" style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 14 }}>
-            {testimonios.map((t, i) => (
-              <div
-                key={i}
-                className={`reveal hov d${i}`}
-                style={{ background: bg3, border: "1px solid rgba(255,255,255,.07)", borderRadius: 20, padding: 28, position: "relative", overflow: "hidden" }}
+      {/* HOW IT WORKS */}
+      <section id="how" style={{ background: charcoal, padding: "110px 80px" }} className="mob-pad">
+        <p className="reveal" style={{ fontSize: ".7rem", fontWeight: 500, textTransform: "uppercase", letterSpacing: "3px", color: gold, marginBottom: 14 }}>Metodología</p>
+        <h2 className="pf reveal" style={{ fontSize: "clamp(2rem,3.5vw,3.2rem)", lineHeight: 1.1, color: "white", marginBottom: 14 }}>La receta del<br />crecimiento en 4 pasos.</h2>
+        <p className="reveal" style={{ maxWidth: 500, fontSize: "1rem", lineHeight: 1.7, color: "rgba(255,255,255,.5)", marginBottom: 60 }}>Un proceso claro, medible y sin sorpresas. De la diagnosis al resultado.</p>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(4,1fr)", gap: 2 }} className="mob-col">
+          {steps.map((s, i) => (
+            <div key={i} className="reveal" style={{ background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.09)", padding: "44px 32px", position: "relative", overflow: "hidden", transition: "background .25s", cursor: "default" }}
+              onMouseEnter={e => e.currentTarget.style.background = "rgba(200,57,43,.12)"}
+              onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,.04)"}
+            >
+              <div style={{ position: "absolute", bottom: -16, right: 14, fontFamily: "'Playfair Display',serif", fontSize: "8rem", fontWeight: 900, color: "rgba(255,255,255,.04)", lineHeight: 1, pointerEvents: "none" }}>{s.n}</div>
+              <p style={{ fontSize: ".75rem", fontWeight: 500, textTransform: "uppercase", letterSpacing: "2px", color: red, marginBottom: 20 }}>{s.n} - {i === 0 ? "Analizamos" : i === 1 ? "Diagnosticamos" : i === 2 ? "Ejecutamos" : "Optimizamos"}</p>
+              <h3 style={{ fontSize: "1.05rem", fontWeight: 500, color: "white", marginBottom: 12 }}>{s.t}</h3>
+              <p style={{ fontSize: ".87rem", lineHeight: 1.7, color: "rgba(255,255,255,.55)" }}>{s.d}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      {/* SERVICES */}
+      <section id="services" style={{ background: cream, padding: "110px 80px" }} className="mob-pad">
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 2fr", gap: 80, alignItems: "start" }} className="mob-col">
+          <div style={{ position: "sticky", top: 120 }}>
+            <p className="reveal" style={{ fontSize: ".7rem", fontWeight: 500, textTransform: "uppercase", letterSpacing: "3px", color: red, marginBottom: 14 }}>Servicios</p>
+            <h2 className="pf reveal" style={{ fontSize: "clamp(2rem,3vw,3rem)", lineHeight: 1.1, color: charcoal, marginBottom: 0 }}>Todo lo que tu delivery necesita,<br />en un solo lugar.</h2>
+            <div className="reveal" style={{ width: 56, height: 3, background: red, margin: "24px 0" }} />
+            <p className="reveal" style={{ fontSize: "1rem", lineHeight: 1.7, color: textSoft, marginBottom: 32 }}>No somos una agencia. Somos expertos en el ecosistema de food apps con relaciones directas con sus equipos comerciales.</p>
+            <a href="#contact" style={{ background: red, color: "white", padding: "14px 32px", fontSize: ".85rem", fontWeight: 500, textTransform: "uppercase", letterSpacing: "1px", textDecoration: "none", display: "inline-block" }}>
+              Hablar con un experto
+            </a>
+          </div>
+          <div>
+            {services.map((s, i) => (
+              <div key={i} className="reveal" style={{ display: "grid", gridTemplateColumns: "64px 1fr", borderTop: "1px solid rgba(0,0,0,.1)", padding: "32px 0", transition: "all .2s" }}
+                onMouseEnter={e => { e.currentTarget.querySelector(".svc-ico").style.background = red; e.currentTarget.querySelector(".svc-ico").style.color = "white"; }}
+                onMouseLeave={e => { e.currentTarget.querySelector(".svc-ico").style.background = "transparent"; e.currentTarget.querySelector(".svc-ico").style.color = red; }}
               >
-                <div className="bar" style={{ position: "absolute", top: 0, left: 0, right: 0, height: 2, background: "linear-gradient(90deg,#e8420c,#d49018)" }} />
-                <div className="sf" style={{ fontStyle: "italic", fontWeight: 700, fontSize: 46, lineHeight: 1, color: fire, marginBottom: 4 }}>{t.n}</div>
-                <div style={{ fontSize: 12, color: muted, marginBottom: 18 }}>{t.m}</div>
-                <p className="sf" style={{ fontStyle: "italic", fontSize: 15, color: "rgba(237,224,196,.75)", lineHeight: 1.7, marginBottom: 18 }}>"{t.q}"</p>
-                <div style={{ display: "flex", alignItems: "center", gap: 10, paddingTop: 16, borderTop: "1px solid rgba(255,255,255,.06)" }}>
-                  <div style={{ width: 36, height: 36, borderRadius: "50%", background: bg4, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 15, flexShrink: 0 }}>{t.ic}</div>
-                  <div>
-                    <div style={{ fontSize: 13, fontWeight: 700 }}>{t.nm}</div>
-                    <div style={{ fontSize: 11, color: muted }}>{t.bz}</div>
-                  </div>
+                <div className="svc-ico" style={{ width: 44, height: 44, border: "1.5px solid " + red, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1.2rem", color: red, marginTop: 2, transition: "all .2s", flexShrink: 0 }}>{s.ico}</div>
+                <div>
+                  <h3 style={{ fontSize: "1.05rem", fontWeight: 500, marginBottom: 8, color: charcoal }}>{s.t}</h3>
+                  <p style={{ fontSize: ".87rem", lineHeight: 1.7, color: textSoft }}>{s.d}</p>
+                </div>
+              </div>
+            ))}
+            <div style={{ borderTop: "1px solid rgba(0,0,0,.1)" }} />
+          </div>
+        </div>
+      </section>
+
+      {/* TESTIMONIAL */}
+      <section style={{ background: red, color: "white", textAlign: "center", padding: "100px 80px" }} className="mob-pad">
+        <p className="pf reveal" style={{ fontStyle: "italic", fontSize: "clamp(1.5rem,2.8vw,2.6rem)", lineHeight: 1.35, maxWidth: 840, margin: "0 auto 32px" }}>
+          "Con Sazón pasamos de 280 a 412 pedidos al mes. Lograron bajar nuestra comisión con Rappi del 27% al 24%. Eso solo ya cubre lo que les pagamos."
+        </p>
+        <p style={{ fontSize: ".8rem", opacity: .65, textTransform: "uppercase", letterSpacing: "2px" }}>Marco Vargas - La Brasa del Barrio · Miraflores, Lima</p>
+      </section>
+
+      {/* PRICING */}
+      <section id="pricing" style={{ background: creamDark, padding: "110px 80px" }} className="mob-pad">
+        <p className="reveal" style={{ fontSize: ".7rem", fontWeight: 500, textTransform: "uppercase", letterSpacing: "3px", color: red, marginBottom: 14 }}>Planes y precios</p>
+        <h2 className="pf reveal" style={{ fontSize: "clamp(2rem,3.5vw,3.2rem)", lineHeight: 1.1, color: charcoal, marginBottom: 14 }}>Inversión clara,<br />resultados medibles.</h2>
+        <p className="reveal" style={{ maxWidth: 500, fontSize: "1rem", lineHeight: 1.7, color: textSoft, marginBottom: 60 }}>Sin costos ocultos. Sin contratos de largo plazo. Elige el plan que se adapta a tu operación.</p>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: 2 }} className="mob-col">
+          {planes.map((p, i) => (
+            <div key={i} className="reveal" style={{ background: p.featured ? charcoal : cream, padding: "44px 38px", border: "1px solid " + (p.featured ? "transparent" : "rgba(0,0,0,.08)"), position: "relative", transition: "transform .2s" }}
+              onMouseEnter={e => { if (!p.featured) e.currentTarget.style.transform = "translateY(-6px)"; }}
+              onMouseLeave={e => { e.currentTarget.style.transform = "none"; }}
+            >
+              {p.featured && (
+                <div style={{ position: "absolute", top: -14, left: 38, background: red, color: "white", fontSize: ".68rem", fontWeight: 500, textTransform: "uppercase", letterSpacing: "1.5px", padding: "5px 14px" }}>Más popular</div>
+              )}
+              <div className="pf" style={{ fontSize: "1.5rem", fontWeight: 700, color: p.featured ? "white" : charcoal, marginBottom: 6 }}>{p.name}</div>
+              <p style={{ fontSize: ".82rem", color: p.featured ? "rgba(255,255,255,.5)" : textSoft, marginBottom: 28 }}>{p.tag}</p>
+              {p.currency ? (
+                <div className="pf" style={{ fontSize: "2.6rem", fontWeight: 900, lineHeight: 1, color: p.featured ? "white" : charcoal, marginBottom: 2 }}>
+                  <sup style={{ fontSize: "1.2rem", verticalAlign: "top", marginTop: 10, fontStyle: "normal" }}>{p.currency}</sup>{p.price}
+                </div>
+              ) : (
+                <div className="pf" style={{ fontSize: "2.2rem", fontWeight: 900, lineHeight: 1, color: p.featured ? "white" : charcoal, marginBottom: 2 }}>{p.price}</div>
+              )}
+              <p style={{ fontSize: ".78rem", color: p.featured ? "rgba(255,255,255,.4)" : textSoft, marginBottom: 6 }}>/{p.period}</p>
+              <p style={{ fontSize: ".78rem", color: p.featured ? "rgba(255,255,255,.5)" : red, marginBottom: 30, fontWeight: 500 }}>{p.plus}</p>
+              <div style={{ height: 1, background: p.featured ? "rgba(255,255,255,.08)" : "rgba(0,0,0,.07)", marginBottom: 28 }} />
+              <ul style={{ listStyle: "none", marginBottom: 36 }}>
+                {p.features.map((f, j) => (
+                  <li key={j} style={{ fontSize: ".87rem", padding: "10px 0", borderBottom: "1px solid " + (p.featured ? "rgba(255,255,255,.07)" : "rgba(0,0,0,.06)"), display: "flex", gap: 12, color: p.featured ? "rgba(255,255,255,.75)" : charcoal }}>
+                    <span style={{ color: red, fontWeight: 700, flexShrink: 0 }}>✓</span>{f}
+                  </li>
+                ))}
+                {p.nofeatures.map((f, j) => (
+                  <li key={"no" + j} style={{ fontSize: ".87rem", padding: "10px 0", borderBottom: "1px solid " + (p.featured ? "rgba(255,255,255,.07)" : "rgba(0,0,0,.06)"), display: "flex", gap: 12, color: "rgba(0,0,0,.25)" }}>
+                    <span style={{ flexShrink: 0 }}>-</span>{f}
+                  </li>
+                ))}
+              </ul>
+              <a href="#contact" style={{ display: "block", textAlign: "center", textDecoration: "none", padding: "14px", border: "1.5px solid " + (p.featured ? red : charcoal), fontSize: ".82rem", fontWeight: 500, textTransform: "uppercase", letterSpacing: "1.5px", color: p.featured ? "white" : charcoal, background: p.featured ? red : "transparent" }}>
+                {p.cta} →
+              </a>
+            </div>
+          ))}
+        </div>
+        <p style={{ textAlign: "center", marginTop: 24, fontSize: ".82rem", color: textSoft }}>✦ Todos los planes incluyen onboarding sin costo. Si en 90 días no creciste al menos 15%, te devolvemos el último mes.</p>
+      </section>
+
+      {/* WHY */}
+      <section id="why" style={{ background: charcoal, display: "grid", gridTemplateColumns: "1fr 1fr", padding: 0 }} className="mob-col">
+        <div style={{ padding: "110px 80px", borderRight: "1px solid rgba(255,255,255,.07)" }} className="mob-pad reveal">
+          <p style={{ fontSize: ".7rem", fontWeight: 500, textTransform: "uppercase", letterSpacing: "3px", color: gold, marginBottom: 18 }}>Resultados reales</p>
+          <div className="pf" style={{ fontSize: "clamp(5rem,10vw,8.5rem)", fontWeight: 900, lineHeight: 1, color: "white", marginBottom: 18 }}>
+            +38<span style={{ color: red }}>%</span>
+          </div>
+          <p style={{ fontSize: "1rem", lineHeight: 1.7, color: "rgba(255,255,255,.45)", maxWidth: 380, marginBottom: 14 }}>
+            Incremento promedio en ventas que logran nuestros clientes en los primeros 90 días de trabajo conjunto.
+          </p>
+          <p style={{ fontSize: ".78rem", color: "rgba(255,255,255,.25)", textTransform: "uppercase", letterSpacing: "1.5px" }}>Basado en 16+ restaurantes en Lima</p>
+        </div>
+        <div style={{ padding: "110px 80px" }} className="mob-pad">
+          <p className="reveal" style={{ fontSize: ".7rem", fontWeight: 500, textTransform: "uppercase", letterSpacing: "3px", color: gold, marginBottom: 14 }}>Por qué Sazón</p>
+          <h2 className="pf reveal" style={{ fontSize: "clamp(2rem,3vw,3rem)", lineHeight: 1.1, color: "white", marginBottom: 14 }}>Los ingredientes<br />de nuestro éxito.</h2>
+          <p className="reveal" style={{ fontSize: ".95rem", lineHeight: 1.7, color: "rgba(255,255,255,.45)", marginBottom: 40 }}>Expertise, datos y acceso directo a las plataformas.</p>
+          <div style={{ display: "flex", flexDirection: "column", gap: 2 }}>
+            {[
+              { ic: "🔬", t: "Expertise en Foodtech", d: "Conocemos los algoritmos de cada plataforma, sus temporadas y las palancas que realmente mueven los números." },
+              { ic: "📡", t: "Data-Driven al 100%", d: "Cada decisión se basa en métricas. Solo acciones que generan ROI comprobable." },
+              { ic: "🤝", t: "Acceso directo a las APPs", d: "Relaciones directas con Rappi, PedidosYa y Didi. Accedes a beneficios y condiciones exclusivas." },
+              { ic: "📋", t: "Transparencia total", d: "Reportes claros, seguimiento constante y acceso completo a todos tus datos. Sin sorpresas." },
+            ].map((pi, i) => (
+              <div key={i} className="reveal" style={{ background: "rgba(255,255,255,.04)", border: "1px solid rgba(255,255,255,.07)", padding: "22px 26px", display: "flex", gap: 20, alignItems: "flex-start", transition: "background .2s" }}
+                onMouseEnter={e => e.currentTarget.style.background = "rgba(200,57,43,.1)"}
+                onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,.04)"}
+              >
+                <span style={{ fontSize: "1.4rem", flexShrink: 0 }}>{pi.ic}</span>
+                <div>
+                  <h4 style={{ fontSize: ".95rem", fontWeight: 500, color: "white", marginBottom: 5 }}>{pi.t}</h4>
+                  <p style={{ fontSize: ".84rem", color: "rgba(255,255,255,.42)", lineHeight: 1.6 }}>{pi.d}</p>
                 </div>
               </div>
             ))}
@@ -431,225 +368,121 @@ export default function App() {
         </div>
       </section>
 
-      {/* COMO FUNCIONA */}
-      <section id="como" className="pmob" style={{ padding: "96px 52px" }}>
-        <div className="gcol" style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80, alignItems: "center" }}>
-          <div>
-            <div className="reveal"><Tag>Como funciona</Tag></div>
-            <h2 className="sf reveal" style={{ fontSize: "clamp(28px,4vw,50px)", fontWeight: 600, lineHeight: 1.1, color: txt2, marginBottom: 10 }}>
-              Resultados desde
-              <br />
-              <em style={{ fontStyle: "italic", color: gold }}>la primera semana.</em>
-            </h2>
-            <p className="reveal d1" style={{ fontSize: 15, color: muted, lineHeight: 1.7, marginBottom: 44 }}>
-              Sin reuniones eternas. Tu sigues cocinando, nosotros hacemos crecer los numeros.
-            </p>
-            {pasos.map((s, i) => (
-              <div
-                key={i}
-                className={`reveal d${i}`}
-                style={{ display: "flex", gap: 20, padding: "22px 0", borderBottom: i < 3 ? "1px solid rgba(255,255,255,.06)" : "none" }}
-              >
-                <div style={{ width: 40, height: 40, borderRadius: "50%", border: "1.5px solid rgba(255,255,255,.12)", display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginTop: 2 }}>
-                  <span className="sf" style={{ fontStyle: "italic", fontSize: 18, color: dim }}>{s.n}</span>
-                </div>
-                <div>
-                  <div style={{ fontSize: 15, fontWeight: 700, color: txt2, marginBottom: 6 }}>{s.t}</div>
-                  <div style={{ fontSize: 13, color: muted, lineHeight: 1.65 }}>{s.d}</div>
-                </div>
-              </div>
-            ))}
-          </div>
+      {/* CLIENTS */}
+      <section id="clients" style={{ background: cream, padding: "110px 80px" }} className="mob-pad">
+        <p className="reveal" style={{ fontSize: ".7rem", fontWeight: 500, textTransform: "uppercase", letterSpacing: "3px", color: red, marginBottom: 14 }}>Clientes</p>
+        <h2 className="pf reveal" style={{ fontSize: "clamp(2rem,3.5vw,3.2rem)", lineHeight: 1.1, color: charcoal, marginBottom: 60 }}>Restaurantes que ya le<br />pusieron sazón a su delivery.</h2>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(5,1fr)", gap: 2 }} className="mob-col">
+          {clients.map((c, i) => (
+            <div key={i} className="reveal" style={{ background: creamDark, padding: "28px 16px", textAlign: "center", transition: "background .2s", cursor: "default" }}
+              onMouseEnter={e => { e.currentTarget.style.background = charcoal; e.currentTarget.querySelector(".cn").style.color = "white"; }}
+              onMouseLeave={e => { e.currentTarget.style.background = creamDark; e.currentTarget.querySelector(".cn").style.color = charcoal; }}
+            >
+              <div style={{ fontSize: "1.7rem", marginBottom: 10 }}>{c.ic}</div>
+              <div className="cn" style={{ fontSize: ".8rem", fontWeight: 500, color: charcoal, transition: "color .2s" }}>{c.n}</div>
+            </div>
+          ))}
+        </div>
+      </section>
 
-          {/* Phone mockup */}
-          <div className="reveal d2 nomob" style={{ display: "flex", justifyContent: "center" }}>
-            <div style={{ position: "relative", padding: "24px 48px" }}>
-              <div style={{ position: "absolute", top: -8, right: -16, background: bg3, border: "1px solid rgba(255,255,255,.13)", borderRadius: 16, padding: "12px 16px", boxShadow: "0 20px 40px rgba(0,0,0,.4)", zIndex: 10 }}>
-                <div style={{ fontSize: 10, fontWeight: 700, color: muted, marginBottom: 2 }}>Respuesta de Carlos</div>
-                <div className="sf" style={{ fontStyle: "italic", fontWeight: 700, fontSize: 22, lineHeight: 1, color: fire }}>menos de 2min</div>
-                <div style={{ fontSize: 9, color: dim, marginTop: 2 }}>24/7 activo</div>
-              </div>
-              <div style={{ width: 238, background: bg3, border: "1px solid rgba(255,255,255,.13)", borderRadius: 32, overflow: "hidden", boxShadow: "0 40px 80px rgba(0,0,0,.5)" }}>
-                <div style={{ background: "#1a3a22", padding: "12px 16px", display: "flex", alignItems: "center", gap: 10 }}>
-                  <div style={{ width: 32, height: 32, borderRadius: "50%", background: "linear-gradient(135deg,#e8420c,#d49018)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 13 }}>🌶️</div>
-                  <div>
-                    <div style={{ fontSize: 12, fontWeight: 700, color: "white" }}>Carlos - Sazon</div>
-                    <div style={{ display: "flex", alignItems: "center", gap: 4, fontSize: 10, color: "rgba(255,255,255,.5)" }}>
-                      <span style={{ width: 5, height: 5, borderRadius: "50%", background: "#25d366", display: "inline-block" }} />
-                      {" "}en linea
-                    </div>
-                  </div>
+      {/* CONTACT / FORM */}
+      <section id="contact" style={{ background: cream, padding: "110px 80px" }} className="mob-pad">
+        <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 80 }} className="mob-col">
+          <div>
+            <p className="reveal" style={{ fontSize: ".7rem", fontWeight: 500, textTransform: "uppercase", letterSpacing: "3px", color: red, marginBottom: 14 }}>Contacto</p>
+            <h2 className="pf reveal" style={{ fontSize: "clamp(2rem,3.5vw,3.2rem)", lineHeight: 1.1, color: charcoal }}>¿Listo para que<br />tu delivery despegue?</h2>
+            <div className="reveal" style={{ width: 56, height: 3, background: red, margin: "24px 0" }} />
+            <p className="reveal" style={{ fontSize: "1rem", lineHeight: 1.7, color: textSoft, maxWidth: 420, marginBottom: 32 }}>
+              Completa el formulario y calcularemos el ROI estimado para tu restaurante. Carlos te responde en menos de 2 minutos por WhatsApp.
+            </p>
+            <div style={{ fontSize: ".82rem", color: textSoft, marginTop: 8 }}>
+              <p style={{ marginBottom: 12, fontSize: ".78rem", textTransform: "uppercase", letterSpacing: "1.5px", color: red, fontWeight: 500 }}>¿Cómo calculamos el ROI?</p>
+              <p style={{ lineHeight: 1.7, color: textSoft }}>
+                Tomamos tus pedidos actuales × tu ticket promedio × 28% de crecimiento proyectado × 12 meses. Eso es el ingreso extra anual que proyectamos para tu restaurante. El 28% es el crecimiento promedio real de nuestros clientes en los primeros 90 días.
+              </p>
+            </div>
+            <div style={{ marginTop: 28, display: "flex", flexDirection: "column", gap: 0 }}>
+              {[
+                { ic: "📱", label: "WhatsApp", val: "+51 952 363 643", href: "https://wa.me/51952363643" },
+                { ic: "📍", label: "Ubicación", val: "Lima, Perú - Operamos en toda LATAM", href: null },
+              ].map((d, i) => (
+                <div key={i} style={{ display: "flex", gap: 14, alignItems: "center", padding: "16px 0", borderTop: i === 0 ? "1px solid rgba(0,0,0,.08)" : "none", borderBottom: "1px solid rgba(0,0,0,.08)", marginTop: i === 0 ? 24 : 0 }}>
+                  <span style={{ fontSize: "1.1rem" }}>{d.ic}</span>
+                  {d.href ? <a href={d.href} style={{ color: charcoal, textDecoration: "none", fontSize: ".95rem" }}>{d.val}</a> : <span style={{ fontSize: ".95rem", color: charcoal }}>{d.val}</span>}
                 </div>
-                <div style={{ background: "#e5ddd5", padding: "12px 10px", display: "flex", flexDirection: "column", gap: 7, minHeight: 240 }}>
-                  {chatMsgs.map((m, i) => (
-                    <div
-                      key={i}
-                      style={{ maxWidth: "88%", alignSelf: m.out ? "flex-end" : "flex-start", background: m.out ? "#d9fdd3" : "white", borderRadius: m.out ? "10px 10px 0 10px" : "0 10px 10px 10px", padding: "8px 11px", fontSize: 11.5, color: "#111", lineHeight: 1.55 }}
-                    >
-                      {m.t}
-                    </div>
-                  ))}
-                </div>
-                <div style={{ background: "#f0f0f0", padding: "8px 12px", display: "flex", gap: 6, alignItems: "center" }}>
-                  <div style={{ flex: 1, background: "white", borderRadius: 18, padding: "7px 12px", fontSize: 11, color: "#aaa" }}>Escribe...</div>
-                  <div style={{ width: 28, height: 28, borderRadius: "50%", background: "#25d366", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 11 }}>send</div>
-                </div>
-              </div>
-              <div style={{ position: "absolute", bottom: 10, left: -16, background: bg3, border: "1px solid rgba(255,255,255,.13)", borderRadius: 16, padding: "12px 16px", boxShadow: "0 20px 40px rgba(0,0,0,.4)" }}>
-                <div style={{ fontSize: 10, fontWeight: 700, color: muted, marginBottom: 2 }}>Crecimiento promedio</div>
-                <div className="sf" style={{ fontStyle: "italic", fontWeight: 700, fontSize: 22, lineHeight: 1, color: fire }}>+31%</div>
-                <div style={{ fontSize: 9, color: dim, marginTop: 2 }}>en 90 dias</div>
-              </div>
+              ))}
             </div>
           </div>
-        </div>
-      </section>
 
-      {/* PLANES */}
-      <section id="planes" className="pmob" style={{ padding: "96px 52px", background: bg2 }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-          <div className="reveal"><Tag>Precios</Tag></div>
-          <h2 className="sf reveal" style={{ fontSize: "clamp(28px,4vw,50px)", fontWeight: 600, lineHeight: 1.1, color: txt2, marginBottom: 10 }}>
-            Sin contratos largos.
-            <br />
-            <em style={{ fontStyle: "italic", color: gold }}>Sin letras pequenas.</em>
-          </h2>
-          <p className="reveal d1" style={{ fontSize: 15, color: muted, lineHeight: 1.7, maxWidth: 480, marginBottom: 52 }}>
-            Mes a mes. Si en 90 dias no creciste al menos 15%, te devolvemos el ultimo mes.
-          </p>
-          <div className="gcol" style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14, maxWidth: 760 }}>
-            {planes.map((p, i) => (
-              <div
-                key={i}
-                className={`reveal d${i}`}
-                style={{ background: p.featured ? bg4 : bg3, border: "1.5px solid " + (p.featured ? "rgba(232,66,12,.3)" : "rgba(255,255,255,.08)"), borderRadius: 22, padding: 34, position: "relative" }}
-              >
-                {p.featured && (
-                  <div style={{ position: "absolute", top: -13, left: "50%", transform: "translateX(-50%)", background: fire, color: "white", padding: "3px 16px", borderRadius: 100, fontSize: 10, fontWeight: 700, whiteSpace: "nowrap" }}>
-                    Mas popular
-                  </div>
-                )}
-                <div style={{ fontSize: 10, fontWeight: 700, letterSpacing: "3px", textTransform: "uppercase", color: muted, marginBottom: 10 }}>{p.name}</div>
-                <div className="sf" style={{ fontStyle: "italic", fontWeight: 700, fontSize: 50, lineHeight: 1, color: txt2, marginBottom: 4 }}>
-                  <sup style={{ fontSize: 20, verticalAlign: "top", marginTop: 12, fontStyle: "normal" }}>S/</sup>
-                  {p.price}
-                  <sub style={{ fontSize: 16, color: muted, fontStyle: "normal" }}>/mes</sub>
-                </div>
-                <div style={{ fontSize: 12, color: muted, marginBottom: 22 }}>{p.plus}</div>
-                <div style={{ height: 1, background: border, marginBottom: 22 }} />
-                <div style={{ display: "flex", flexDirection: "column", gap: 10, marginBottom: 28 }}>
-                  {p.features.map((f, j) => (
-                    <div key={j} style={{ display: "flex", gap: 9, fontSize: 13, color: muted }}>
-                      <span style={{ color: "#2d9e58", fontWeight: 800, flexShrink: 0 }}>v</span>
-                      {f}
+          {/* FORM */}
+          <div className="reveal">
+            {!sent ? (
+              <form onSubmit={submit} style={{ display: "flex", flexDirection: "column", gap: 14 }}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+                  {[
+                    { label: "Nombre", name: "name", placeholder: "Tu nombre", type: "text" },
+                    { label: "Restaurante", name: "restaurant", placeholder: "Nombre del local", type: "text" },
+                  ].map((f) => (
+                    <div key={f.name} style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                      <label style={{ fontSize: ".7rem", textTransform: "uppercase", letterSpacing: "1.5px", fontWeight: 500, color: textSoft }}>{f.label}</label>
+                      <input name={f.name} value={form[f.name]} onChange={handleInput} placeholder={f.placeholder} type={f.type}
+                        style={{ background: creamDark, border: "1px solid rgba(0,0,0,.12)", padding: "13px 16px", borderRadius: 2, transition: "border-color .2s" }}
+                        onFocus={e => e.target.style.borderColor = red} onBlur={e => e.target.style.borderColor = "rgba(0,0,0,.12)"} />
                     </div>
                   ))}
                 </div>
-                <button
-                  onClick={() => goTo("formulario")}
-                  style={{ width: "100%", padding: 14, borderRadius: 100, background: p.featured ? fire : "transparent", border: p.featured ? "none" : "1.5px solid " + border2, color: p.featured ? "white" : muted, fontFamily: "Syne, sans-serif", fontSize: 14, fontWeight: 700, cursor: "pointer" }}
-                >
-                  Empezar con {p.name}
-                </button>
-              </div>
-            ))}
-          </div>
-        </div>
-      </section>
-
-      {/* FORMULARIO */}
-      <section id="formulario" className="pmob" style={{ padding: "96px 52px", background: bg, position: "relative" }}>
-        <div style={{ position: "absolute", top: 0, left: 0, right: 0, height: 1, background: "linear-gradient(90deg,transparent,rgba(232,66,12,.3),rgba(212,144,24,.3),transparent)" }} />
-        <div className="gcol" style={{ maxWidth: 1100, margin: "0 auto", display: "grid", gridTemplateColumns: "1fr 460px", gap: 80, alignItems: "start" }}>
-          <div>
-            <div className="reveal"><Tag>Analisis gratuito</Tag></div>
-            <h2 className="sf reveal" style={{ fontSize: "clamp(28px,4vw,50px)", fontWeight: 600, lineHeight: 1.1, color: txt2, marginBottom: 10 }}>
-              Calcula cuanto
-              <br />
-              <em style={{ fontStyle: "italic", color: gold }}>puedes crecer.</em>
-            </h2>
-            <p className="reveal d1" style={{ fontSize: 15, color: muted, lineHeight: 1.7, maxWidth: 420, marginBottom: 44 }}>
-              Completa el formulario y en menos de 2 minutos recibes un WhatsApp con la proyeccion especifica para tu restaurante.
-            </p>
-            {[
-              { ic: "⚡", t: "Respuesta en menos de 2 minutos", d: "Carlos analiza tu restaurante al instante y te manda el diagnostico al WhatsApp." },
-              { ic: "📊", t: "Proyeccion real con tus datos", d: "Calculamos con tu ticket, plataformas y benchmark de tu categoria." },
-              { ic: "🔒", t: "Sin spam ni llamadas no solicitadas", d: "Solo recibiras el analisis. Si no quieres continuar, simplemente no respondas." },
-            ].map((pr, i) => (
-              <div key={i} className={`reveal d${i}`} style={{ display: "flex", gap: 14, marginBottom: 22 }}>
-                <div style={{ width: 38, height: 38, borderRadius: 10, background: "rgba(232,66,12,.1)", border: "1px solid rgba(232,66,12,.2)", display: "flex", alignItems: "center", justifyContent: "center", fontSize: 16, flexShrink: 0 }}>{pr.ic}</div>
-                <div>
-                  <div style={{ fontSize: 14, fontWeight: 700, color: txt2, marginBottom: 4 }}>{pr.t}</div>
-                  <div style={{ fontSize: 12.5, color: muted, lineHeight: 1.6 }}>{pr.d}</div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <label style={{ fontSize: ".7rem", textTransform: "uppercase", letterSpacing: "1.5px", fontWeight: 500, color: textSoft }}>WhatsApp</label>
+                  <input name="phone" value={form.phone} onChange={handleInput} placeholder="+51 999 999 999" type="tel"
+                    style={{ background: creamDark, border: "1px solid rgba(0,0,0,.12)", padding: "13px 16px", borderRadius: 2, transition: "border-color .2s" }}
+                    onFocus={e => e.target.style.borderColor = red} onBlur={e => e.target.style.borderColor = "rgba(0,0,0,.12)"} />
                 </div>
-              </div>
-            ))}
-          </div>
-
-          <div className="reveal d2" style={{ background: bg2, border: "1.5px solid " + border2, borderRadius: 24, padding: 36, boxShadow: "0 40px 80px rgba(0,0,0,.3)", position: "sticky", top: 90 }}>
-            {!sent ? (
-              <form onSubmit={submit}>
-                <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 26, fontWeight: 600, color: txt2, marginBottom: 4, lineHeight: 1.2 }}>
-                  Tu analisis gratuito
-                </div>
-                <div style={{ fontSize: 12.5, color: muted, marginBottom: 24 }}>Menos de 60 segundos para completarlo</div>
-                <div style={{ marginBottom: 14 }}>
-                  <Label>Nombre del restaurante</Label>
-                  <input name="name" value={form.name} onChange={handleInput} placeholder="Ej: La Brasa del Barrio" type="text" />
-                </div>
-                <div style={{ marginBottom: 14 }}>
-                  <Label>Tu WhatsApp</Label>
-                  <input name="phone" value={form.phone} onChange={handleInput} placeholder="999 999 999" type="tel" />
-                </div>
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 12, marginBottom: 14 }}>
-                  <div>
-                    <Label>Plataformas</Label>
-                    <select name="platforms" value={form.platforms} onChange={handleInput}>
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 14 }}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    <label style={{ fontSize: ".7rem", textTransform: "uppercase", letterSpacing: "1.5px", fontWeight: 500, color: textSoft }}>Plataformas</label>
+                    <select name="platforms" value={form.platforms} onChange={handleInput} style={{ background: creamDark, border: "1px solid rgba(0,0,0,.12)", padding: "13px 16px", borderRadius: 2, cursor: "pointer", WebkitAppearance: "none" }}>
                       <option value="Solo Rappi">Solo Rappi</option>
                       <option value="Rappi + PedidosYa">Rappi + PedidosYa</option>
-                      <option value="3 o mas">3 o mas</option>
+                      <option value="3 o más plataformas">3 o más plataformas</option>
                     </select>
                   </div>
-                  <div>
-                    <Label>Pedidos/mes</Label>
-                    <select name="orders" value={form.orders} onChange={handleInput}>
+                  <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                    <label style={{ fontSize: ".7rem", textTransform: "uppercase", letterSpacing: "1.5px", fontWeight: 500, color: textSoft }}>Pedidos / mes</label>
+                    <select name="orders" value={form.orders} onChange={handleInput} style={{ background: creamDark, border: "1px solid rgba(0,0,0,.12)", padding: "13px 16px", borderRadius: 2, cursor: "pointer", WebkitAppearance: "none" }}>
                       <option value="50-100">50 a 100</option>
                       <option value="100-300">100 a 300</option>
-                      <option value="300-1000">300 a 1000</option>
-                      <option value="1000+">Mas de 1000</option>
+                      <option value="300-1000">300 a 1,000</option>
+                      <option value="1000+">Más de 1,000</option>
                     </select>
                   </div>
                 </div>
-                <div style={{ marginBottom: 6 }}>
-                  <Label>Ticket promedio (soles)</Label>
-                  <input name="ticket" value={form.ticket} onChange={handleInput} placeholder="Ej: 45" type="number" />
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <label style={{ fontSize: ".7rem", textTransform: "uppercase", letterSpacing: "1.5px", fontWeight: 500, color: textSoft }}>Ticket promedio (soles)</label>
+                  <input name="ticket" value={form.ticket} onChange={handleInput} placeholder="Ej: 45" type="number"
+                    style={{ background: creamDark, border: "1px solid rgba(0,0,0,.12)", padding: "13px 16px", borderRadius: 2, transition: "border-color .2s" }}
+                    onFocus={e => e.target.style.borderColor = red} onBlur={e => e.target.style.borderColor = "rgba(0,0,0,.12)"} />
+                </div>
+                <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+                  <label style={{ fontSize: ".7rem", textTransform: "uppercase", letterSpacing: "1.5px", fontWeight: 500, color: textSoft }}>Cuéntanos sobre tu operación (opcional)</label>
+                  <textarea name="mensaje" value={form.mensaje} onChange={handleInput} placeholder="En qué plataformas estás, cuál es tu mayor desafío hoy..." rows={3}
+                    style={{ background: creamDark, border: "1px solid rgba(0,0,0,.12)", padding: "13px 16px", borderRadius: 2, resize: "vertical", transition: "border-color .2s" }}
+                    onFocus={e => e.target.style.borderColor = red} onBlur={e => e.target.style.borderColor = "rgba(0,0,0,.12)"} />
                 </div>
                 {formError && (
-                  <div style={{ fontSize: 12, color: "#f07060", marginBottom: 8, padding: "8px 12px", background: "rgba(232,66,12,.08)", borderRadius: 8, border: "1px solid rgba(232,66,12,.2)" }}>
-                    {formError}
-                  </div>
+                  <div style={{ fontSize: ".85rem", color: red, padding: "10px 14px", background: "rgba(200,57,43,.06)", border: "1px solid rgba(200,57,43,.2)" }}>{formError}</div>
                 )}
-                <button
-                  type="submit"
-                  style={{ width: "100%", marginTop: 8, padding: 15, borderRadius: 100, background: fire, color: "white", border: "none", fontFamily: "Syne, sans-serif", fontSize: 14, fontWeight: 800, cursor: "pointer", boxShadow: "0 8px 28px rgba(232,66,12,.3)" }}
-                >
-                  Quiero mi analisis gratuito
+                <button type="submit" style={{ background: red, color: "white", border: "none", padding: "17px 36px", fontSize: ".85rem", fontWeight: 500, textTransform: "uppercase", letterSpacing: "1.5px", cursor: "pointer", alignSelf: "flex-start" }}>
+                  Enviar y calcular ROI →
                 </button>
-                <p style={{ fontSize: 10.5, color: dim, textAlign: "center", marginTop: 10, lineHeight: 1.6 }}>
-                  Carlos te contactara por WhatsApp en menos de 2 minutos.
-                </p>
+                <p style={{ fontSize: ".78rem", color: textSoft, opacity: .7 }}>Carlos te responde por WhatsApp en menos de 2 minutos con tu proyección personalizada.</p>
               </form>
             ) : (
-              <div style={{ textAlign: "center", padding: "20px 0" }}>
-                <div style={{ fontSize: 52, marginBottom: 14 }}>🌶️</div>
-                <div style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: 26, fontWeight: 600, color: txt2, marginBottom: 8, lineHeight: 1.2 }}>
-                  Listo! Carlos ya esta en camino.
-                </div>
-                <p style={{ fontSize: 14, color: muted, lineHeight: 1.7, marginBottom: 18 }}>
-                  Recibiras un WhatsApp en los proximos 2 minutos con tu proyeccion personalizada.
-                </p>
-                <div style={{ display: "inline-flex", alignItems: "center", gap: 6, padding: "8px 18px", borderRadius: 100, background: "rgba(37,211,102,.1)", border: "1px solid rgba(37,211,102,.2)", fontSize: 12, fontWeight: 700, color: "#50d080" }}>
-                  Revisa tu WhatsApp
+              <div style={{ padding: "40px", background: creamDark, border: "1px solid rgba(0,0,0,.08)", textAlign: "center" }}>
+                <div style={{ fontSize: 48, marginBottom: 16 }}>🌶️</div>
+                <div className="pf" style={{ fontSize: "1.8rem", fontWeight: 700, color: charcoal, marginBottom: 10 }}>¡Listo! Mensaje enviado.</div>
+                <p style={{ fontSize: ".95rem", color: textSoft, lineHeight: 1.7 }}>Carlos ya recibió tus datos y te contactará en menos de 2 minutos con la proyección de crecimiento para tu restaurante.</p>
+                <div style={{ marginTop: 20, display: "inline-flex", alignItems: "center", gap: 8, padding: "10px 20px", background: "rgba(37,211,102,.1)", border: "1px solid rgba(37,211,102,.3)", fontSize: ".85rem", fontWeight: 600, color: "#1a7a3c" }}>
+                  📱 Revisa tu WhatsApp
                 </div>
               </div>
             )}
@@ -658,23 +491,16 @@ export default function App() {
       </section>
 
       {/* FOOTER */}
-      <footer style={{ padding: "32px 52px", borderTop: "1px solid rgba(255,255,255,.06)", background: bg2, display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16 }}>
-        <div style={{ display: "flex", alignItems: "center", gap: 8, fontWeight: 800, fontSize: 14 }}>
-          <div style={{ width: 24, height: 24, borderRadius: "50%", background: fire, display: "flex", alignItems: "center", justifyContent: "center", fontSize: 10 }}>🌶️</div>
-          Sazon <span style={{ color: fire }}>Growth</span>
+      <footer style={{ background: charcoalMid, color: "rgba(255,255,255,.4)", display: "flex", alignItems: "center", justifyContent: "space-between", padding: "26px 60px", fontSize: ".78rem", flexWrap: "wrap", gap: 12 }}>
+        <div className="pf" style={{ fontWeight: 900, fontSize: "1.1rem", color: "white" }}>
+          Sazón<span style={{ color: red }}>.</span> Growth Partner
         </div>
-        <div style={{ display: "flex", gap: 24 }}>
-          {["Como funciona", "Planes", "Contacto"].map((l, i) => (
-            <button
-              key={i}
-              onClick={() => goTo(["como", "planes", "formulario"][i])}
-              style={{ background: "none", border: "none", color: muted, fontSize: 12, cursor: "pointer", fontFamily: "Syne, sans-serif" }}
-            >
-              {l}
-            </button>
+        <div>© 2025 Sazón. Todos los derechos reservados.</div>
+        <div style={{ display: "flex", gap: 20 }}>
+          {["Privacidad", "Términos"].map((l) => (
+            <a key={l} href="#" style={{ color: "rgba(255,255,255,.4)", textDecoration: "none" }}>{l}</a>
           ))}
         </div>
-        <div style={{ fontSize: 12, color: dim }}>Lima, Peru - sazonpartner.com</div>
       </footer>
     </>
   );
