@@ -4,14 +4,19 @@ import { useState, useEffect, useRef } from "react";
 const WA_LINK       = "https://wa.me/51952363643";
 const CONTACT_EMAIL = "comercial@sazonpartner.com";
 
-// Reemplaza con tus links reales de Mercado Pago
-// Netlify: Settings → Build & deploy → Environment variables
-// Variable: VITE_MP_STARTER y VITE_MP_GROWTH
+// Mercado Pago — agrega en Netlify: Site settings → Environment variables
 const MP_STARTER = import.meta.env.VITE_MP_STARTER || "";
 const MP_GROWTH  = import.meta.env.VITE_MP_GROWTH  || "";
 
-// API de Anthropic para Carlos (opcional — funciona sin ella con fallback inteligente)
-// Variable: VITE_ANTHROPIC_KEY
+// ── OPCION 1 (GRATIS): Google Gemini — console.cloud.google.com
+//    Crear proyecto → habilitar Gemini API → Credentials → Create API Key
+//    Netlify env var: VITE_GEMINI_KEY
+//    Limite gratuito: 1,500 requests/dia, sin tarjeta de credito
+const GEMINI_KEY = import.meta.env.VITE_GEMINI_KEY || "";
+
+// ── OPCION 2 (PAGO): Anthropic Claude — console.anthropic.com
+//    Netlify env var: VITE_ANTHROPIC_KEY
+//    Sin clave, Carlos usa fallback inteligente (funciona sin costo)
 const ANTHROPIC_KEY = import.meta.env.VITE_ANTHROPIC_KEY || "";
 
 // ─── CARLOS: SYSTEM PROMPT ───────────────────────────────────────────────────
@@ -58,8 +63,37 @@ CUANDO EL CHAT NO SEA SOBRE VENTAS:
 - Si preguntan por el email de contacto: ${CONTACT_EMAIL}
 - Si preguntan algo que no puedes responder: "Déjame consultarlo con el equipo y te confirmo"`;
 
-// ─── CARLOS: LLAMADA A API ────────────────────────────────────────────────────
-async function callCarlosAPI(history) {
+// ─── CARLOS: GEMINI API (GRATIS) ────────────────────────────────────────────
+// google.com/aistudio → Get API Key → sin tarjeta, 1500 requests/dia gratis
+async function callGeminiAPI(history) {
+  if (!GEMINI_KEY) return null;
+  try {
+    // Convertir historial al formato de Gemini (user/model en vez de user/assistant)
+    const contents = history.map(m => ({
+      role: m.role === "assistant" ? "model" : "user",
+      parts: [{ text: m.content }]
+    }));
+    const res = await fetch(
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`,
+      {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          system_instruction: { parts: [{ text: CARLOS_SYSTEM }] },
+          contents,
+          generationConfig: { maxOutputTokens: 280, temperature: 0.75 }
+        })
+      }
+    );
+    const data = await res.json();
+    return data.candidates?.[0]?.content?.parts?.[0]?.text || null;
+  } catch {
+    return null;
+  }
+}
+
+// ─── CARLOS: ANTHROPIC API (PAGO) ────────────────────────────────────────────
+async function callAnthropicAPI(history) {
   if (!ANTHROPIC_KEY) return null;
   try {
     const res = await fetch("https://api.anthropic.com/v1/messages", {
@@ -71,8 +105,8 @@ async function callCarlosAPI(history) {
         "anthropic-dangerous-direct-browser-access": "true"
       },
       body: JSON.stringify({
-        model: "claude-sonnet-4-20250514",
-        max_tokens: 250,
+        model: "claude-haiku-4-5-20251001",
+        max_tokens: 280,
         system: CARLOS_SYSTEM,
         messages: history
       })
@@ -82,6 +116,22 @@ async function callCarlosAPI(history) {
   } catch {
     return null;
   }
+}
+
+// ─── CARLOS: ROUTER — Gemini gratis → Anthropic → Fallback inteligente ────────
+async function callCarlosAPI(history) {
+  // 1. Intentar Gemini (gratis, sin tarjeta)
+  if (GEMINI_KEY) {
+    const r = await callGeminiAPI(history);
+    if (r) return r;
+  }
+  // 2. Intentar Anthropic (si configurado)
+  if (ANTHROPIC_KEY) {
+    const r = await callAnthropicAPI(history);
+    if (r) return r;
+  }
+  // 3. Fallback inteligente local (siempre funciona)
+  return null;
 }
 
 // ─── CARLOS: FALLBACK INTELIGENTE (sin API) ───────────────────────────────────
@@ -273,11 +323,8 @@ export default function App() {
     const newApiHist = [...apiHist, { role: "user", content: msg }];
     setApiHist(newApiHist);
 
-    // Intentar API; si falla o no hay key, usar fallback
-    let reply = null;
-    if (ANTHROPIC_KEY) {
-      reply = await callCarlosAPI(newApiHist);
-    }
+    // Gemini gratis → Anthropic → Fallback inteligente local
+    let reply = await callCarlosAPI(newApiHist);
     if (!reply) {
       reply = carlosFallback(newApiHist);
     }
@@ -537,7 +584,7 @@ export default function App() {
   {/* ═══ TESTIMONIAL ═══ */}
   <section style={{background:"#C8392B",color:"white",textAlign:"center",padding:"100px 80px"}}>
     <p className="pf rv" style={{fontStyle:"italic",fontSize:"clamp(1.6rem,2.8vw,2.8rem)",lineHeight:1.35,maxWidth:860,margin:"0 auto 36px"}}>"Con Sazon pasamos de 80 a 340 pedidos diarios en solo tres meses. Su equipo conoce cada detalle de las plataformas y sabe exactamente que palancas mover para crecer."</p>
-    <p className="rv" style={{fontSize:".8rem",opacity:.65,textTransform:"uppercase",letterSpacing:2}}>Carlos M. — Propietario · La Picada Cebicheria</p>
+    <p className="rv" style={{fontSize:".8rem",opacity:.65,textTransform:"uppercase",letterSpacing:2}}>Mauricio Aguila — Fundador · Mr Smash</p>
   </section>
 
   {/* ═══ PRICING ═══ */}
