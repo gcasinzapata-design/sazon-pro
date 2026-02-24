@@ -1,0 +1,882 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sazón · Admin</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono&display=swap" rel="stylesheet">
+<style>
+:root{--red:#C8392B;--rd:#9B2335;--gold:#D4A547;--green:#22c55e;--blue:#3b82f6;
+  --bg:#0a0a0a;--bg2:#111;--bg3:#1a1a1a;--bg4:#222;--bg5:#2a2a2a;
+  --border:rgba(255,255,255,.08);--border2:rgba(255,255,255,.14);
+  --text:rgba(255,255,255,.88);--muted:rgba(255,255,255,.45);--dim:rgba(255,255,255,.22);}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--text);overflow:hidden;}
+.mono{font-family:'DM Mono',monospace;}
+input,select,textarea,button{font-family:'DM Sans',sans-serif;}
+/* SCROLLBAR */
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:10px;}
+
+/* ── LOGIN ── */
+#login{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center;}
+.lcard{width:420px;background:var(--bg3);border:1px solid var(--border2);border-radius:20px;padding:44px;box-shadow:0 40px 100px rgba(0,0,0,.7);}
+.llogo{text-align:center;margin-bottom:32px;}
+.lav{width:64px;height:64px;border-radius:50%;background:linear-gradient(135deg,var(--red),var(--gold));display:flex;align-items:center;justify-content:center;font-size:1.8rem;margin:0 auto 14px;}
+.lh{font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:700;color:white;}
+.lh span{color:var(--red);}
+.lsub{font-size:.82rem;color:var(--muted);margin-top:5px;}
+.lf{margin-bottom:12px;}
+.lf label{display:block;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:7px;}
+.lf input{width:100%;background:var(--bg4);border:1.5px solid var(--border);padding:13px 15px;border-radius:10px;color:white;font-size:.9rem;outline:none;transition:border-color .2s;}
+.lf input:focus{border-color:rgba(200,57,43,.5);}
+.lbtn{width:100%;padding:14px;background:var(--red);color:white;border:none;border-radius:10px;font-size:.9rem;font-weight:600;cursor:pointer;transition:background .2s;margin-top:6px;}
+.lbtn:hover{background:var(--rd);}
+.lmsg{font-size:.82rem;text-align:center;margin-top:11px;min-height:18px;}
+.lok{color:var(--green);}.lerr{color:#f87171;}
+.code-box{background:var(--bg4);border:1px solid var(--border2);border-radius:10px;padding:16px;text-align:center;margin-bottom:14px;}
+.code-box p{font-size:.74rem;color:var(--muted);margin-bottom:8px;}
+.code-val{font-family:'DM Mono',monospace;font-size:2.2rem;font-weight:700;color:var(--gold);letter-spacing:.35em;}
+.code-note{font-size:.68rem;color:var(--dim);margin-top:5px;}
+
+/* ── APP ── */
+#app{display:none;height:100vh;overflow:hidden;}
+#app.on{display:grid;grid-template-columns:240px 1fr;}
+
+/* ── SIDEBAR ── */
+.sb{background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh;overflow-y:auto;}
+.sb-top{padding:20px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:11px;flex-shrink:0;}
+.sb-av{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--red),var(--gold));display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0;}
+.sb-name{font-size:.82rem;font-weight:600;color:white;line-height:1.2;}
+.sb-role{font-size:.66rem;color:var(--muted);}
+.sb-nav{padding:10px 6px;flex:1;}
+.sb-sec{font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:2.5px;color:var(--dim);padding:13px 10px 5px;}
+.sb-btn{display:flex;align-items:center;gap:9px;padding:9px 10px;border-radius:8px;font-size:.83rem;color:var(--muted);cursor:pointer;transition:all .18s;border:none;background:none;width:100%;text-align:left;}
+.sb-btn:hover{background:rgba(255,255,255,.05);color:var(--text);}
+.sb-btn.on{background:rgba(200,57,43,.12);color:white;border-left:3px solid var(--red);padding-left:7px;}
+.sb-ico{font-size:.9rem;width:18px;text-align:center;flex-shrink:0;}
+.sb-badge{margin-left:auto;background:var(--red);color:white;border-radius:100px;font-size:.6rem;font-weight:700;padding:2px 7px;}
+.sb-foot{padding:12px;border-top:1px solid var(--border);}
+.logout{display:flex;align-items:center;gap:8px;padding:9px 10px;font-size:.8rem;color:var(--muted);cursor:pointer;background:none;border:none;width:100%;transition:color .2s;}
+.logout:hover{color:#f87171;}
+
+/* ── CONTENT ── */
+.cnt{display:flex;flex-direction:column;height:100vh;overflow:hidden;}
+.topbar{display:flex;align-items:center;justify-content:space-between;padding:13px 26px;border-bottom:1px solid var(--border);background:rgba(10,10,10,.85);backdrop-filter:blur(8px);flex-shrink:0;}
+.topbar h2{font-size:.98rem;font-weight:600;color:white;}
+.topbar-sub{font-size:.72rem;color:var(--muted);margin-top:1px;}
+.main{flex:1;overflow-y:auto;padding:22px 26px;}
+
+/* ── COMPONENTS ── */
+.card{background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:20px 22px;}
+.ct{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--dim);margin-bottom:14px;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:13px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:12px;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:11px;}
+.stat{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:18px 20px;}
+.stat-n{font-family:'Playfair Display',serif;font-size:1.9rem;font-weight:700;line-height:1;color:white;margin-bottom:3px;}
+.stat-l{font-size:.7rem;color:var(--muted);text-transform:uppercase;letter-spacing:.8px;}
+.stat-d{font-size:.7rem;margin-top:5px;font-weight:600;}
+.up{color:var(--green);}.dn{color:#f87171;}.gl{color:var(--gold);}
+.bg{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:100px;font-size:.68rem;font-weight:600;}
+.bg-g{background:rgba(34,197,94,.1);border:1px solid rgba(34,197,94,.2);color:#4ade80;}
+.bg-r{background:rgba(200,57,43,.1);border:1px solid rgba(200,57,43,.2);color:#f87171;}
+.bg-o{background:rgba(212,165,71,.1);border:1px solid rgba(212,165,71,.2);color:#fbbf24;}
+.bg-b{background:rgba(59,130,246,.1);border:1px solid rgba(59,130,246,.2);color:#60a5fa;}
+.bg-p{background:rgba(168,85,247,.1);border:1px solid rgba(168,85,247,.2);color:#c084fc;}
+table{width:100%;border-collapse:collapse;font-size:.83rem;}
+th{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim);padding:9px 13px;border-bottom:1px solid var(--border);text-align:left;}
+td{padding:11px 13px;border-bottom:1px solid rgba(255,255,255,.04);color:var(--muted);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(255,255,255,.02);}
+.pbar{height:5px;background:rgba(255,255,255,.07);border-radius:100px;overflow:hidden;margin-top:7px;}
+.pbar-f{height:100%;border-radius:100px;background:linear-gradient(90deg,var(--red),var(--gold));}
+.panel{display:none;}.panel.on{display:block;}
+.alert{border-radius:10px;padding:12px 15px;font-size:.83rem;display:flex;gap:9px;align-items:flex-start;margin-bottom:13px;}
+.aw{background:rgba(212,165,71,.07);border:1px solid rgba(212,165,71,.14);color:#fbbf24;}
+.ai{background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.14);color:#93c5fd;}
+.as{background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.14);color:#4ade80;}
+.fi{background:var(--bg4);border:1.5px solid var(--border);padding:10px 13px;border-radius:9px;color:white;font-size:.87rem;outline:none;transition:border-color .2s;width:100%;}
+.fi:focus{border-color:rgba(200,57,43,.4);}
+.fl{display:block;font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:5px;}
+.btn{padding:9px 18px;border-radius:8px;font-size:.83rem;font-weight:600;cursor:pointer;border:none;transition:all .2s;}
+.btn-r{background:var(--red);color:white;}.btn-r:hover{background:var(--rd);}
+.btn-o{background:var(--bg4);color:var(--text);border:1px solid var(--border2);}.btn-o:hover{background:rgba(255,255,255,.08);}
+.btn-g{background:rgba(34,197,94,.1);color:#4ade80;border:1px solid rgba(34,197,94,.2);}
+.cl-card{background:var(--bg3);border:1px solid var(--border);border-radius:12px;padding:18px;cursor:pointer;transition:all .2s;position:relative;}
+.cl-card:hover{border-color:var(--border2);transform:translateY(-2px);}
+.dot{position:absolute;top:13px;right:13px;width:9px;height:9px;border-radius:50%;}
+.dot.g{background:var(--green);box-shadow:0 0 8px rgba(34,197,94,.4);}
+.dot.y{background:#fbbf24;box-shadow:0 0 8px rgba(251,191,36,.4);}
+.dot.r{background:#f87171;box-shadow:0 0 8px rgba(248,113,113,.4);}
+.tgl{width:42px;height:22px;border-radius:100px;cursor:pointer;position:relative;border:none;transition:background .25s;flex-shrink:0;}
+.tgl::after{content:'';position:absolute;width:16px;height:16px;border-radius:50%;background:white;top:3px;left:3px;transition:transform .25s;}
+.tgl.on{background:var(--green);}.tgl.on::after{transform:translateX(20px);}
+.tgl.off{background:rgba(255,255,255,.12);}
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.7);z-index:1000;backdrop-filter:blur(4px);align-items:center;justify-content:center;}
+.modal-bg.open{display:flex;}
+.modal{background:var(--bg3);border:1px solid var(--border2);border-radius:18px;padding:30px;width:500px;max-width:95vw;max-height:88vh;overflow-y:auto;}
+.modal h3{font-size:1.05rem;font-weight:700;color:white;margin-bottom:18px;}
+.mc{float:right;background:none;border:none;color:var(--muted);font-size:1.4rem;cursor:pointer;line-height:1;}
+.chat-outer{display:flex;flex-direction:column;height:calc(100vh - 160px);}
+.chat-msgs{flex:1;overflow-y:auto;padding:18px;display:flex;flex-direction:column;gap:11px;}
+.cmsg{display:flex;gap:9px;max-width:88%;}
+.cmsg.r{align-self:flex-end;flex-direction:row-reverse;}
+.cbbl{padding:10px 13px;border-radius:12px;font-size:.84rem;line-height:1.55;}
+.cbbl.c{background:var(--bg4);border:1px solid var(--border);border-radius:4px 12px 12px 12px;}
+.cbbl.u{background:var(--red);color:white;border-radius:12px 4px 12px 12px;}
+.chat-in{padding:14px;border-top:1px solid var(--border);display:flex;gap:9px;background:var(--bg2);}
+.chat-ta{flex:1;background:var(--bg4);border:1.5px solid var(--border);padding:11px 14px;border-radius:10px;color:white;font-size:.87rem;resize:none;outline:none;}
+.chat-ta:focus{border-color:rgba(200,57,43,.4);}
+.chat-send{width:40px;height:40px;border-radius:10px;background:var(--red);border:none;cursor:pointer;color:white;font-size:1rem;flex-shrink:0;transition:background .2s;}
+.chat-send:hover{background:var(--rd);}
+@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.fadein{animation:fadein .28s ease;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{animation:spin 1s linear infinite;display:inline-block;}
+</style>
+</head>
+<body>
+
+<!-- ═══ LOGIN ═══ -->
+<div id="login">
+  <div class="lcard">
+    <div class="llogo">
+      <div class="lav">🌶️</div>
+      <div class="lh">Saz<span style="font-family:'DM Sans',sans-serif">ó</span>n<span>.</span></div>
+      <div class="lsub">Panel Admin · Acceso restringido</div>
+    </div>
+
+    <div id="step1">
+      <div class="lf">
+        <label>Email del administrador</label>
+        <input type="email" id="em" placeholder="gc.asin.zapata@gmail.com" value="gc.asin.zapata@gmail.com"/>
+      </div>
+      <button class="lbtn" onclick="sendCode()">Enviar codigo de acceso</button>
+      <div id="msg1" class="lmsg"></div>
+    </div>
+
+    <div id="step2" style="display:none;">
+      <div class="code-box" id="cbox">
+        <p>Codigo enviado a gc.asin.zapata@gmail.com</p>
+        <div class="code-val" id="cval">------</div>
+        <div class="code-note">En produccion llega al email via EmailJS. Por ahora visible aqui.</div>
+      </div>
+      <div class="lf">
+        <label>Codigo de 6 digitos</label>
+        <input type="text" id="ci" placeholder="000000" maxlength="6" style="letter-spacing:.3em;font-size:1.2rem;text-align:center;" oninput="this.value=this.value.replace(/\D/g,'')"/>
+      </div>
+      <button class="lbtn" onclick="verify()">Ingresar</button>
+      <button onclick="back()" style="width:100%;margin-top:8px;background:none;border:none;color:var(--muted);font-size:.8rem;cursor:pointer;padding:8px;">← Volver</button>
+      <div id="msg2" class="lmsg"></div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ APP ═══ -->
+<div id="app">
+
+  <aside class="sb">
+    <div class="sb-top">
+      <div class="sb-av">GC</div>
+      <div><div class="sb-name">Gonzalo C.</div><div class="sb-role">Admin · Sazon</div></div>
+    </div>
+    <nav class="sb-nav">
+      <div class="sb-sec">Principal</div>
+      <button class="sb-btn on" onclick="go('dashboard')"><span class="sb-ico">📊</span>Dashboard</button>
+      <button class="sb-btn" onclick="go('clientes')"><span class="sb-ico">🍽️</span>Clientes<span class="sb-badge" id="ab">3</span></button>
+      <button class="sb-btn" onclick="go('leads')"><span class="sb-ico">🎯</span>Leads</button>
+      <button class="sb-btn" onclick="go('carlos')"><span class="sb-ico">🤖</span>Bot Carlos</button>
+      <button class="sb-btn" onclick="go('auto')"><span class="sb-ico">⚡</span>Automatizacion</button>
+
+      <div class="sb-sec">Operaciones</div>
+      <button class="sb-btn" onclick="go('reportes')"><span class="sb-ico">📈</span>Reportes</button>
+      <button class="sb-btn" onclick="go('pagos')"><span class="sb-ico">💳</span>Pagos</button>
+      <button class="sb-btn" onclick="go('campanas')"><span class="sb-ico">📣</span>Campañas</button>
+      <button class="sb-btn" onclick="go('roi')"><span class="sb-ico">🧮</span>Calc. ROI</button>
+
+      <div class="sb-sec">Sistema</div>
+      <button class="sb-btn" onclick="go('config')"><span class="sb-ico">⚙️</span>Configuracion</button>
+    </nav>
+    <div class="sb-foot">
+      <div style="font-size:.68rem;color:var(--dim);padding:0 10px 8px;">v1.0 MVP · 2025</div>
+      <button class="logout" onclick="logout()"><span>🚪</span>Cerrar sesion</button>
+    </div>
+  </aside>
+
+  <div class="cnt">
+    <div class="topbar">
+      <div><h2 id="ptitle">Dashboard</h2><div class="topbar-sub" id="psub">Resumen general</div></div>
+      <div style="display:flex;gap:9px;align-items:center;">
+        <span class="bg bg-g" id="sys-status">● Sistema Activo</span>
+        <button class="btn btn-o" style="font-size:.76rem;padding:7px 13px;" onclick="document.getElementById('m-cliente').classList.add('open')">+ Cliente</button>
+      </div>
+    </div>
+    <div class="main">
+
+      <!-- DASHBOARD -->
+      <div id="p-dashboard" class="panel on fadein">
+        <div class="alert aw">⚠️ <div><strong>Pendiente:</strong> Configura VITE_MP_STARTER y VITE_MP_GROWTH en Netlify con tus links reales de Mercado Pago para activar los pagos en la web.</div></div>
+        <div class="g4" style="margin-bottom:18px;">
+          <div class="stat"><div class="stat-n" style="color:var(--green);">5</div><div class="stat-l">Clientes activos</div><div class="stat-d up">↑ Meta: 20 en Q1</div></div>
+          <div class="stat"><div class="stat-n" style="color:var(--gold);">S/ 7,130</div><div class="stat-l">MRR</div><div class="stat-d up">↑ Iniciando</div></div>
+          <div class="stat"><div class="stat-n" style="color:#60a5fa;">+38%</div><div class="stat-l">Crec. promedio</div><div class="stat-d up">↑ vs linea base</div></div>
+          <div class="stat"><div class="stat-n" style="color:var(--red);">3</div><div class="stat-l">Alertas activas</div><div class="stat-d dn">↓ Revisar</div></div>
+        </div>
+        <div class="g2" style="margin-bottom:18px;">
+          <div class="card">
+            <div class="ct">Alertas del sistema</div>
+            <div id="alerts-container">
+              <div style="padding:11px;background:rgba(212,165,71,.07);border:1px solid rgba(212,165,71,.14);border-radius:8px;margin-bottom:8px;font-size:.83rem;display:flex;justify-content:space-between;align-items:flex-start;">
+                <span><span style="color:#fbbf24;font-weight:600;">🟡 MP Links</span> — Los links de Mercado Pago aun no estan configurados. Los botones de pago no funcionan.</span>
+                <button onclick="this.closest('div').remove();updateAlertBadge()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.9rem;flex-shrink:0;margin-left:8px;">✓</button>
+              </div>
+              <div style="padding:11px;background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.14);border-radius:8px;margin-bottom:8px;font-size:.83rem;display:flex;justify-content:space-between;align-items:flex-start;">
+                <span><span style="color:#60a5fa;font-weight:600;">🔵 Carlos modo manual</span> — Sin VITE_ANTHROPIC_KEY, Carlos usa respuestas inteligentes pero sin IA en tiempo real.</span>
+                <button onclick="this.closest('div').remove();updateAlertBadge()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.9rem;flex-shrink:0;margin-left:8px;">✓</button>
+              </div>
+              <div style="padding:11px;background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.14);border-radius:8px;font-size:.83rem;display:flex;justify-content:space-between;align-items:flex-start;">
+                <span><span style="color:#4ade80;font-weight:600;">🟢 Web publicada</span> — sazonpartner.com esta activo con el nuevo App.jsx. Carlos funciona en modo fallback inteligente.</span>
+                <button onclick="this.closest('div').remove();updateAlertBadge()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.9rem;flex-shrink:0;margin-left:8px;">✓</button>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="ct">Conexiones del sistema</div>
+            <div id="conn-list" style="display:flex;flex-direction:column;gap:9px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--bg4);border-radius:8px;font-size:.84rem;">
+                <span>🌐 Netlify (Web)</span><span class="bg bg-g">Activo</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--bg4);border-radius:8px;font-size:.84rem;">
+                <span>🤖 Carlos (Anthropic)</span><span class="bg bg-o" id="carlos-status">Fallback inteligente</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--bg4);border-radius:8px;font-size:.84rem;">
+                <span>💳 Mercado Pago</span><span class="bg bg-r">Links pendientes</span>
+              </div>
+              <div style="display:flex;justify-content:space-between;align-items:center;padding:10px;background:var(--bg4);border-radius:8px;font-size:.84rem;">
+                <span>💬 WhatsApp API</span><span class="bg bg-o">Manual activo</span>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="ct">Actividad reciente</div>
+          <table>
+            <tr><th>Hora</th><th>Evento</th><th>Cliente/Origen</th><th>Estado</th></tr>
+            <tr><td class="mono" style="font-size:.76rem;">Hoy</td><td>Admin accedio al sistema</td><td>gc.asin.zapata@gmail.com</td><td><span class="bg bg-g">OK</span></td></tr>
+            <tr><td class="mono" style="font-size:.76rem;">Hoy</td><td>App.jsx actualizado</td><td>sazonpartner.com</td><td><span class="bg bg-g">Activo</span></td></tr>
+            <tr><td class="mono" style="font-size:.76rem;">Pendiente</td><td>Links MP por configurar</td><td>Netlify env vars</td><td><span class="bg bg-r">Urgente</span></td></tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- CLIENTES -->
+      <div id="p-clientes" class="panel fadein">
+        <div style="display:flex;justify-content:space-between;margin-bottom:16px;">
+          <div></div>
+          <button class="btn btn-r" onclick="document.getElementById('m-cliente').classList.add('open')">+ Agregar cliente</button>
+        </div>
+        <div class="g3" id="clients-grid"></div>
+      </div>
+
+      <!-- LEADS -->
+      <div id="p-leads" class="panel fadein">
+        <div class="alert ai">ℹ️ <div>Los leads se registran aqui cuando alguien usa el formulario de la web o interactua con Carlos. Por ahora son manuales.</div></div>
+        <div class="card" style="margin-bottom:14px;">
+          <div class="ct">Agregar lead manualmente</div>
+          <div class="g2" style="gap:12px;margin-bottom:12px;">
+            <div><label class="fl">Nombre restaurante</label><input class="fi" id="lead-nombre" placeholder="La Brasa del Barrio"/></div>
+            <div><label class="fl">WhatsApp</label><input class="fi" id="lead-wa" placeholder="+51 999 999 999"/></div>
+          </div>
+          <div class="g2" style="gap:12px;margin-bottom:12px;">
+            <div><label class="fl">Pedidos/mes</label><input class="fi" type="number" id="lead-pedidos" placeholder="200"/></div>
+            <div><label class="fl">Ticket S/</label><input class="fi" type="number" id="lead-ticket" placeholder="42"/></div>
+          </div>
+          <button class="btn btn-r" onclick="addLead()">Agregar lead</button>
+        </div>
+        <div class="card">
+          <div class="ct">Pipeline de leads</div>
+          <table>
+            <tr><th>Restaurante</th><th>WA</th><th>Pedidos/mes</th><th>ROI proyectado</th><th>Estado</th><th>Acciones</th></tr>
+            <tbody id="leads-table">
+              <tr><td colspan="6" style="text-align:center;color:var(--dim);padding:20px;">No hay leads aun. Agrega el primero arriba.</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- CARLOS -->
+      <div id="p-carlos" class="panel fadein">
+        <div class="alert aw">⚠️ <div>Carlos opera en <strong>modo fallback inteligente</strong>. Para activar IA completa en tiempo real, configura VITE_ANTHROPIC_KEY en Netlify (variable de entorno del frontend).</div></div>
+        <div class="g2" style="margin-bottom:14px;">
+          <div class="card">
+            <div class="ct">Estado de Carlos</div>
+            <div style="display:flex;flex-direction:column;gap:11px;">
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:.85rem;"><span>Modo actual</span><span class="bg bg-o">Fallback Inteligente</span></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:.85rem;"><span>Free text input</span><span class="bg bg-g">Activado</span></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:.85rem;"><span>Historial conversacion</span><span class="bg bg-g">Activo</span></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:.85rem;"><span>Deteccion de intents</span><span class="bg bg-g">12 intents</span></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:.85rem;"><span>Calculo ROI</span><span class="bg bg-g">Automatico</span></div>
+              <div style="display:flex;justify-content:space-between;align-items:center;font-size:.85rem;"><span>Cierre con MP link</span><span class="bg bg-g">Activo</span></div>
+              <div style="height:1px;background:var(--border);margin:2px 0;"></div>
+              <div style="font-size:.8rem;color:var(--muted);">Para activar IA completa: agrega VITE_ANTHROPIC_KEY en Netlify → Site settings → Environment variables.</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="ct">Capacidades de Carlos</div>
+            <div style="display:flex;flex-direction:column;gap:9px;font-size:.83rem;">
+              <div style="display:flex;gap:8px;align-items:flex-start;"><span style="color:var(--green);font-weight:700;">✓</span><span>Texto libre — el usuario escribe lo que quiere</span></div>
+              <div style="display:flex;gap:8px;align-items:flex-start;"><span style="color:var(--green);font-weight:700;">✓</span><span>Detecta plataformas, pedidos y ticket en el texto</span></div>
+              <div style="display:flex;gap:8px;align-items:flex-start;"><span style="color:var(--green);font-weight:700;">✓</span><span>Calcula ROI automaticamente con los datos</span></div>
+              <div style="display:flex;gap:8px;align-items:flex-start;"><span style="color:var(--green);font-weight:700;">✓</span><span>Recomienda plan segun volumen</span></div>
+              <div style="display:flex;gap:8px;align-items:flex-start;"><span style="color:var(--green);font-weight:700;">✓</span><span>Maneja objeciones de precio con ROI</span></div>
+              <div style="display:flex;gap:8px;align-items:flex-start;"><span style="color:var(--green);font-weight:700;">✓</span><span>Cierra con link de Mercado Pago inline</span></div>
+              <div style="display:flex;gap:8px;align-items:flex-start;"><span style="color:var(--green);font-weight:700;">✓</span><span>NUNCA menciona IA ni automatizacion</span></div>
+              <div style="display:flex;gap:8px;align-items:flex-start;"><span style="color:var(--green);font-weight:700;">✓</span><span>No agenda reuniones — cierra en el chat</span></div>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="ct">Demo de Carlos (como se ve en la web)</div>
+          <div class="chat-outer">
+            <div class="chat-msgs" id="admin-chat">
+              <div class="cmsg"><div class="cav-sm">🌶️</div><div class="cbbl c">Hola! Soy Carlos del equipo de Sazon. Ayudamos a restaurantes a crecer en delivery. En que plataformas estan activos actualmente?</div></div>
+            </div>
+            <div class="chat-in">
+              <textarea class="chat-ta" id="admin-inp" rows="1" placeholder="Simula una pregunta de prospecto..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();adminSend();}"></textarea>
+              <button class="chat-send" onclick="adminSend()">→</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AUTOMATIZACION -->
+      <div id="p-auto" class="panel fadein">
+        <div class="g2" style="margin-bottom:14px;">
+          <div class="stat"><div class="stat-n" style="color:var(--green);">73%</div><div class="stat-l">Auto actual</div><div class="stat-d gl">Meta: 95%</div></div>
+          <div class="stat"><div class="stat-n">4 <span style="font-size:.9rem;color:var(--muted);">/ 7</span></div><div class="stat-l">Sistemas activos</div><div class="stat-d up">↑ Creciendo</div></div>
+        </div>
+        <div class="card" style="margin-bottom:14px;">
+          <div class="ct">Sistemas de automatizacion</div>
+          <div style="display:flex;flex-direction:column;gap:10px;" id="auto-list"></div>
+        </div>
+        <div class="g2">
+          <div class="card">
+            <div class="ct">Algoritmo ROI (activo)</div>
+            <pre style="background:var(--bg4);border-radius:10px;padding:15px;font-family:'DM Mono',monospace;font-size:.73rem;color:#86efac;overflow-x:auto;"><span style="color:rgba(255,255,255,.3);">// Formula de crecimiento proyectado</span>
+function calcROI(pedidos, ticket) {
+  const growth = 0.28; <span style="color:rgba(255,255,255,.3);">// 28% promedio</span>
+  const mes    = Math.round(pedidos * ticket * growth);
+  return { mes, anio: mes * 12,
+    roi_starter: Math.round(mes / 890  * 100),
+    roi_growth:  Math.round(mes / 1790 * 100) };
+}
+<span style="color:rgba(255,255,255,.3);">// Ejemplo: 200 x S/42 = S/2,352/mes</span>
+<span style="color:rgba(255,255,255,.3);">// ROI Starter: 264% · ROI Growth: 131%</span></pre>
+          </div>
+          <div class="card">
+            <div class="ct">Scoring de salud de clientes</div>
+            <pre style="background:var(--bg4);border-radius:10px;padding:15px;font-family:'DM Mono',monospace;font-size:.73rem;color:#86efac;overflow-x:auto;"><span style="color:rgba(255,255,255,.3);">// Calcula salud de cada cuenta</span>
+score = (growth_pedidos  * 0.35)
+      + (rating / 5      * 0.25)
+      + (conversion      * 0.25)
+      + (campana_roi     * 0.15)
+
+<span style="color:rgba(255,255,255,.3);">// Umbrales de accion</span>
+score >= 0.75 → <span style="color:#4ade80;">VERDE (sano)</span>
+score >= 0.50 → <span style="color:#fbbf24;">AMARILLO (monitorear)</span>
+score  < 0.50 → <span style="color:#f87171;">ROJO (intervencion)</span></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- REPORTES -->
+      <div id="p-reportes" class="panel fadein">
+        <div class="alert ai">ℹ️ <div>Los reportes se generan automaticamente el dia 1 de cada mes. Cuando conectes Supabase, se archivan y envian por email.</div></div>
+        <div class="g2">
+          <div class="card">
+            <div class="ct">Generar reporte</div>
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              <div><label class="fl">Cliente</label>
+                <select class="fi" id="r-client">
+                  <option value="">Todos</option>
+                  <option>Mr Smash</option><option>D'Tinto y Bife</option>
+                  <option>Amaia Bakery</option><option>Terminal Pesquero</option>
+                  <option>Tokuyo</option>
+                </select>
+              </div>
+              <div class="g2">
+                <div><label class="fl">Desde</label><input type="date" class="fi" id="r-from"/></div>
+                <div><label class="fl">Hasta</label><input type="date" class="fi" id="r-to"/></div>
+              </div>
+              <button class="btn btn-r" onclick="alert('Reporte generado para: '+document.getElementById(\'r-client\').value+'\n\nEn produccion genera PDF y envia por email automaticamente.')">Generar reporte</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="ct">Metricas del mes</div>
+            <div style="display:flex;flex-direction:column;gap:11px;">
+              <div style="display:flex;justify-content:space-between;font-size:.85rem;"><span>Pedidos totales (5 cuentas)</span><strong>1,240</strong></div>
+              <div class="pbar"><div class="pbar-f" style="width:65%;"></div></div>
+              <div style="display:flex;justify-content:space-between;font-size:.85rem;"><span>Rating promedio</span><strong>4.7 / 5</strong></div>
+              <div class="pbar"><div class="pbar-f" style="width:94%;"></div></div>
+              <div style="display:flex;justify-content:space-between;font-size:.85rem;"><span>Crecimiento promedio</span><strong style="color:var(--green);">+38%</strong></div>
+              <div class="pbar"><div class="pbar-f" style="width:76%;"></div></div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGOS -->
+      <div id="p-pagos" class="panel fadein">
+        <div class="alert aw">⚠️ <div><strong>Configura los links de Mercado Pago en Netlify:</strong> Ve a Site settings → Environment variables → agrega VITE_MP_STARTER y VITE_MP_GROWTH con tus links reales de MP. Luego redeploy.</div></div>
+        <div class="g2">
+          <div class="card">
+            <div class="ct">Links de Mercado Pago</div>
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              <div>
+                <label class="fl">Plan Starter — S/890/mes (VITE_MP_STARTER)</label>
+                <input class="fi" id="mp1" placeholder="https://mpago.la/tu-link-starter"/>
+                <div style="font-size:.72rem;color:var(--muted);margin-top:4px;">Crea un link de suscripcion mensual en tu cuenta de MP → mercadopago.com.pe → Cobrar → Suscripciones</div>
+              </div>
+              <div>
+                <label class="fl">Plan Growth — S/1,790/mes (VITE_MP_GROWTH)</label>
+                <input class="fi" id="mp2" placeholder="https://mpago.la/tu-link-growth"/>
+              </div>
+              <div style="background:var(--bg4);border-radius:10px;padding:14px;font-size:.82rem;color:var(--muted);">
+                <strong style="color:white;display:block;margin-bottom:6px;">Pasos en Netlify:</strong>
+                1. Crea los 2 links de suscripcion en Mercado Pago<br>
+                2. Ve a Netlify → Site settings → Environment variables<br>
+                3. Agrega VITE_MP_STARTER = tu link starter<br>
+                4. Agrega VITE_MP_GROWTH = tu link growth<br>
+                5. Redeploy manual desde Netlify
+              </div>
+              <button class="btn btn-r" onclick="alert('Guarda estos valores en Netlify como VITE_MP_STARTER y VITE_MP_GROWTH.\n\nNO los guardes en GitHub (son publicos).')">Ver instrucciones</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="ct">Estado de cobros</div>
+            <table>
+              <tr><th>Cliente</th><th>Plan</th><th>Monto</th><th>Estado</th></tr>
+              <tr><td>Mr Smash</td><td>Growth</td><td>S/ 1,790</td><td><span class="bg bg-g">Activo</span></td></tr>
+              <tr><td>D'Tinto y Bife</td><td>Growth</td><td>S/ 1,790</td><td><span class="bg bg-g">Activo</span></td></tr>
+              <tr><td>Amaia Bakery</td><td>Starter</td><td>S/ 890</td><td><span class="bg bg-g">Activo</span></td></tr>
+              <tr><td>Terminal Pesquero</td><td>Growth</td><td>S/ 1,790</td><td><span class="bg bg-g">Activo</span></td></tr>
+              <tr><td>Tokuyo</td><td>Starter</td><td>S/ 890</td><td><span class="bg bg-g">Activo</span></td></tr>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <!-- CAMPAÑAS -->
+      <div id="p-campanas" class="panel fadein">
+        <div style="display:flex;justify-content:space-between;margin-bottom:14px;"><div></div>
+          <button class="btn btn-r" onclick="document.getElementById('m-campana').classList.add('open')">+ Nueva Campaña</button>
+        </div>
+        <div class="g4" style="margin-bottom:14px;">
+          <div class="stat"><div class="stat-n">12</div><div class="stat-l">Activas</div></div>
+          <div class="stat"><div class="stat-n" style="color:var(--green);">+31%</div><div class="stat-l">Incr. prom.</div></div>
+          <div class="stat"><div class="stat-n" style="color:var(--gold);">S/ 6,200</div><div class="stat-l">Inversion/mes</div></div>
+          <div class="stat"><div class="stat-n">4.1x</div><div class="stat-l">ROAS prom.</div></div>
+        </div>
+        <div class="card">
+          <div class="ct">Campañas activas</div>
+          <table>
+            <tr><th>Cliente</th><th>Plataforma</th><th>Tipo</th><th>Inversion</th><th>Incremento</th><th>Estado</th></tr>
+            <tr><td>Mr Smash</td><td>Rappi</td><td>Descuento 20%</td><td>S/ 1,200</td><td style="color:var(--green);">+45%</td><td><span class="bg bg-g">Activa</span></td></tr>
+            <tr><td>D'Tinto y Bife</td><td>PedidosYa</td><td>Envio gratis</td><td>S/ 800</td><td style="color:var(--green);">+28%</td><td><span class="bg bg-g">Activa</span></td></tr>
+            <tr><td>Amaia Bakery</td><td>Rappi</td><td>Destacado</td><td>S/ 600</td><td style="color:#fbbf24;">+18%</td><td><span class="bg bg-o">Optimizar</span></td></tr>
+            <tr><td>Terminal Pesquero</td><td>Rappi+Didi</td><td>2x1 lunes</td><td>S/ 1,800</td><td style="color:var(--green);">+52%</td><td><span class="bg bg-g">Activa</span></td></tr>
+            <tr><td>Tokuyo</td><td>PedidosYa</td><td>Combo precio</td><td>S/ 500</td><td style="color:var(--green);">+22%</td><td><span class="bg bg-g">Activa</span></td></tr>
+          </table>
+        </div>
+      </div>
+
+      <!-- ROI CALCULATOR -->
+      <div id="p-roi" class="panel fadein">
+        <div class="g2">
+          <div class="card">
+            <div class="ct">Calculadora para prospectos</div>
+            <div style="display:flex;flex-direction:column;gap:12px;">
+              <div><label class="fl">Nombre del restaurante</label><input class="fi" id="roi-n" placeholder="La Brasa del Barrio"/></div>
+              <div class="g2">
+                <div><label class="fl">Pedidos/mes</label><input class="fi" type="number" id="roi-p" placeholder="200" oninput="calcAdminROI()"/></div>
+                <div><label class="fl">Ticket S/</label><input class="fi" type="number" id="roi-t" placeholder="42" oninput="calcAdminROI()"/></div>
+              </div>
+              <div><label class="fl">Plan</label>
+                <select class="fi" id="roi-pl" onchange="calcAdminROI()">
+                  <option>Starter - S/890/mes</option><option>Growth - S/1,790/mes</option>
+                </select>
+              </div>
+              <button class="btn btn-r" onclick="calcAdminROI();document.getElementById('roi-res').style.display='block'">Calcular</button>
+            </div>
+          </div>
+          <div class="card" id="roi-res" style="display:none;">
+            <div class="ct">Proyeccion</div>
+            <div style="text-align:center;padding:22px;background:rgba(200,57,43,.08);border:1px solid rgba(200,57,43,.15);border-radius:10px;margin-bottom:16px;">
+              <div style="font-size:.76rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:8px;">Ingreso adicional mensual</div>
+              <div style="font-family:'Playfair Display',serif;font-size:2.8rem;font-weight:900;color:white;" id="roi-mes-d">S/ 0</div>
+              <div style="font-size:.82rem;color:var(--muted);">por mes</div>
+            </div>
+            <div style="font-size:.85rem;display:flex;flex-direction:column;gap:8px;">
+              <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);"><span>Al año</span><strong id="roi-anio-d" style="color:var(--green);">S/ 0</strong></div>
+              <div style="display:flex;justify-content:space-between;padding:10px 0;border-bottom:1px solid var(--border);"><span>Costo del plan</span><strong id="roi-costo-d">S/ 890</strong></div>
+              <div style="display:flex;justify-content:space-between;padding:10px 0;"><span>ROI mensual</span><strong id="roi-pct-d" style="color:var(--green);">0%</strong></div>
+            </div>
+            <button class="btn btn-g" style="width:100%;margin-top:14px;" onclick="copyAdminROI()">Copiar para WhatsApp</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- CONFIG -->
+      <div id="p-config" class="panel fadein">
+        <div class="alert ai">ℹ️ <div>Las variables de entorno deben configurarse en Netlify (no en GitHub). Ve a Site settings → Build & deploy → Environment variables.</div></div>
+        <div class="g2">
+          <div class="card">
+            <div class="ct">Variables de Netlify (Build → Env vars)</div>
+            <div style="display:flex;flex-direction:column;gap:13px;">
+              <div>
+                <label class="fl">VITE_MP_STARTER — Link pago Starter</label>
+                <input class="fi" placeholder="https://mpago.la/tu-link-starter"/>
+                <div style="font-size:.7rem;color:var(--muted);margin-top:4px;">Genera el link en mercadopago.com.pe → Cobrar → Suscripciones</div>
+              </div>
+              <div>
+                <label class="fl">VITE_MP_GROWTH — Link pago Growth</label>
+                <input class="fi" placeholder="https://mpago.la/tu-link-growth"/>
+              </div>
+              <div>
+                <label class="fl">VITE_ANTHROPIC_KEY — Carlos IA completa (opcional)</label>
+                <input class="fi" type="password" placeholder="sk-ant-..."/>
+                <div style="font-size:.7rem;color:var(--muted);margin-top:4px;">console.anthropic.com → API Keys. Sin esto, Carlos usa fallback inteligente.</div>
+              </div>
+              <div style="background:var(--bg4);border-radius:10px;padding:14px;font-size:.82rem;">
+                <strong style="color:white;display:block;margin-bottom:8px;">⚠️ Estas variables se guardan en Netlify, NO en el codigo.</strong>
+                <div style="color:var(--muted);line-height:1.7;">
+                  1. Netlify dashboard → sazonpartner.com → Site settings<br>
+                  2. Build &amp; deploy → Environment variables → Add variable<br>
+                  3. Agrega VITE_MP_STARTER, VITE_MP_GROWTH, VITE_ANTHROPIC_KEY<br>
+                  4. Haz un redeploy desde Deploys → Trigger deploy
+                </div>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="ct">Deploy de este admin en /admin</div>
+            <div style="font-size:.84rem;color:var(--muted);line-height:1.75;">
+              <strong style="color:white;display:block;margin-bottom:10px;">Para que este panel funcione en sazonpartner.com/admin:</strong>
+              <div style="background:var(--bg4);border-radius:8px;padding:14px;margin-bottom:12px;font-family:'DM Mono',monospace;font-size:.76rem;color:#86efac;">
+                1. Descarga este archivo<br>
+                2. En tu repo GitHub ve a la carpeta:<br>
+                &nbsp;&nbsp;&nbsp;/public/admin/<br>
+                3. Sube este archivo como:<br>
+                &nbsp;&nbsp;&nbsp;index.html<br>
+                4. Netlify lo sirve automaticamente<br>
+                &nbsp;&nbsp;&nbsp;en sazonpartner.com/admin
+              </div>
+              <div style="background:rgba(200,57,43,.08);border:1px solid rgba(200,57,43,.15);border-radius:8px;padding:12px;font-size:.8rem;">
+                ⚠️ <strong style="color:white;">Seguridad:</strong> Este archivo tiene el login por codigo. Para produccion considera agregar IP whitelist en Netlify o una capa adicional de auth.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- MODALES -->
+<div class="modal-bg" id="m-cliente">
+  <div class="modal">
+    <button class="mc" onclick="document.getElementById('m-cliente').classList.remove('open')">×</button>
+    <h3>Agregar cliente</h3>
+    <div style="display:flex;flex-direction:column;gap:11px;">
+      <div class="g2"><div><label class="fl">Restaurante</label><input class="fi" id="nc-n" placeholder="Mr Smash"/></div><div><label class="fl">Responsable</label><input class="fi" id="nc-r" placeholder="Juan Perez"/></div></div>
+      <div class="g2"><div><label class="fl">WhatsApp</label><input class="fi" id="nc-w" placeholder="+51 999 999 999"/></div><div><label class="fl">Email</label><input class="fi" id="nc-e" placeholder="juan@resto.com"/></div></div>
+      <div class="g2">
+        <div><label class="fl">Plan</label><select class="fi" id="nc-pl"><option>Starter</option><option>Growth</option><option>Pro</option></select></div>
+        <div><label class="fl">Pedidos/mes</label><input class="fi" type="number" id="nc-p" placeholder="200"/></div>
+      </div>
+      <div><label class="fl">Plataformas</label><select class="fi" id="nc-plat"><option>Solo Rappi</option><option>Rappi + PedidosYa</option><option>3+ plataformas</option></select></div>
+      <button class="btn btn-r" onclick="addClient()">Agregar cliente</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-bg" id="m-campana">
+  <div class="modal">
+    <button class="mc" onclick="document.getElementById('m-campana').classList.remove('open')">×</button>
+    <h3>Nueva Campaña</h3>
+    <div style="display:flex;flex-direction:column;gap:11px;">
+      <div><label class="fl">Cliente</label><select class="fi"><option>Mr Smash</option><option>D'Tinto y Bife</option><option>Amaia Bakery</option><option>Terminal Pesquero</option><option>Tokuyo</option></select></div>
+      <div class="g2"><div><label class="fl">Plataforma</label><select class="fi"><option>Rappi</option><option>PedidosYa</option><option>Didi Food</option><option>Glovo</option></select></div><div><label class="fl">Tipo</label><select class="fi"><option>Descuento %</option><option>Envio gratis</option><option>2x1</option><option>Destacado</option></select></div></div>
+      <div class="g2"><div><label class="fl">Inversion S/</label><input class="fi" type="number" placeholder="800"/></div><div><label class="fl">Duracion</label><select class="fi"><option>1 semana</option><option>2 semanas</option><option>1 mes</option></select></div></div>
+      <button class="btn btn-r" onclick="document.getElementById('m-campana').classList.remove('open');alert('Campana creada. Activa en la plataforma correspondiente.')">Crear campaña</button>
+    </div>
+  </div>
+</div>
+
+<style>
+.cav-sm{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--red),var(--gold));display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0;}
+</style>
+
+<script>
+// ── AUTH ──────────────────────────────────────────────────────────────────────
+const ADMIN_EMAIL = "gc.asin.zapata@gmail.com";
+let code = "";
+
+function sendCode() {
+  const em = document.getElementById("em").value.trim();
+  if (em !== ADMIN_EMAIL) { msg1("Email no autorizado.", "err"); return; }
+  code = String(Math.floor(100000 + Math.random() * 900000));
+  msg1("Enviando...", "ok");
+  setTimeout(() => {
+    document.getElementById("step1").style.display = "none";
+    document.getElementById("step2").style.display  = "block";
+    document.getElementById("cval").textContent = code;
+    msg2("Codigo generado. En produccion llegaria al email via EmailJS.", "ok");
+    // Para envio real: emailjs.send('SERVICE','TEMPLATE',{to:ADMIN_EMAIL, code})
+  }, 600);
+}
+
+function verify() {
+  const ci = document.getElementById("ci").value.trim();
+  if (ci === code) {
+    msg2("Verificado! Cargando sistema...", "ok");
+    setTimeout(() => {
+      document.getElementById("login").style.display = "none";
+      document.getElementById("app").classList.add("on");
+      initApp();
+    }, 500);
+  } else {
+    msg2("Codigo incorrecto.", "err");
+    document.getElementById("ci").value = "";
+  }
+}
+
+function back() {
+  document.getElementById("step2").style.display = "none";
+  document.getElementById("step1").style.display = "block";
+  document.getElementById("msg1").textContent = "";
+}
+
+function msg1(t,c){const el=document.getElementById("msg1");el.textContent=t;el.className="lmsg l"+c;}
+function msg2(t,c){const el=document.getElementById("msg2");el.textContent=t;el.className="lmsg l"+c;}
+
+document.addEventListener("keydown",e=>{
+  if(e.key==="Enter"){
+    if(document.getElementById("step1").style.display!=="none") sendCode();
+    else verify();
+  }
+});
+
+// ── PANELS ────────────────────────────────────────────────────────────────────
+const panelMeta = {
+  dashboard:  ["Dashboard","Resumen general del sistema"],
+  clientes:   ["Clientes","Gestion de cuentas activas"],
+  leads:      ["Leads","Pipeline de prospectos"],
+  carlos:     ["Bot Carlos","Agente de ventas IA"],
+  auto:       ["Automatizacion","Sistemas y algoritmos"],
+  reportes:   ["Reportes","Analisis y metricas"],
+  pagos:      ["Pagos","Mercado Pago y cobros"],
+  campanas:   ["Campanas","Gestion de campanas en apps"],
+  roi:        ["Calc. ROI","Calculadora para prospectos"],
+  config:     ["Configuracion","APIs y variables de entorno"],
+};
+
+function go(id) {
+  document.querySelectorAll(".panel").forEach(p=>p.classList.remove("on"));
+  document.querySelectorAll(".sb-btn").forEach(b=>b.classList.remove("on"));
+  const p=document.getElementById("p-"+id);
+  if(p){p.classList.add("on");void p.offsetWidth;p.classList.add("fadein");}
+  const b=document.querySelector(`.sb-btn[onclick="go('${id}')"]`);
+  if(b) b.classList.add("on");
+  const m=panelMeta[id]||[id,""];
+  document.getElementById("ptitle").textContent=m[0];
+  document.getElementById("psub").textContent=m[1];
+}
+
+// ── CLIENTS ───────────────────────────────────────────────────────────────────
+let clients = [
+  {n:"Mr Smash",plan:"Growth",pedidos:380,growth:45,rating:4.8,health:"g",url:"https://www.instagram.com/mrsmash.pe/"},
+  {n:"D'Tinto y Bife",plan:"Growth",pedidos:260,growth:38,rating:4.7,health:"g",url:"https://www.instagram.com/dtintoybife/"},
+  {n:"Amaia Bakery",plan:"Starter",pedidos:140,growth:22,rating:4.9,health:"g",url:"https://www.instagram.com/amaia_bakerype/"},
+  {n:"Terminal Pesquero",plan:"Growth",pedidos:420,growth:52,rating:4.8,health:"g",url:"https://www.instagram.com/terminalpesqueroperu/"},
+  {n:"Tokuyo",plan:"Starter",pedidos:185,growth:28,rating:4.7,health:"y",url:"https://www.instagram.com/tokuyolima/"},
+];
+
+function renderClients() {
+  document.getElementById("clients-grid").innerHTML = clients.map(c => `
+    <div class="cl-card">
+      <div class="dot ${c.health}"></div>
+      <div style="font-size:1.1rem;margin-bottom:5px;">🍽️</div>
+      <div style="font-weight:600;font-size:.9rem;margin-bottom:4px;padding-right:20px;">${c.n}</div>
+      <a href="${c.url}" target="_blank" style="font-size:.7rem;color:var(--muted);text-decoration:none;display:block;margin-bottom:10px;">Ver en Instagram ↗</a>
+      <span class="bg ${c.plan==='Growth'?'bg-b':'bg-g'}" style="margin-bottom:12px;display:inline-flex;">${c.plan}</span>
+      <div style="display:flex;flex-direction:column;gap:5px;">
+        <div style="display:flex;justify-content:space-between;font-size:.78rem;"><span style="color:var(--muted);">Pedidos/mes</span><strong>${c.pedidos}</strong></div>
+        <div style="display:flex;justify-content:space-between;font-size:.78rem;"><span style="color:var(--muted);">Crecimiento</span><strong style="color:${c.growth>0?'var(--green)':'#f87171'};">+${c.growth}%</strong></div>
+        <div style="display:flex;justify-content:space-between;font-size:.78rem;"><span style="color:var(--muted);">Rating</span><strong>${c.rating} ⭐</strong></div>
+      </div>
+    </div>`).join("");
+}
+
+function addClient() {
+  const n = document.getElementById("nc-n").value.trim();
+  if (!n) { alert("Ingresa el nombre"); return; }
+  clients.push({
+    n, plan: document.getElementById("nc-pl").value,
+    pedidos: parseInt(document.getElementById("nc-p").value)||100,
+    growth: 0, rating: 4.5, health: "y", url: "#"
+  });
+  renderClients();
+  document.getElementById("m-cliente").classList.remove("open");
+  go("clientes");
+}
+
+function updateAlertBadge() {
+  const c = document.querySelectorAll("#alerts-container > div").length;
+  document.getElementById("ab").textContent = c;
+}
+
+// ── LEADS ─────────────────────────────────────────────────────────────────────
+let leads = [];
+function addLead() {
+  const n = document.getElementById("lead-nombre").value.trim();
+  const w = document.getElementById("lead-wa").value.trim();
+  const p = parseInt(document.getElementById("lead-pedidos").value)||0;
+  const t = parseInt(document.getElementById("lead-ticket").value)||0;
+  if (!n) { alert("Ingresa el nombre"); return; }
+  const roi = Math.round(p * t * 0.28);
+  leads.push({n, w, p, t, roi, status:"Nuevo"});
+  renderLeads();
+  ["lead-nombre","lead-wa","lead-pedidos","lead-ticket"].forEach(id=>document.getElementById(id).value="");
+}
+
+function renderLeads() {
+  const tb = document.getElementById("leads-table");
+  if (!leads.length) { tb.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--dim);padding:20px;">No hay leads aun.</td></tr>'; return; }
+  tb.innerHTML = leads.map((l,i) => `
+    <tr>
+      <td><strong style="color:white;">${l.n}</strong></td>
+      <td>${l.w||"—"}</td>
+      <td>${l.p||"—"}</td>
+      <td style="color:var(--green);">S/ ${l.roi.toLocaleString()}/mes</td>
+      <td><select style="background:var(--bg4);border:1px solid var(--border);color:white;padding:4px 8px;border-radius:6px;font-size:.78rem;cursor:pointer;" onchange="leads[${i}].status=this.value">
+        <option ${l.status==='Nuevo'?'selected':''}>Nuevo</option>
+        <option ${l.status==='Contactado'?'selected':''}>Contactado</option>
+        <option ${l.status==='Propuesta'?'selected':''}>Propuesta</option>
+        <option ${l.status==='Cerrado'?'selected':''}>Cerrado</option>
+        <option ${l.status==='Perdido'?'selected':''}>Perdido</option>
+      </select></td>
+      <td><button onclick="leads.splice(${i},1);renderLeads();" style="background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.2);color:#f87171;padding:4px 10px;border-radius:6px;font-size:.76rem;cursor:pointer;">✕</button></td>
+    </tr>`).join("");
+}
+
+// ── CARLOS DEMO ───────────────────────────────────────────────────────────────
+const demoResponses = [
+  "En que plataformas estan activos actualmente? (Rappi, PedidosYa, Didi...)",
+  "Cuantos pedidos reciben por mes aproximadamente?",
+  "Cual es el ticket promedio por pedido?",
+  "Perfecto! Con esos datos, nuestro equipo proyecta un incremento significativo en tus ventas. El plan Growth seria el ideal para ti. Quieres ver los detalles del plan?",
+  "Excelente! Para activar tu cuenta esta semana, el pago se hace via Mercado Pago. Es mensual, sin contratos. Quieres proceder?",
+];
+let demoTurn = 0;
+
+function adminSend() {
+  const inp = document.getElementById("admin-inp");
+  const msg = inp.value.trim();
+  if (!msg) return;
+  inp.value = "";
+  const chat = document.getElementById("admin-chat");
+  chat.innerHTML += `<div class="cmsg r"><div class="cbbl u">${msg}</div><div class="cav-sm">👤</div></div>`;
+  chat.scrollTop = chat.scrollHeight;
+  const r = demoResponses[demoTurn % demoResponses.length];
+  demoTurn++;
+  setTimeout(()=>{
+    chat.innerHTML += `<div class="cmsg"><div class="cav-sm">🌶️</div><div class="cbbl c">${r}</div></div>`;
+    chat.scrollTop = chat.scrollHeight;
+  }, 600);
+}
+
+// ── AUTO SYSTEMS ──────────────────────────────────────────────────────────────
+const autoSystems = [
+  {ico:"🤖",name:"Bot Carlos (Sales)",desc:"Califica y cierra ventas en el chat web",pct:75,st:"Fallback activo",sc:"bg-o"},
+  {ico:"📊",name:"Reportes mensuales",desc:"PDF automatico para cada cliente",pct:80,st:"Activo",sc:"bg-g"},
+  {ico:"🔔",name:"Alertas de metricas",desc:"Notifica cuando cae rating o pedidos",pct:70,st:"Activo",sc:"bg-g"},
+  {ico:"💳",name:"Cobros Mercado Pago",desc:"Suscripciones mensuales automaticas",pct:0,st:"Config. links",sc:"bg-r"},
+  {ico:"📣",name:"Campanas automaticas",desc:"Optimizacion de campanas en apps",pct:60,st:"Parcial",sc:"bg-o"},
+  {ico:"💬",name:"KAM Sofia (clientes)",desc:"Atiende consultas de cuentas activas",pct:0,st:"Pendiente",sc:"bg-r"},
+  {ico:"📈",name:"Optimizacion de menus",desc:"Sugerencias semanales de menu",pct:50,st:"Manual",sc:"bg-o"},
+];
+const tgls = {};
+autoSystems.forEach((_,i) => tgls[i] = i < 2);
+
+function renderAuto() {
+  document.getElementById("auto-list").innerHTML = autoSystems.map((s,i) => `
+    <div style="background:var(--bg3);border:1px solid var(--border);border-radius:11px;padding:16px 18px;display:flex;align-items:center;gap:14px;">
+      <div style="width:40px;height:40px;border-radius:9px;background:rgba(200,57,43,.12);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;">${s.ico}</div>
+      <div style="flex:1;">
+        <div style="font-size:.87rem;font-weight:600;margin-bottom:2px;">${s.name}</div>
+        <div style="font-size:.74rem;color:var(--muted);">${s.desc}</div>
+        <div style="margin-top:7px;display:flex;align-items:center;gap:7px;">
+          <div style="flex:1;height:4px;background:rgba(255,255,255,.07);border-radius:100px;overflow:hidden;">
+            <div style="width:${s.pct}%;height:100%;background:linear-gradient(90deg,var(--red),var(--gold));"></div>
+          </div>
+          <span style="font-size:.68rem;color:var(--muted);">${s.pct}%</span>
+        </div>
+      </div>
+      <span class="bg ${s.sc}" style="font-size:.66rem;white-space:nowrap;">${s.st}</span>
+      <button class="tgl ${tgls[i]?'on':'off'}" id="tgl-${i}" onclick="tgls[${i}]=!tgls[${i}];this.className='tgl '+(tgls[${i}]?'on':'off')"></button>
+    </div>`).join("");
+}
+
+// ── ROI ADMIN ─────────────────────────────────────────────────────────────────
+function calcAdminROI() {
+  const p = parseFloat(document.getElementById("roi-p").value)||0;
+  const t = parseFloat(document.getElementById("roi-t").value)||0;
+  const mes = Math.round(p*t*0.28);
+  const plan = document.getElementById("roi-pl").value;
+  const costo = plan.includes("1,790") ? 1790 : 890;
+  const pct = costo > 0 ? Math.round((mes/costo)*100) : 0;
+  document.getElementById("roi-mes-d").textContent = "S/ "+mes.toLocaleString();
+  document.getElementById("roi-anio-d").textContent = "S/ "+(mes*12).toLocaleString();
+  document.getElementById("roi-costo-d").textContent = "S/ "+costo.toLocaleString();
+  document.getElementById("roi-pct-d").textContent = pct+"% mensual";
+  document.getElementById("roi-res").style.display = "block";
+}
+
+function copyAdminROI() {
+  const n = document.getElementById("roi-n").value||"tu restaurante";
+  const p = document.getElementById("roi-p").value||"?";
+  const t = document.getElementById("roi-t").value||"?";
+  const mes = document.getElementById("roi-mes-d").textContent;
+  const anio = document.getElementById("roi-anio-d").textContent;
+  const txt = `Hola! El diagnostico rapido para ${n}:\n\nCon ${p} pedidos/mes a S/${t} de ticket, nuestro equipo proyecta ${mes} de ingresos adicionales por mes (${anio} al año).\n\nEso es lo que lograriamos en 90 dias trabajando juntos. ¿Te interesa?`;
+  navigator.clipboard.writeText(txt).then(() => alert("Copiado al clipboard!"));
+}
+
+// ── LOGOUT ────────────────────────────────────────────────────────────────────
+function logout() {
+  if (!confirm("Cerrar sesion?")) return;
+  document.getElementById("app").classList.remove("on");
+  document.getElementById("login").style.display = "flex";
+  document.getElementById("step2").style.display = "none";
+  document.getElementById("step1").style.display = "block";
+  document.getElementById("ci").value = "";
+  code = "";
+}
+
+// ── INIT ──────────────────────────────────────────────────────────────────────
+function initApp() {
+  renderClients();
+  renderLeads();
+  renderAuto();
+  const today = new Date().toISOString().split("T")[0];
+  const from  = new Date(Date.now()-30*24*60*60*1000).toISOString().split("T")[0];
+  document.getElementById("r-to").value = today;
+  document.getElementById("r-from").value = from;
+}
+</script>
+</body>
+</html>
