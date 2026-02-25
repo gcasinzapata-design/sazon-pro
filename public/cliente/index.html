@@ -1,0 +1,771 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sazón · Mi Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono&display=swap" rel="stylesheet">
+<style>
+:root{
+  --red:#C8392B;--rd:#9B2335;--cream:#F5EFE0;--cream2:#EDE4CE;
+  --ch:#1A1A1A;--gold:#D4A547;--soft:#5A4E3E;
+  --green:#16a34a;--green2:#dcfce7;--blue:#1d4ed8;--blue2:#dbeafe;
+  --orange:#c2410c;--orange2:#ffedd5;--purple:#7e22ce;--purple2:#f3e8ff;
+  --bg:#faf8f4;--border:rgba(0,0,0,.08);--border2:rgba(0,0,0,.14);
+}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
+html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ch);overflow-x:hidden;}
+.mono{font-family:'DM Mono',monospace;}
+.pf{font-family:'Playfair Display',serif;}
+input,select,button,textarea{font-family:'DM Sans',sans-serif;}
+::-webkit-scrollbar{width:5px;height:5px;}
+::-webkit-scrollbar-thumb{background:rgba(0,0,0,.12);border-radius:10px;}
+
+/* ── LOGIN ── */
+#login{position:fixed;inset:0;background:var(--ch);z-index:999;display:flex;align-items:center;justify-content:center;}
+.lcard{width:420px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:44px;box-shadow:0 40px 80px rgba(0,0,0,.6);}
+.lav{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,var(--red),var(--gold));display:flex;align-items:center;justify-content:center;font-size:1.7rem;margin:0 auto 14px;}
+.lh{text-align:center;font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:700;color:white;margin-bottom:4px;}
+.lsub{text-align:center;font-size:.82rem;color:rgba(255,255,255,.45);margin-bottom:28px;}
+.lf label{display:block;font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,.4);margin-bottom:6px;margin-top:13px;}
+.lf input{width:100%;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.1);padding:12px 15px;border-radius:10px;color:white;font-size:.9rem;outline:none;transition:border-color .2s;}
+.lf input:focus{border-color:rgba(200,57,43,.5);}
+.lbtn{width:100%;margin-top:16px;padding:14px;background:var(--red);color:white;border:none;border-radius:10px;font-size:.9rem;font-weight:600;cursor:pointer;transition:background .2s;}
+.lbtn:hover{background:var(--rd);}
+.lmsg{font-size:.8rem;text-align:center;margin-top:10px;min-height:18px;}
+.lok{color:#4ade80;}.lerr{color:#f87171;}
+.demo-cred{margin-top:16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:14px;font-size:.78rem;color:rgba(255,255,255,.4);line-height:1.7;}
+.demo-cred strong{color:rgba(255,255,255,.65);display:block;margin-bottom:4px;}
+
+/* ── LAYOUT ── */
+#app{display:none;min-height:100vh;}
+#app.on{display:block;}
+
+/* ── TOPBAR ── */
+.topbar{background:var(--cream);border-bottom:2px solid var(--cream2);padding:0 36px;display:flex;align-items:center;justify-content:space-between;height:62px;position:sticky;top:0;z-index:50;}
+.logo{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:900;color:var(--ch);cursor:pointer;}
+.logo span{color:var(--red);}
+.topbar-right{display:flex;align-items:center;gap:14px;}
+.rest-badge{background:var(--ch);color:white;padding:6px 14px;border-radius:100px;font-size:.76rem;font-weight:600;}
+.notif{width:34px;height:34px;border-radius:50%;background:var(--cream2);border:none;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;position:relative;}
+.notif-dot{position:absolute;top:4px;right:4px;width:8px;height:8px;background:var(--red);border-radius:50%;border:2px solid var(--cream);}
+
+/* ── NAV TABS ── */
+.tabs{background:white;border-bottom:1px solid var(--border);padding:0 36px;display:flex;gap:0;overflow-x:auto;}
+.tab{padding:14px 20px;font-size:.82rem;font-weight:500;color:var(--soft);cursor:pointer;background:none;border:none;border-bottom:2px solid transparent;transition:all .18s;white-space:nowrap;}
+.tab:hover{color:var(--ch);}
+.tab.on{color:var(--red);border-bottom-color:var(--red);font-weight:600;}
+
+/* ── MAIN ── */
+.main{padding:28px 36px;max-width:1200px;}
+.panel{display:none;}.panel.on{display:block;}
+@keyframes fi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.fi{animation:fi .3s ease;}
+
+/* ── STAT CARDS ── */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;}
+.scard{background:white;border:1px solid var(--border);border-radius:14px;padding:20px 22px;}
+.scard-n{font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;line-height:1;margin-bottom:4px;}
+.scard-l{font-size:.7rem;text-transform:uppercase;letter-spacing:1px;color:var(--soft);}
+.scard-d{font-size:.73rem;font-weight:600;margin-top:6px;}
+.up{color:var(--green);}.dn{color:var(--red);}.neu{color:var(--soft);}
+
+/* ── CHART AREA ── */
+.chart-wrap{background:white;border:1px solid var(--border);border-radius:14px;padding:22px 24px;margin-bottom:22px;}
+.chart-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;}
+.chart-title{font-size:.9rem;font-weight:600;}
+.chart-sub{font-size:.75rem;color:var(--soft);margin-top:2px;}
+.chart-legend{display:flex;gap:16px;}
+.leg-item{display:flex;align-items:center;gap:6px;font-size:.74rem;color:var(--soft);}
+.leg-dot{width:10px;height:10px;border-radius:50%;}
+.bar-chart{display:flex;align-items:flex-end;gap:10px;height:160px;padding:0 4px;}
+.bar-group{display:flex;flex-direction:column;align-items:center;gap:5px;flex:1;}
+.bar-wrap{display:flex;gap:3px;align-items:flex-end;height:120px;}
+.bar{border-radius:4px 4px 0 0;transition:opacity .2s;cursor:pointer;}
+.bar:hover{opacity:.8;}
+.bar-label{font-size:.7rem;color:var(--soft);}
+.bar-val{font-size:.68rem;font-weight:600;color:var(--soft);}
+
+/* ── CARDS ── */
+.card{background:white;border:1px solid var(--border);border-radius:14px;padding:20px 22px;}
+.ct{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:rgba(0,0,0,.35);margin-bottom:14px;}
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+
+/* ── BADGES ── */
+.bg{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:100px;font-size:.7rem;font-weight:600;}
+.bg-g{background:var(--green2);color:var(--green);}
+.bg-r{background:#fee2e2;color:#dc2626;}
+.bg-o{background:var(--orange2);color:var(--orange);}
+.bg-b{background:var(--blue2);color:var(--blue);}
+.bg-p{background:var(--purple2);color:var(--purple);}
+.bg-k{background:#f3f4f6;color:#374151;}
+
+/* ── TABLE ── */
+table{width:100%;border-collapse:collapse;font-size:.83rem;}
+th{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:rgba(0,0,0,.35);padding:9px 12px;border-bottom:1px solid var(--border);text-align:left;}
+td{padding:11px 12px;border-bottom:1px solid rgba(0,0,0,.04);color:var(--soft);vertical-align:middle;}
+tr:last-child td{border-bottom:none;}
+tr:hover td{background:rgba(0,0,0,.01);}
+
+/* ── PROGRESS ── */
+.pbar{height:6px;background:rgba(0,0,0,.07);border-radius:100px;overflow:hidden;}
+.pbar-f{height:100%;border-radius:100px;}
+
+/* ── REPORTE CARD ── */
+.rep-card{background:white;border:1px solid var(--border);border-radius:12px;padding:18px 20px;display:flex;align-items:center;gap:16px;cursor:pointer;transition:all .2s;}
+.rep-card:hover{border-color:var(--red);transform:translateY(-1px);}
+.rep-ico{width:44px;height:44px;border-radius:10px;background:rgba(200,57,43,.08);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;}
+
+/* ── CAMPAIGN CARD ── */
+.camp-card{background:white;border:1px solid var(--border);border-radius:12px;padding:18px 20px;transition:border-color .2s;}
+.camp-card:hover{border-color:var(--border2);}
+.camp-plat{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;background:var(--cream2);border-radius:100px;font-size:.72rem;font-weight:600;margin-bottom:10px;}
+
+/* ── TOOLTIP ── */
+.tooltip{position:relative;}
+.tooltip::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1A1A1A;color:white;padding:5px 10px;border-radius:6px;font-size:.72rem;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;}
+.tooltip:hover::after{opacity:1;}
+
+/* ── BUTTONS ── */
+.btn{padding:9px 18px;border-radius:8px;font-size:.83rem;font-weight:600;cursor:pointer;border:none;transition:all .18s;}
+.btn-r{background:var(--red);color:white;}.btn-r:hover{background:var(--rd);}
+.btn-o{background:var(--cream2);color:var(--ch);border:1px solid var(--border2);}.btn-o:hover{background:var(--cream);}
+.btn-sm{padding:6px 13px;font-size:.76rem;}
+
+/* ── NOTIFICATIONS ── */
+.notif-panel{position:fixed;top:62px;right:0;width:340px;background:white;border-left:1px solid var(--border);border-bottom:1px solid var(--border);box-shadow:-4px 8px 24px rgba(0,0,0,.1);z-index:40;max-height:calc(100vh - 62px);overflow-y:auto;display:none;}
+.notif-panel.on{display:block;}
+.notif-item{padding:14px 18px;border-bottom:1px solid var(--border);font-size:.83rem;cursor:pointer;transition:background .15s;}
+.notif-item:hover{background:#f9f7f3;}
+.notif-item.unread{background:#fff8f7;border-left:3px solid var(--red);}
+.notif-time{font-size:.7rem;color:var(--soft);margin-top:3px;}
+
+@media(max-width:768px){
+  .topbar,.tabs{padding:0 18px;}
+  .main{padding:18px;}
+  .stats-row{grid-template-columns:1fr 1fr;}
+  .g2{grid-template-columns:1fr;}
+  .g3{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="login">
+  <div class="lcard">
+    <div class="lav">🌶️</div>
+    <div class="lh">Saz<span style="font-family:'DM Sans',sans-serif;">ó</span>n<span style="color:var(--red);">.</span></div>
+    <div class="lsub">Portal de Cliente · Acceso con email</div>
+    <div class="lf">
+      <label>Tu email de contacto</label>
+      <input type="email" id="cl-email" placeholder="tu@restaurante.com" value="mauricio@mrsmash.pe"/>
+    </div>
+    <button class="lbtn" onclick="loginCliente()">Acceder a mi dashboard</button>
+    <div id="cl-msg" class="lmsg"></div>
+    <div class="demo-cred">
+      <strong>Demo — credenciales de prueba:</strong>
+      Email: mauricio@mrsmash.pe<br>
+      (En produccion llega un link magico al email)
+    </div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="logo">Saz<span style="font-family:'DM Sans',sans-serif;">ó</span>n<span>.</span></div>
+    <div class="topbar-right">
+      <div class="rest-badge" id="rest-name">Mr Smash</div>
+      <button class="notif tooltip" data-tip="Notificaciones" onclick="toggleNotif()">
+        🔔<div class="notif-dot" id="notif-dot"></div>
+      </button>
+      <button class="btn btn-o btn-sm" onclick="logoutCliente()">Salir</button>
+    </div>
+  </div>
+
+  <!-- NOTIF PANEL -->
+  <div class="notif-panel" id="notif-panel">
+    <div style="padding:14px 18px;font-weight:600;font-size:.85rem;border-bottom:1px solid var(--border);">Notificaciones</div>
+    <div class="notif-item unread">
+      <div>🟢 <strong>Campana de verano activa</strong> — Tu campaña en Rappi ya está generando ventas adicionales.</div>
+      <div class="notif-time">Hoy, 09:15</div>
+    </div>
+    <div class="notif-item unread">
+      <div>📊 <strong>Reporte de enero listo</strong> — Tu resumen mensual está disponible para descargar.</div>
+      <div class="notif-time">Hoy, 08:00</div>
+    </div>
+    <div class="notif-item">
+      <div>⭐ <strong>Nueva reseña respondida</strong> — Tu equipo Sazón respondió 3 reseñas negativas.</div>
+      <div class="notif-time">Ayer, 18:30</div>
+    </div>
+    <div class="notif-item">
+      <div>📈 <strong>Record de pedidos</strong> — El martes pasado fue tu mejor dia del mes con 42 pedidos.</div>
+      <div class="notif-time">Hace 3 días</div>
+    </div>
+  </div>
+
+  <!-- TABS -->
+  <div class="tabs">
+    <button class="tab on" onclick="goTab('resumen')">Resumen</button>
+    <button class="tab" onclick="goTab('ventas')">Ventas y Pedidos</button>
+    <button class="tab" onclick="goTab('campanas')">Campañas</button>
+    <button class="tab" onclick="goTab('menu')">Menú Digital</button>
+    <button class="tab" onclick="goTab('reportes')">Reportes</button>
+    <button class="tab" onclick="goTab('soporte')">Soporte</button>
+  </div>
+
+  <div class="main">
+
+    <!-- ═══ RESUMEN ═══ -->
+    <div id="t-resumen" class="panel on fi">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+        <div>
+          <h1 class="pf" style="font-size:1.6rem;font-weight:700;line-height:1.15;">Buen día, <span id="greeting-name">Mauricio</span> 👋</h1>
+          <p style="font-size:.88rem;color:var(--soft);margin-top:4px;">Dashboard actualizado · Febrero 2025</p>
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;">
+          <button class="btn btn-o btn-sm" onclick="goTab('reportes')">📥 Ver reportes</button>
+          <button class="btn btn-r btn-sm" onclick="goTab('soporte')">💬 Hablar con mi GM</button>
+        </div>
+      </div>
+
+      <div class="stats-row">
+        <div class="scard">
+          <div class="scard-n" style="color:var(--red);" id="stat-pedidos">—</div>
+          <div class="scard-l">Pedidos este mes</div>
+          <div class="scard-d up" id="stat-pedidos-d">↑ Cargando...</div>
+        </div>
+        <div class="scard">
+          <div class="scard-n" style="color:var(--green);" id="stat-ventas">—</div>
+          <div class="scard-l">Ventas totales S/</div>
+          <div class="scard-d up" id="stat-ventas-d">↑ Cargando...</div>
+        </div>
+        <div class="scard">
+          <div class="scard-n" id="stat-rating">—</div>
+          <div class="scard-l">Rating promedio</div>
+          <div class="scard-d" id="stat-rating-d">Cargando...</div>
+        </div>
+        <div class="scard">
+          <div class="scard-n" style="color:var(--gold);" id="stat-ticket">—</div>
+          <div class="scard-l">Ticket promedio S/</div>
+          <div class="scard-d" id="stat-ticket-d">Cargando...</div>
+        </div>
+      </div>
+
+      <!-- GRAFICO DE PEDIDOS -->
+      <div class="chart-wrap">
+        <div class="chart-head">
+          <div>
+            <div class="chart-title">Pedidos por semana</div>
+            <div class="chart-sub">Ultimas 8 semanas vs periodo anterior</div>
+          </div>
+          <div class="chart-legend">
+            <div class="leg-item"><div class="leg-dot" style="background:var(--red);"></div>Este periodo</div>
+            <div class="leg-item"><div class="leg-dot" style="background:var(--cream2);border:1px solid #ccc;"></div>Periodo anterior</div>
+          </div>
+        </div>
+        <div class="bar-chart" id="bar-chart"></div>
+      </div>
+
+      <div class="g2" style="margin-bottom:20px;">
+        <!-- ALERTAS -->
+        <div class="card">
+          <div class="ct">Novedades de tu cuenta</div>
+          <div style="display:flex;flex-direction:column;gap:10px;" id="novedades-list">
+            <div style="padding:12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;font-size:.84rem;">
+              <div style="font-weight:600;color:var(--green);margin-bottom:3px;">🟢 Campaña activa en Rappi</div>
+              Tu descuento del 20% está generando +45% en pedidos esta semana.
+            </div>
+            <div style="padding:12px;background:#fff8f7;border:1px solid #fecaca;border-radius:8px;font-size:.84rem;">
+              <div style="font-weight:600;color:var(--red);margin-bottom:3px;">🔴 Accion requerida</div>
+              Sube la foto de tu combo premium. Tu equipo la necesita para la campaña de la próxima semana.
+              <button onclick="goTab('menu')" style="display:block;margin-top:6px;padding:5px 12px;background:var(--red);color:white;border:none;border-radius:6px;font-size:.74rem;cursor:pointer;font-family:'DM Sans',sans-serif;">Ir a Menú Digital →</button>
+            </div>
+            <div style="padding:12px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;font-size:.84rem;">
+              <div style="font-weight:600;color:var(--blue);margin-bottom:3px;">🔵 Reporte enero disponible</div>
+              Tu resumen mensual está listo con todas las métricas.
+              <button onclick="goTab('reportes')" style="display:block;margin-top:6px;padding:5px 12px;background:var(--blue);color:white;border:none;border-radius:6px;font-size:.74rem;cursor:pointer;font-family:'DM Sans',sans-serif;">Ver reporte →</button>
+            </div>
+          </div>
+        </div>
+
+        <!-- TOP PLATOS -->
+        <div class="card">
+          <div class="ct">Top platos del mes</div>
+          <div style="display:flex;flex-direction:column;gap:12px;" id="top-items"></div>
+        </div>
+      </div>
+
+      <!-- PLATAFORMAS -->
+      <div class="card">
+        <div class="ct">Rendimiento por plataforma</div>
+        <div class="g3" id="platforms-grid"></div>
+      </div>
+    </div>
+
+    <!-- ═══ VENTAS ═══ -->
+    <div id="t-ventas" class="panel fi">
+      <h2 class="pf" style="font-size:1.4rem;margin-bottom:20px;">Ventas y Pedidos</h2>
+
+      <div class="stats-row" style="grid-template-columns:repeat(3,1fr);">
+        <div class="scard"><div class="scard-n" style="color:var(--green);">S/ 18,420</div><div class="scard-l">Ventas totales feb.</div><div class="scard-d up">↑ +38% vs ene.</div></div>
+        <div class="scard"><div class="scard-n">382</div><div class="scard-l">Pedidos totales</div><div class="scard-d up">↑ +45% vs ene.</div></div>
+        <div class="scard"><div class="scard-n" style="color:var(--gold);">S/ 48</div><div class="scard-l">Ticket promedio</div><div class="scard-d up">↑ +8% vs ene.</div></div>
+      </div>
+
+      <div class="chart-wrap">
+        <div class="chart-head">
+          <div><div class="chart-title">Ventas diarias — Febrero 2025</div><div class="chart-sub">S/ por dia</div></div>
+        </div>
+        <div id="ventas-chart" style="display:flex;align-items:flex-end;gap:4px;height:140px;padding:0 4px;"></div>
+      </div>
+
+      <div class="g2">
+        <div class="card">
+          <div class="ct">Pedidos por hora (promedio)</div>
+          <div id="hour-chart" style="display:flex;align-items:flex-end;gap:5px;height:100px;margin-bottom:6px;"></div>
+          <div style="display:flex;justify-content:space-between;font-size:.68rem;color:var(--soft);padding:0 2px;">
+            <span>11am</span><span>1pm</span><span>3pm</span><span>5pm</span><span>7pm</span><span>9pm</span>
+          </div>
+        </div>
+        <div class="card">
+          <div class="ct">Pedidos por dia de semana</div>
+          <div id="day-chart" style="display:flex;align-items:flex-end;gap:8px;height:100px;margin-bottom:6px;"></div>
+          <div style="display:flex;justify-content:space-between;font-size:.68rem;color:var(--soft);padding:0 4px;">
+            <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sab</span><span>Dom</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:16px;">
+        <div class="ct">Ultimos pedidos</div>
+        <table>
+          <tr><th>Fecha</th><th>Plataforma</th><th>Pedidos</th><th>Ventas</th><th>Ticket prom.</th><th>Rating</th></tr>
+          <tr><td>24 Feb</td><td><span class="bg bg-r">Rappi</span></td><td><strong style="color:var(--ch);">22</strong></td><td>S/ 1,056</td><td>S/ 48</td><td>⭐ 4.9</td></tr>
+          <tr><td>23 Feb</td><td><span class="bg bg-b">PedidosYa</span></td><td><strong style="color:var(--ch);">15</strong></td><td>S/ 660</td><td>S/ 44</td><td>⭐ 4.7</td></tr>
+          <tr><td>23 Feb</td><td><span class="bg bg-r">Rappi</span></td><td><strong style="color:var(--ch);">28</strong></td><td>S/ 1,428</td><td>S/ 51</td><td>⭐ 4.8</td></tr>
+          <tr><td>22 Feb</td><td><span class="bg bg-r">Rappi</span></td><td><strong style="color:var(--ch);">19</strong></td><td>S/ 855</td><td>S/ 45</td><td>⭐ 5.0</td></tr>
+          <tr><td>21 Feb</td><td><span class="bg bg-p">Didi Food</span></td><td><strong style="color:var(--ch);">11</strong></td><td>S/ 473</td><td>S/ 43</td><td>⭐ 4.6</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- ═══ CAMPAÑAS ═══ -->
+    <div id="t-campanas" class="panel fi">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <h2 class="pf" style="font-size:1.4rem;">Campañas activas</h2>
+        <button class="btn btn-r btn-sm" onclick="goTab('soporte')">+ Solicitar nueva campaña</button>
+      </div>
+
+      <div class="stats-row" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px;">
+        <div class="scard"><div class="scard-n">3</div><div class="scard-l">Campañas activas</div><div class="scard-d up">↑ Este mes</div></div>
+        <div class="scard"><div class="scard-n" style="color:var(--green);">+45%</div><div class="scard-l">Incremento promedio</div><div class="scard-d up">↑ Con campaña vs sin</div></div>
+        <div class="scard"><div class="scard-n" style="color:var(--gold);">4.2x</div><div class="scard-l">Retorno de inversion</div><div class="scard-d up">↑ ROAS actual</div></div>
+      </div>
+
+      <div class="g3" id="campanas-grid"></div>
+
+      <div class="card" style="margin-top:16px;">
+        <div class="ct">Historico de campañas</div>
+        <table>
+          <tr><th>Periodo</th><th>Tipo</th><th>Plataforma</th><th>Inversion</th><th>Ventas extra</th><th>ROAS</th><th>Estado</th></tr>
+          <tr><td>Feb 2025</td><td>Descuento 20%</td><td><span class="bg bg-r">Rappi</span></td><td>S/ 1,200</td><td style="color:var(--green);">S/ 5,040</td><td><strong>4.2x</strong></td><td><span class="bg bg-g">Activa</span></td></tr>
+          <tr><td>Ene 2025</td><td>Envio gratis</td><td><span class="bg bg-b">PedidosYa</span></td><td>S/ 800</td><td style="color:var(--green);">S/ 2,960</td><td><strong>3.7x</strong></td><td><span class="bg bg-k">Finalizada</span></td></tr>
+          <tr><td>Ene 2025</td><td>Destacado</td><td><span class="bg bg-r">Rappi</span></td><td>S/ 600</td><td style="color:var(--green);">S/ 1,980</td><td><strong>3.3x</strong></td><td><span class="bg bg-k">Finalizada</span></td></tr>
+          <tr><td>Dic 2024</td><td>Navidad combo</td><td><span class="bg bg-r">Rappi</span></td><td>S/ 1,500</td><td style="color:var(--green);">S/ 7,500</td><td><strong>5.0x</strong></td><td><span class="bg bg-k">Finalizada</span></td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- ═══ MENU DIGITAL ═══ -->
+    <div id="t-menu" class="panel fi">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+        <h2 class="pf" style="font-size:1.4rem;">Menú Digital</h2>
+        <button class="btn btn-r btn-sm" onclick="goTab('soporte')">📤 Enviar fotos nuevas</button>
+      </div>
+
+      <div style="padding:16px;background:#fff8f7;border:1px solid #fecaca;border-radius:10px;margin-bottom:20px;font-size:.85rem;">
+        <strong style="color:var(--red);">⚠️ Accion requerida:</strong> Tu equipo Sazón necesita la foto del <strong>Combo Premium Smash</strong> para la campaña de la próxima semana. Envíala por WhatsApp con el asunto "FOTO MENU".
+      </div>
+
+      <div class="g3" id="menu-grid"></div>
+
+      <div class="card" style="margin-top:16px;">
+        <div class="ct">Optimizaciones realizadas por Sazon</div>
+        <table>
+          <tr><th>Fecha</th><th>Item</th><th>Cambio</th><th>Impacto</th></tr>
+          <tr><td>18 Feb</td><td>Smash Clásico</td><td>Foto + descripcion optimizada</td><td style="color:var(--green);">+22% clics</td></tr>
+          <tr><td>15 Feb</td><td>Combo Doble</td><td>Precio ancla ajustado</td><td style="color:var(--green);">+18% conv.</td></tr>
+          <tr><td>10 Feb</td><td>Bebidas</td><td>Orden de presentacion</td><td style="color:var(--green);">+12% ticket</td></tr>
+          <tr><td>01 Feb</td><td>Menu completo</td><td>Auditoria inicial y restructura</td><td style="color:var(--green);">Base optimizada</td></tr>
+        </table>
+      </div>
+    </div>
+
+    <!-- ═══ REPORTES ═══ -->
+    <div id="t-reportes" class="panel fi">
+      <h2 class="pf" style="font-size:1.4rem;margin-bottom:20px;">Reportes mensuales</h2>
+
+      <div class="alert-bar" style="padding:14px 18px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;margin-bottom:20px;font-size:.85rem;">
+        📊 <strong>Reporte de Enero 2025 disponible.</strong> Tu resumen completo con análisis de crecimiento, campañas y recomendaciones para febrero está listo.
+      </div>
+
+      <div style="display:flex;flex-direction:column;gap:12px;" id="reportes-list"></div>
+    </div>
+
+    <!-- ═══ SOPORTE ═══ -->
+    <div id="t-soporte" class="panel fi">
+      <h2 class="pf" style="font-size:1.4rem;margin-bottom:6px;">Tu Growth Manager</h2>
+      <p style="font-size:.88rem;color:var(--soft);margin-bottom:20px;">Nuestro equipo está disponible para cualquier consulta o solicitud.</p>
+
+      <div class="g2" style="margin-bottom:20px;">
+        <div class="card" style="display:flex;gap:16px;align-items:flex-start;">
+          <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--red),var(--gold));display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;">👤</div>
+          <div>
+            <div style="font-weight:600;margin-bottom:2px;">Tu Growth Manager</div>
+            <div style="font-size:.8rem;color:var(--soft);margin-bottom:10px;">Sazon Growth Partner · Equipo Activo</div>
+            <div style="display:flex;gap:6px;flex-wrap:wrap;">
+              <span class="bg bg-g">● En linea</span>
+              <span class="bg bg-k">Resp. en &lt;2h</span>
+            </div>
+          </div>
+        </div>
+        <div class="card">
+          <div class="ct">Proxima reunion de seguimiento</div>
+          <div style="font-size:1.1rem;font-weight:600;margin-bottom:4px;">Viernes 28 Feb · 10:00 AM</div>
+          <div style="font-size:.83rem;color:var(--soft);margin-bottom:14px;">Revision de metricas de febrero + plan de campañas marzo</div>
+          <button class="btn btn-o btn-sm">📅 Ver en calendario</button>
+        </div>
+      </div>
+
+      <div class="g2">
+        <div class="card">
+          <div class="ct">Enviar mensaje directo</div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <select style="background:var(--cream2);border:1px solid var(--border2);padding:10px 13px;border-radius:8px;font-size:.86rem;outline:none;cursor:pointer;">
+              <option>Consulta sobre campañas</option>
+              <option>Enviar fotos de menú</option>
+              <option>Solicitar nueva campaña</option>
+              <option>Reporte personalizado</option>
+              <option>Otro</option>
+            </select>
+            <textarea placeholder="Describe tu consulta o solicitud..." rows="4" style="background:var(--cream2);border:1px solid var(--border2);padding:12px 13px;border-radius:8px;font-size:.86rem;resize:none;outline:none;font-family:'DM Sans',sans-serif;"></textarea>
+            <button class="btn btn-r" onclick="sendSoporte()">Enviar mensaje → WhatsApp</button>
+          </div>
+        </div>
+        <div class="card">
+          <div class="ct">Solicitudes recientes</div>
+          <div style="display:flex;flex-direction:column;gap:10px;">
+            <div style="padding:12px;background:var(--cream2);border-radius:8px;font-size:.82rem;">
+              <div style="display:flex;justify-content:space-between;margin-bottom:3px;"><strong>Fotos combo premium</strong><span class="bg bg-o">Pendiente tuyo</span></div>
+              <div style="color:var(--soft);">Tu equipo espera las fotos para activar la campaña</div>
+            </div>
+            <div style="padding:12px;background:var(--cream2);border-radius:8px;font-size:.82rem;">
+              <div style="display:flex;justify-content:space-between;margin-bottom:3px;"><strong>Campaña marzo</strong><span class="bg bg-b">En proceso</span></div>
+              <div style="color:var(--soft);">Propuesta lista el 1 de marzo</div>
+            </div>
+            <div style="padding:12px;background:var(--cream2);border-radius:8px;font-size:.82rem;">
+              <div style="display:flex;justify-content:space-between;margin-bottom:3px;"><strong>Negociacion comision Rappi</strong><span class="bg bg-g">Completado</span></div>
+              <div style="color:var(--soft);">Comision reducida de 28% a 24.5%</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /main -->
+</div><!-- /app -->
+
+<script>
+// ── DATA DEL CLIENTE (en produccion viene de Supabase/API) ────────────────────
+const CLIENTES = {
+  "mauricio@mrsmash.pe": {
+    nombre: "Mauricio",
+    restaurante: "Mr Smash",
+    plan: "Growth",
+    gm: "Equipo Sazon",
+    wa: "51952363643",
+    stats: { pedidos: 382, ventas: 18420, rating: 4.8, ticket: 48 },
+    pedidos_hist: [180, 210, 240, 265, 290, 310, 345, 382],   // 8 semanas
+    pedidos_prev: [120, 145, 168, 190, 212, 230, 255, 270],
+    semanas: ["5 ene","12 ene","19 ene","26 ene","2 feb","9 feb","16 feb","23 feb"],
+    by_hour: [2, 4, 6, 8, 14, 18, 22, 20, 16, 12, 8, 4],   // 11am-9pm
+    by_day:  [38, 52, 45, 55, 68, 82, 42],                  // lun-dom
+    ventas_diarias: Array.from({length:24},(_,i)=>Math.floor(Math.random()*600+300+i*20)),
+    top_items: [
+      { n:"Smash Clásico",        pct:32, ventas:5894 },
+      { n:"Combo Doble",          pct:24, ventas:4421 },
+      { n:"Smash con Queso",      pct:18, ventas:3316 },
+      { n:"Papas Sazonadas",      pct:14, ventas:2579 },
+      { n:"Bebida del día",       pct:12, ventas:2211 },
+    ],
+    plataformas: [
+      { n:"Rappi",     ico:"🛵", pedidos:228, ventas:10944, rating:4.9, color:"var(--red)" },
+      { n:"PedidosYa", ico:"🟡", pedidos:103, ventas:4532,  rating:4.7, color:"#f59e0b" },
+      { n:"Didi Food", ico:"🟠", pedidos:51,  ventas:2449,  rating:4.6, color:"#f97316" },
+    ],
+    campanas: [
+      { t:"Descuento 20% — Smash Clasico", plat:"Rappi", tipo:"Descuento", inv:1200, extra:5040, roas:4.2, activa:true, vence:"28 Feb" },
+      { t:"Envio gratis fin de semana",    plat:"PedidosYa", tipo:"Envio gratis", inv:600, extra:2220, roas:3.7, activa:true, vence:"28 Feb" },
+      { t:"Destacado almuerzo",            plat:"Didi Food", tipo:"Destacado", inv:400, extra:1480, roas:3.7, activa:true, vence:"28 Feb" },
+    ],
+    menu: [
+      { n:"Smash Clásico",   precio:38, ventas:"Alta", foto:"✅", opt:"✅", badge:"bg-g", badge_t:"Optimizado" },
+      { n:"Combo Doble",     precio:55, ventas:"Alta", foto:"✅", opt:"✅", badge:"bg-g", badge_t:"Optimizado" },
+      { n:"Smash con Queso", precio:42, ventas:"Media",foto:"✅", opt:"✅", badge:"bg-g", badge_t:"Optimizado" },
+      { n:"Combo Premium",   precio:68, ventas:"—",    foto:"❌", opt:"❌", badge:"bg-r", badge_t:"Foto pendiente" },
+      { n:"Papas Sazonadas", precio:15, ventas:"Alta", foto:"✅", opt:"✅", badge:"bg-g", badge_t:"Optimizado" },
+      { n:"Bebida del dia",  precio:12, ventas:"Media",foto:"⚠️", opt:"✅", badge:"bg-o", badge_t:"Foto mejorable" },
+    ],
+    reportes: [
+      { mes:"Enero 2025", estado:"Disponible", pedidos:267, ventas:12816, crec:"+38%", link:"#" },
+      { mes:"Diciembre 2024", estado:"Disponible", pedidos:195, ventas:9360, crec:"+22%", link:"#" },
+      { mes:"Noviembre 2024", estado:"Disponible", pedidos:160, ventas:7680, crec:"Linea base", link:"#" },
+    ]
+  }
+};
+
+let currentClient = null;
+
+function loginCliente() {
+  const em = document.getElementById("cl-email").value.trim().toLowerCase();
+  const cl = CLIENTES[em];
+  if (!cl) {
+    const msg = document.getElementById("cl-msg");
+    msg.textContent = "Email no encontrado. Usa mauricio@mrsmash.pe para la demo.";
+    msg.className = "lmsg lerr";
+    return;
+  }
+  const msg = document.getElementById("cl-msg");
+  msg.textContent = "Accediendo...";
+  msg.className = "lmsg lok";
+  currentClient = cl;
+  setTimeout(() => {
+    document.getElementById("login").style.display = "none";
+    document.getElementById("app").classList.add("on");
+    renderAll();
+  }, 500);
+}
+
+function logoutCliente() {
+  if (!confirm("Cerrar sesion?")) return;
+  document.getElementById("app").classList.remove("on");
+  document.getElementById("login").style.display = "flex";
+  currentClient = null;
+}
+
+function toggleNotif() {
+  const p = document.getElementById("notif-panel");
+  p.classList.toggle("on");
+  document.getElementById("notif-dot").style.display = "none";
+}
+
+document.addEventListener("click", e => {
+  const np = document.getElementById("notif-panel");
+  if (np.classList.contains("on") && !e.target.closest(".notif") && !e.target.closest(".notif-panel")) {
+    np.classList.remove("on");
+  }
+});
+
+function goTab(id) {
+  document.querySelectorAll(".tab").forEach(b => b.classList.remove("on"));
+  document.querySelectorAll(".panel").forEach(p => p.classList.remove("on"));
+  document.querySelector(`.tab[onclick="goTab('${id}')"]`).classList.add("on");
+  const p = document.getElementById("t-" + id);
+  p.classList.add("on");
+  void p.offsetWidth;
+  p.classList.add("fi");
+}
+
+function renderAll() {
+  const c = currentClient;
+  document.getElementById("rest-name").textContent = c.restaurante;
+  document.getElementById("greeting-name").textContent = c.nombre;
+
+  // Stats con animacion
+  animateNum("stat-pedidos", 0, c.stats.pedidos, "");
+  animateNum("stat-ventas",  0, c.stats.ventas,  "S/ ");
+  document.getElementById("stat-rating").textContent = c.stats.rating + " ⭐";
+  document.getElementById("stat-ticket").textContent = "S/ " + c.stats.ticket;
+  document.getElementById("stat-pedidos-d").innerHTML = '<span class="up">↑ +45% vs mes anterior</span>';
+  document.getElementById("stat-ventas-d").innerHTML  = '<span class="up">↑ +38% vs mes anterior</span>';
+  document.getElementById("stat-rating-d").innerHTML  = '<span class="up">↑ +0.3 vs mes anterior</span>';
+  document.getElementById("stat-ticket-d").innerHTML  = '<span class="up">↑ +8% vs mes anterior</span>';
+
+  renderBarChart();
+  renderTopItems();
+  renderPlatforms();
+  renderCampanas();
+  renderMenu();
+  renderReportes();
+  renderVentasChart();
+  renderHourChart();
+  renderDayChart();
+}
+
+function animateNum(id, from, to, prefix) {
+  const el = document.getElementById(id);
+  const dur = 800, fps = 40, steps = dur / fps;
+  let i = 0;
+  const inc = (to - from) / steps;
+  const t = setInterval(() => {
+    i++;
+    const v = Math.round(from + inc * i);
+    el.textContent = prefix + v.toLocaleString();
+    if (i >= steps) { clearInterval(t); el.textContent = prefix + to.toLocaleString(); }
+  }, fps);
+}
+
+function renderBarChart() {
+  const c = currentClient;
+  const max = Math.max(...c.pedidos_hist, ...c.pedidos_prev);
+  const chart = document.getElementById("bar-chart");
+  chart.innerHTML = c.pedidos_hist.map((v, i) => {
+    const hp = Math.round((v / max) * 110);
+    const pp = Math.round((c.pedidos_prev[i] / max) * 110);
+    return `<div class="bar-group">
+      <div class="bar-val">${v}</div>
+      <div class="bar-wrap">
+        <div class="bar tooltip" data-tip="${c.semanas[i]}: ${c.pedidos_prev[i]} pedidos" style="width:18px;height:${pp}px;background:var(--cream2);border:1px solid #ccc;"></div>
+        <div class="bar tooltip" data-tip="${c.semanas[i]}: ${v} pedidos" style="width:18px;height:${hp}px;background:var(--red);"></div>
+      </div>
+      <div class="bar-label">${c.semanas[i].split(" ")[0]}</div>
+    </div>`;
+  }).join("");
+}
+
+function renderTopItems() {
+  const c = currentClient;
+  document.getElementById("top-items").innerHTML = c.top_items.map((it, i) => `
+    <div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
+        <span style="font-size:.84rem;font-weight:500;">${i+1}. ${it.n}</span>
+        <span style="font-size:.78rem;color:var(--soft);">S/ ${it.ventas.toLocaleString()}</span>
+      </div>
+      <div class="pbar"><div class="pbar-f" style="width:${it.pct*2.8}%;background:${i===0?'var(--red)':i===1?'var(--gold)':'var(--cream2)'};${i>1?'border:1px solid #ccc;':''}"></div></div>
+    </div>`).join("");
+}
+
+function renderPlatforms() {
+  const c = currentClient;
+  document.getElementById("platforms-grid").innerHTML = c.plataformas.map(p => `
+    <div style="text-align:center;padding:18px;background:var(--cream2);border-radius:10px;">
+      <div style="font-size:1.4rem;margin-bottom:8px;">${p.ico}</div>
+      <div style="font-weight:700;margin-bottom:6px;">${p.n}</div>
+      <div style="font-size:.78rem;color:var(--soft);margin-bottom:4px;">${p.pedidos} pedidos</div>
+      <div style="font-size:.82rem;font-weight:600;color:var(--green);">S/ ${p.ventas.toLocaleString()}</div>
+      <div style="font-size:.76rem;color:var(--soft);margin-top:4px;">⭐ ${p.rating}</div>
+      <div style="height:4px;background:rgba(0,0,0,.1);border-radius:100px;margin-top:10px;overflow:hidden;">
+        <div style="width:${Math.round((p.pedidos/382)*100)}%;height:100%;background:${p.color};border-radius:100px;"></div>
+      </div>
+    </div>`).join("");
+}
+
+function renderCampanas() {
+  const c = currentClient;
+  document.getElementById("campanas-grid").innerHTML = c.campanas.map(ca => `
+    <div class="camp-card">
+      <div class="camp-plat">${ca.plat}</div>
+      <div style="font-weight:600;margin-bottom:6px;">${ca.t}</div>
+      <div style="font-size:.78rem;color:var(--soft);margin-bottom:12px;">Vence: ${ca.vence}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+        <span class="bg bg-g">Activa</span>
+        <span class="bg bg-k">${ca.tipo}</span>
+      </div>
+      <div style="display:flex;justify-content:space-between;font-size:.82rem;border-top:1px solid var(--border);padding-top:10px;">
+        <div><div style="color:var(--soft);">Inversion</div><strong>S/ ${ca.inv.toLocaleString()}</strong></div>
+        <div><div style="color:var(--soft);">Ventas extra</div><strong style="color:var(--green);">S/ ${ca.extra.toLocaleString()}</strong></div>
+        <div><div style="color:var(--soft);">ROAS</div><strong>${ca.roas}x</strong></div>
+      </div>
+    </div>`).join("");
+}
+
+function renderMenu() {
+  const c = currentClient;
+  document.getElementById("menu-grid").innerHTML = c.menu.map(m => `
+    <div class="camp-card">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
+        <div style="font-weight:600;font-size:.88rem;">${m.n}</div>
+        <span class="bg ${m.badge}">${m.badge_t}</span>
+      </div>
+      <div style="font-size:.78rem;color:var(--soft);margin-bottom:8px;">S/ ${m.precio}</div>
+      <div style="display:flex;gap:12px;font-size:.78rem;">
+        <span>Foto: ${m.foto}</span>
+        <span>Copy: ${m.opt}</span>
+        <span>Ventas: ${m.ventas}</span>
+      </div>
+    </div>`).join("");
+}
+
+function renderReportes() {
+  const c = currentClient;
+  document.getElementById("reportes-list").innerHTML = c.reportes.map(r => `
+    <div class="rep-card" onclick="alert('Descargando reporte de ${r.mes}...\n\nEn produccion: genera y descarga el PDF automaticamente.')">
+      <div class="rep-ico">📊</div>
+      <div style="flex:1;">
+        <div style="font-weight:600;margin-bottom:3px;">${r.mes}</div>
+        <div style="font-size:.78rem;color:var(--soft);">${r.pedidos} pedidos · S/ ${r.ventas.toLocaleString()} ventas · Crecimiento: ${r.crec}</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <span class="bg bg-g">${r.estado}</span>
+        <button class="btn btn-o btn-sm">📥 Descargar PDF</button>
+      </div>
+    </div>`).join("");
+}
+
+function renderVentasChart() {
+  const dias = currentClient.ventas_diarias.slice(0, 24);
+  const max = Math.max(...dias);
+  document.getElementById("ventas-chart").innerHTML = dias.map((v, i) => {
+    const h = Math.round((v / max) * 120);
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;">
+      <div class="tooltip" data-tip="Dia ${i+1}: S/${v}" style="width:100%;height:${h}px;background:${i===dias.length-1?'var(--red)':'var(--cream2)'};border:1px solid rgba(0,0,0,.08);border-radius:3px 3px 0 0;transition:opacity .2s;cursor:pointer;" onmouseover="this.style.opacity=.7" onmouseout="this.style.opacity=1"></div>
+    </div>`;
+  }).join("");
+}
+
+function renderHourChart() {
+  const h = currentClient.by_hour;
+  const max = Math.max(...h);
+  document.getElementById("hour-chart").innerHTML = h.map((v, i) => {
+    const ht = Math.round((v / max) * 85);
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;">
+      <div style="font-size:.62rem;color:var(--soft);">${v}</div>
+      <div class="tooltip" data-tip="${11+Math.floor(i*10/6)}:00 — ${v} pedidos" style="width:100%;height:${ht}px;background:${ht>60?'var(--red)':'var(--cream2)'};border:1px solid rgba(0,0,0,.08);border-radius:3px 3px 0 0;"></div>
+    </div>`;
+  }).join("");
+}
+
+function renderDayChart() {
+  const d = currentClient.by_day;
+  const max = Math.max(...d);
+  const dias = ["L","M","X","J","V","S","D"];
+  document.getElementById("day-chart").innerHTML = d.map((v, i) => {
+    const ht = Math.round((v / max) * 85);
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;">
+      <div style="font-size:.62rem;color:var(--soft);">${v}</div>
+      <div class="tooltip" data-tip="${dias[i]}: ${v} pedidos" style="width:100%;height:${ht}px;background:${i>=4?'var(--red)':'var(--cream2)'};border:1px solid rgba(0,0,0,.08);border-radius:3px 3px 0 0;"></div>
+    </div>`;
+  }).join("");
+}
+
+function sendSoporte() {
+  const sel = document.querySelector('#t-soporte select');
+  const ta  = document.querySelector('#t-soporte textarea');
+  const msg = sel.value + (ta.value ? "\n\n" + ta.value : "");
+  const wa  = "https://wa.me/" + currentClient.wa + "?text=" + encodeURIComponent(
+    "Hola, soy " + currentClient.nombre + " de " + currentClient.restaurante + ".\n\nConsulta: " + msg
+  );
+  window.open(wa, "_blank", "noopener,noreferrer");
+  ta.value = "";
+}
+
+document.addEventListener("keydown", e => {
+  if (e.key === "Enter" && document.getElementById("login").style.display !== "none") loginCliente();
+});
+</script>
+</body>
+</html>
