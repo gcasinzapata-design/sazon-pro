@@ -1,3 +1,8 @@
-/politicas /index.html 200
-/libro-de-reclamaciones /index.html 200
-/* /index.html 200
+# Rutas estáticas — deben ir ANTES del catch-all de React
+/admin             /admin/index.html      200
+/admin/*           /admin/index.html      200
+/cliente           /cliente/index.html    200
+/cliente/*         /cliente/index.html    200
+
+# Catch-all para el SPA de React (siempre al final)
+/*                 /index.html            200
