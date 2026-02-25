@@ -19,6 +19,31 @@ const GEMINI_KEY = import.meta.env.VITE_GEMINI_KEY || "";
 //    Sin clave, Carlos usa fallback inteligente (funciona sin costo)
 const ANTHROPIC_KEY = import.meta.env.VITE_ANTHROPIC_KEY || "";
 
+// ─── PAGO: abre el link de MP evitando el link-expander de Netlify ───────────
+// El error "resource /expand/..." ocurre porque Netlify intenta resolver
+// shortlinks de mpago.la en el servidor. Soluciones:
+//
+// OPCION A (recomendada): Usa la URL larga de Mercado Pago:
+//   - Abre tu shortlink mpago.la/xxx en el navegador
+//   - Copia la URL final a la que redirige (empieza con mercadopago.com.pe/...)
+//   - Usa esa URL como VITE_MP_STARTER / VITE_MP_GROWTH en Netlify
+//
+// OPCION B (este codigo): Crea un <a> en tiempo de ejecucion — el navegador
+//   lo abre directamente sin pasar por Netlify
+function openPayment(url) {
+  if (!url) return;
+  let full = url.trim();
+  if (!full.startsWith("http")) full = "https://" + full;
+  // Crear elemento <a> temporal — bypasea el link-expander del servidor
+  const a = document.createElement("a");
+  a.href = full;
+  a.target = "_blank";
+  a.rel = "noopener noreferrer";
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { try { document.body.removeChild(a); } catch{} }, 200);
+}
+
 // ─── CARLOS: SYSTEM PROMPT ───────────────────────────────────────────────────
 const CARLOS_SYSTEM = `Eres Carlos, Growth Executive del equipo de Sazón Growth Partner. Sazón ayuda a restaurantes a crecer sus ventas en plataformas de delivery (Rappi, PedidosYa, Didi Food, Glovo y más).
 
@@ -229,25 +254,25 @@ function CarlosMsg({ text }) {
       {parts.map((p, i) => {
         if (p === "[PAGO_STARTER]") {
           return MP_STARTER ? (
-            <a key={i} href={MP_STARTER} target="_blank" rel="noreferrer"
-              style={{ display:"inline-block", marginTop:8, padding:"10px 20px", background:"#009EE3", color:"white", borderRadius:8, fontSize:".82rem", fontWeight:700, textDecoration:"none", textTransform:"uppercase", letterSpacing:1 }}>
+            <button key={i} onClick={() => openPayment(MP_STARTER)}
+              style={{ display:"inline-block", marginTop:8, padding:"10px 20px", background:"#009EE3", color:"white", borderRadius:8, fontSize:".82rem", fontWeight:700, textDecoration:"none", textTransform:"uppercase", letterSpacing:1, border:"none", cursor:"pointer", fontFamily:"DM Sans,sans-serif" }}>
               Pagar Starter — S/890/mes ↗
-            </a>
+            </button>
           ) : (
             <span key={i} style={{ display:"inline-block", marginTop:8, padding:"10px 18px", background:"rgba(0,158,227,.2)", color:"#60d4f7", borderRadius:8, fontSize:".8rem", border:"1px solid rgba(0,158,227,.3)" }}>
-              Link MP pendiente de configurar en Netlify
+              Configura VITE_MP_STARTER en Netlify
             </span>
           );
         }
         if (p === "[PAGO_GROWTH]") {
           return MP_GROWTH ? (
-            <a key={i} href={MP_GROWTH} target="_blank" rel="noreferrer"
-              style={{ display:"inline-block", marginTop:8, padding:"10px 20px", background:"#009EE3", color:"white", borderRadius:8, fontSize:".82rem", fontWeight:700, textDecoration:"none", textTransform:"uppercase", letterSpacing:1 }}>
+            <button key={i} onClick={() => openPayment(MP_GROWTH)}
+              style={{ display:"inline-block", marginTop:8, padding:"10px 20px", background:"#009EE3", color:"white", borderRadius:8, fontSize:".82rem", fontWeight:700, textDecoration:"none", textTransform:"uppercase", letterSpacing:1, border:"none", cursor:"pointer", fontFamily:"DM Sans,sans-serif" }}>
               Pagar Growth — S/1,790/mes ↗
-            </a>
+            </button>
           ) : (
             <span key={i} style={{ display:"inline-block", marginTop:8, padding:"10px 18px", background:"rgba(0,158,227,.2)", color:"#60d4f7", borderRadius:8, fontSize:".8rem", border:"1px solid rgba(0,158,227,.3)" }}>
-              Link MP pendiente de configurar en Netlify
+              Configura VITE_MP_GROWTH en Netlify
             </span>
           );
         }
@@ -610,7 +635,7 @@ export default function App() {
           </ul>
           {p.mpLink ? (
             <div style={{display:"flex",flexDirection:"column",gap:8}}>
-              <a href={p.mpLink} target="_blank" rel="noreferrer" style={{display:"block",textAlign:"center",padding:"14px",background:"#009EE3",color:"white",fontSize:".82rem",fontWeight:700,textTransform:"uppercase",letterSpacing:"1.5px",cursor:"pointer",borderRadius:2,textDecoration:"none",transition:"background .2s"}} onMouseEnter={e=>e.currentTarget.style.background="#007DB3"} onMouseLeave={e=>e.currentTarget.style.background="#009EE3"}>Pagar con Mercado Pago</a>
+              <button onClick={()=>openPayment(p.mpLink)} style={{display:"block",width:"100%",textAlign:"center",padding:"14px",background:"#009EE3",color:"white",fontSize:".82rem",fontWeight:700,textTransform:"uppercase",letterSpacing:"1.5px",cursor:"pointer",borderRadius:2,border:"none",fontFamily:"DM Sans,sans-serif",transition:"background .2s"}} onMouseEnter={e=>e.currentTarget.style.background="#007DB3"} onMouseLeave={e=>e.currentTarget.style.background="#009EE3"}>💳 Pagar con Mercado Pago</button>
               <button onClick={()=>setChatOpen(true)} style={{display:"block",width:"100%",textAlign:"center",padding:"11px",border:p.dark?"1px solid rgba(255,255,255,.2)":"1px solid rgba(0,0,0,.2)",background:"transparent",fontSize:".78rem",color:p.dark?"rgba(255,255,255,.5)":"#5A4E3E",cursor:"pointer",fontFamily:"DM Sans,sans-serif",borderRadius:2}}>o consultar con Carlos →</button>
             </div>
           ) : !p.mpLink && p.name!=="Pro" ? (
