@@ -5,6 +5,7 @@
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>Sazón · Mi Dashboard</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root{
   --red:#C8392B;--rd:#9B2335;--cream:#F5EFE0;--cream2:#EDE4CE;
@@ -14,14 +15,14 @@
   --bg:#faf8f4;--border:rgba(0,0,0,.08);--border2:rgba(0,0,0,.14);
 }
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-html,body{height:100%;font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ch);overflow-x:hidden;}
+html,body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ch);overflow-x:hidden;}
 .mono{font-family:'DM Mono',monospace;}
 .pf{font-family:'Playfair Display',serif;}
 input,select,button,textarea{font-family:'DM Sans',sans-serif;}
 ::-webkit-scrollbar{width:5px;height:5px;}
 ::-webkit-scrollbar-thumb{background:rgba(0,0,0,.12);border-radius:10px;}
 
-/* ── LOGIN ── */
+/* LOGIN */
 #login{position:fixed;inset:0;background:var(--ch);z-index:999;display:flex;align-items:center;justify-content:center;}
 .lcard{width:420px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:44px;box-shadow:0 40px 80px rgba(0,0,0,.6);}
 .lav{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,var(--red),var(--gold));display:flex;align-items:center;justify-content:center;font-size:1.7rem;margin:0 auto 14px;}
@@ -37,32 +38,32 @@ input,select,button,textarea{font-family:'DM Sans',sans-serif;}
 .demo-cred{margin-top:16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:14px;font-size:.78rem;color:rgba(255,255,255,.4);line-height:1.7;}
 .demo-cred strong{color:rgba(255,255,255,.65);display:block;margin-bottom:4px;}
 
-/* ── LAYOUT ── */
+/* APP */
 #app{display:none;min-height:100vh;}
 #app.on{display:block;}
 
-/* ── TOPBAR ── */
+/* TOPBAR */
 .topbar{background:var(--cream);border-bottom:2px solid var(--cream2);padding:0 36px;display:flex;align-items:center;justify-content:space-between;height:62px;position:sticky;top:0;z-index:50;}
-.logo{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:900;color:var(--ch);cursor:pointer;}
+.logo{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:900;color:var(--ch);}
 .logo span{color:var(--red);}
-.topbar-right{display:flex;align-items:center;gap:14px;}
+.topbar-right{display:flex;align-items:center;gap:12px;}
 .rest-badge{background:var(--ch);color:white;padding:6px 14px;border-radius:100px;font-size:.76rem;font-weight:600;}
-.notif{width:34px;height:34px;border-radius:50%;background:var(--cream2);border:none;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;position:relative;}
+.notif-btn{width:34px;height:34px;border-radius:50%;background:var(--cream2);border:none;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;position:relative;}
 .notif-dot{position:absolute;top:4px;right:4px;width:8px;height:8px;background:var(--red);border-radius:50%;border:2px solid var(--cream);}
 
-/* ── NAV TABS ── */
+/* TABS */
 .tabs{background:white;border-bottom:1px solid var(--border);padding:0 36px;display:flex;gap:0;overflow-x:auto;}
 .tab{padding:14px 20px;font-size:.82rem;font-weight:500;color:var(--soft);cursor:pointer;background:none;border:none;border-bottom:2px solid transparent;transition:all .18s;white-space:nowrap;}
 .tab:hover{color:var(--ch);}
 .tab.on{color:var(--red);border-bottom-color:var(--red);font-weight:600;}
 
-/* ── MAIN ── */
+/* MAIN */
 .main{padding:28px 36px;max-width:1200px;}
 .panel{display:none;}.panel.on{display:block;}
-@keyframes fi{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-.fi{animation:fi .3s ease;}
+@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.fadein{animation:fadein .3s ease;}
 
-/* ── STAT CARDS ── */
+/* STATS */
 .stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;}
 .scard{background:white;border:1px solid var(--border);border-radius:14px;padding:20px 22px;}
 .scard-n{font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;line-height:1;margin-bottom:4px;}
@@ -70,7 +71,7 @@ input,select,button,textarea{font-family:'DM Sans',sans-serif;}
 .scard-d{font-size:.73rem;font-weight:600;margin-top:6px;}
 .up{color:var(--green);}.dn{color:var(--red);}.neu{color:var(--soft);}
 
-/* ── CHART AREA ── */
+/* CHARTS */
 .chart-wrap{background:white;border:1px solid var(--border);border-radius:14px;padding:22px 24px;margin-bottom:22px;}
 .chart-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;}
 .chart-title{font-size:.9rem;font-weight:600;}
@@ -81,18 +82,17 @@ input,select,button,textarea{font-family:'DM Sans',sans-serif;}
 .bar-chart{display:flex;align-items:flex-end;gap:10px;height:160px;padding:0 4px;}
 .bar-group{display:flex;flex-direction:column;align-items:center;gap:5px;flex:1;}
 .bar-wrap{display:flex;gap:3px;align-items:flex-end;height:120px;}
-.bar{border-radius:4px 4px 0 0;transition:opacity .2s;cursor:pointer;}
-.bar:hover{opacity:.8;}
+.bar{border-radius:4px 4px 0 0;cursor:pointer;transition:opacity .2s;}
+.bar:hover{opacity:.75;}
 .bar-label{font-size:.7rem;color:var(--soft);}
-.bar-val{font-size:.68rem;font-weight:600;color:var(--soft);}
 
-/* ── CARDS ── */
+/* CARDS */
 .card{background:white;border:1px solid var(--border);border-radius:14px;padding:20px 22px;}
 .ct{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:rgba(0,0,0,.35);margin-bottom:14px;}
 .g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
 .g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
 
-/* ── BADGES ── */
+/* BADGES */
 .bg{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:100px;font-size:.7rem;font-weight:600;}
 .bg-g{background:var(--green2);color:var(--green);}
 .bg-r{background:#fee2e2;color:#dc2626;}
@@ -101,39 +101,44 @@ input,select,button,textarea{font-family:'DM Sans',sans-serif;}
 .bg-p{background:var(--purple2);color:var(--purple);}
 .bg-k{background:#f3f4f6;color:#374151;}
 
-/* ── TABLE ── */
+/* TABLE */
 table{width:100%;border-collapse:collapse;font-size:.83rem;}
 th{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:rgba(0,0,0,.35);padding:9px 12px;border-bottom:1px solid var(--border);text-align:left;}
 td{padding:11px 12px;border-bottom:1px solid rgba(0,0,0,.04);color:var(--soft);vertical-align:middle;}
 tr:last-child td{border-bottom:none;}
 tr:hover td{background:rgba(0,0,0,.01);}
 
-/* ── PROGRESS ── */
+/* PROGRESS */
 .pbar{height:6px;background:rgba(0,0,0,.07);border-radius:100px;overflow:hidden;}
 .pbar-f{height:100%;border-radius:100px;}
 
-/* ── REPORTE CARD ── */
+/* BUTTONS */
+.btn{padding:9px 18px;border-radius:8px;font-size:.83rem;font-weight:600;cursor:pointer;border:none;transition:all .18s;}
+.btn-r{background:var(--red);color:white;}.btn-r:hover{background:var(--rd);}
+.btn-o{background:var(--cream2);color:var(--ch);border:1px solid var(--border2);}.btn-o:hover{background:var(--cream);}
+.btn-g{background:var(--green2);color:var(--green);border:1px solid rgba(22,163,74,.2);}.btn-g:hover{background:#bbf7d0;}
+.btn-sm{padding:6px 13px;font-size:.76rem;}
+
+/* REP CARD */
 .rep-card{background:white;border:1px solid var(--border);border-radius:12px;padding:18px 20px;display:flex;align-items:center;gap:16px;cursor:pointer;transition:all .2s;}
-.rep-card:hover{border-color:var(--red);transform:translateY(-1px);}
+.rep-card:hover{border-color:var(--red);transform:translateY(-1px);box-shadow:0 4px 16px rgba(200,57,43,.1);}
 .rep-ico{width:44px;height:44px;border-radius:10px;background:rgba(200,57,43,.08);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;}
 
-/* ── CAMPAIGN CARD ── */
+/* CAMP CARD */
 .camp-card{background:white;border:1px solid var(--border);border-radius:12px;padding:18px 20px;transition:border-color .2s;}
 .camp-card:hover{border-color:var(--border2);}
 .camp-plat{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;background:var(--cream2);border-radius:100px;font-size:.72rem;font-weight:600;margin-bottom:10px;}
 
-/* ── TOOLTIP ── */
-.tooltip{position:relative;}
-.tooltip::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1A1A1A;color:white;padding:5px 10px;border-radius:6px;font-size:.72rem;white-space:nowrap;pointer-events:none;opacity:0;transition:opacity .15s;}
-.tooltip:hover::after{opacity:1;}
+/* PLATFORM STATUS */
+.plat-card{background:white;border:1px solid var(--border);border-radius:12px;padding:18px;transition:border-color .2s;}
+.plat-card.connected{border-color:rgba(22,163,74,.3);background:linear-gradient(135deg,white,#f0fdf4);}
+.plat-card.pending{border-color:rgba(251,191,36,.3);background:linear-gradient(135deg,white,#fffbeb);}
+.status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
+.status-dot.green{background:var(--green);box-shadow:0 0 6px rgba(22,163,74,.4);}
+.status-dot.yellow{background:#f59e0b;box-shadow:0 0 6px rgba(245,158,11,.4);}
+.status-dot.gray{background:#9ca3af;}
 
-/* ── BUTTONS ── */
-.btn{padding:9px 18px;border-radius:8px;font-size:.83rem;font-weight:600;cursor:pointer;border:none;transition:all .18s;}
-.btn-r{background:var(--red);color:white;}.btn-r:hover{background:var(--rd);}
-.btn-o{background:var(--cream2);color:var(--ch);border:1px solid var(--border2);}.btn-o:hover{background:var(--cream);}
-.btn-sm{padding:6px 13px;font-size:.76rem;}
-
-/* ── NOTIFICATIONS ── */
+/* NOTIF PANEL */
 .notif-panel{position:fixed;top:62px;right:0;width:340px;background:white;border-left:1px solid var(--border);border-bottom:1px solid var(--border);box-shadow:-4px 8px 24px rgba(0,0,0,.1);z-index:40;max-height:calc(100vh - 62px);overflow-y:auto;display:none;}
 .notif-panel.on{display:block;}
 .notif-item{padding:14px 18px;border-bottom:1px solid var(--border);font-size:.83rem;cursor:pointer;transition:background .15s;}
@@ -141,9 +146,56 @@ tr:hover td{background:rgba(0,0,0,.01);}
 .notif-item.unread{background:#fff8f7;border-left:3px solid var(--red);}
 .notif-time{font-size:.7rem;color:var(--soft);margin-top:3px;}
 
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:100;backdrop-filter:blur(4px);align-items:center;justify-content:center;}
+.modal-bg.open{display:flex;}
+.modal{background:white;border-radius:18px;padding:28px 30px;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto;position:relative;}
+.modal-close{position:absolute;top:16px;right:16px;background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--soft);line-height:1;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:background .15s;}
+.modal-close:hover{background:var(--cream2);}
+.modal h3{font-size:1.1rem;font-weight:700;margin-bottom:18px;}
+
+/* CALENDAR */
+.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:14px 0;}
+.cal-head{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px;}
+.cal-head span{text-align:center;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--soft);}
+.cal-day{aspect-ratio:1;border-radius:8px;border:none;background:none;cursor:pointer;font-size:.84rem;transition:all .15s;display:flex;align-items:center;justify-content:center;}
+.cal-day:hover:not(.empty):not(.past){background:rgba(200,57,43,.08);color:var(--red);}
+.cal-day.today{background:var(--red);color:white;font-weight:700;}
+.cal-day.selected{background:var(--red);color:white;font-weight:700;}
+.cal-day.has-slot{position:relative;}
+.cal-day.has-slot::after{content:'';position:absolute;bottom:4px;left:50%;transform:translateX(-50%);width:4px;height:4px;background:var(--green);border-radius:50%;}
+.cal-day.past{opacity:.35;cursor:not-allowed;}
+.cal-day.empty{cursor:default;}
+.cal-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
+.cal-nav button{background:var(--cream2);border:none;cursor:pointer;border-radius:8px;padding:6px 12px;font-size:.82rem;transition:background .15s;}
+.cal-nav button:hover{background:var(--cream);}
+.time-slots{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px;}
+.time-slot{padding:10px;border:1.5px solid var(--border);border-radius:8px;text-align:center;cursor:pointer;font-size:.82rem;font-weight:500;transition:all .15s;}
+.time-slot:hover{border-color:var(--red);color:var(--red);}
+.time-slot.sel{background:var(--red);color:white;border-color:var(--red);}
+.time-slot.taken{opacity:.4;cursor:not-allowed;text-decoration:line-through;}
+
+/* INPUT */
+.fi{background:var(--cream2);border:1.5px solid var(--border);padding:10px 13px;border-radius:9px;color:var(--ch);font-size:.87rem;outline:none;transition:border-color .2s;width:100%;}
+.fi:focus{border-color:rgba(200,57,43,.4);}
+.fl{display:block;font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--soft);margin-bottom:5px;}
+
+/* PDF LOADER */
+.pdf-loading{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;background:rgba(22,163,74,.1);border:1px solid rgba(22,163,74,.2);border-radius:8px;font-size:.82rem;color:var(--green);}
+@keyframes spin{to{transform:rotate(360deg)}}
+.spin{animation:spin .8s linear infinite;display:inline-block;}
+
+/* PHOTO UPLOAD */
+.upload-zone{border:2px dashed var(--border2);border-radius:12px;padding:32px;text-align:center;cursor:pointer;transition:all .2s;}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--red);background:rgba(200,57,43,.04);}
+.upload-zone input{display:none;}
+
+/* TOOLTIP */
+.tooltip{position:relative;}
+.tooltip:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1A1A1A;color:white;padding:5px 10px;border-radius:6px;font-size:.72rem;white-space:nowrap;z-index:10;pointer-events:none;}
+
 @media(max-width:768px){
-  .topbar,.tabs{padding:0 18px;}
-  .main{padding:18px;}
+  .topbar,.tabs,.main{padding-left:16px;padding-right:16px;}
   .stats-row{grid-template-columns:1fr 1fr;}
   .g2{grid-template-columns:1fr;}
   .g3{grid-template-columns:1fr;}
@@ -156,30 +208,31 @@ tr:hover td{background:rgba(0,0,0,.01);}
 <div id="login">
   <div class="lcard">
     <div class="lav">🌶️</div>
-    <div class="lh">Saz<span style="font-family:'DM Sans',sans-serif;">ó</span>n<span style="color:var(--red);">.</span></div>
+    <div class="lh">Saz<span style="font-family:'DM Sans',sans-serif">ó</span>n<span style="color:var(--red)">.</span></div>
     <div class="lsub">Portal de Cliente · Acceso con email</div>
     <div class="lf">
       <label>Tu email de contacto</label>
-      <input type="email" id="cl-email" placeholder="tu@restaurante.com" value="mauricio@mrsmash.pe"/>
+      <input type="email" id="cl-email" placeholder="tu@restaurante.com" value="mauricio@mrsmash.pe">
     </div>
     <button class="lbtn" onclick="loginCliente()">Acceder a mi dashboard</button>
     <div id="cl-msg" class="lmsg"></div>
     <div class="demo-cred">
       <strong>Demo — credenciales de prueba:</strong>
       Email: mauricio@mrsmash.pe<br>
-      (En produccion llega un link magico al email)
+      (En producción llega un link mágico al email)
     </div>
   </div>
 </div>
 
 <!-- APP -->
 <div id="app">
+
   <!-- TOPBAR -->
   <div class="topbar">
-    <div class="logo">Saz<span style="font-family:'DM Sans',sans-serif;">ó</span>n<span>.</span></div>
+    <div class="logo">Saz<span style="font-family:'DM Sans',sans-serif">ó</span>n<span>.</span></div>
     <div class="topbar-right">
       <div class="rest-badge" id="rest-name">Mr Smash</div>
-      <button class="notif tooltip" data-tip="Notificaciones" onclick="toggleNotif()">
+      <button class="notif-btn" onclick="toggleNotif()" style="position:relative;">
         🔔<div class="notif-dot" id="notif-dot"></div>
       </button>
       <button class="btn btn-o btn-sm" onclick="logoutCliente()">Salir</button>
@@ -188,9 +241,12 @@ tr:hover td{background:rgba(0,0,0,.01);}
 
   <!-- NOTIF PANEL -->
   <div class="notif-panel" id="notif-panel">
-    <div style="padding:14px 18px;font-weight:600;font-size:.85rem;border-bottom:1px solid var(--border);">Notificaciones</div>
+    <div style="padding:14px 18px;font-weight:600;font-size:.85rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
+      Notificaciones
+      <button onclick="document.getElementById('notif-panel').classList.remove('on')" style="background:none;border:none;cursor:pointer;color:var(--soft);font-size:.8rem;">Cerrar</button>
+    </div>
     <div class="notif-item unread">
-      <div>🟢 <strong>Campana de verano activa</strong> — Tu campaña en Rappi ya está generando ventas adicionales.</div>
+      <div>🟢 <strong>Campaña de verano activa</strong> — Tu campaña en Rappi está generando ventas adicionales.</div>
       <div class="notif-time">Hoy, 09:15</div>
     </div>
     <div class="notif-item unread">
@@ -202,25 +258,29 @@ tr:hover td{background:rgba(0,0,0,.01);}
       <div class="notif-time">Ayer, 18:30</div>
     </div>
     <div class="notif-item">
-      <div>📈 <strong>Record de pedidos</strong> — El martes pasado fue tu mejor dia del mes con 42 pedidos.</div>
+      <div>📈 <strong>Récord de pedidos</strong> — El martes fue tu mejor día con 42 pedidos.</div>
       <div class="notif-time">Hace 3 días</div>
+    </div>
+    <div style="padding:14px 18px;">
+      <button class="btn btn-o btn-sm" style="width:100%;" onclick="document.getElementById('notif-panel').classList.remove('on')">Ver todas →</button>
     </div>
   </div>
 
   <!-- TABS -->
   <div class="tabs">
-    <button class="tab on" onclick="goTab('resumen')">Resumen</button>
-    <button class="tab" onclick="goTab('ventas')">Ventas y Pedidos</button>
-    <button class="tab" onclick="goTab('campanas')">Campañas</button>
-    <button class="tab" onclick="goTab('menu')">Menú Digital</button>
-    <button class="tab" onclick="goTab('reportes')">Reportes</button>
-    <button class="tab" onclick="goTab('soporte')">Soporte</button>
+    <button class="tab on"  onclick="goTab('resumen')">Resumen</button>
+    <button class="tab"     onclick="goTab('ventas')">Ventas y Pedidos</button>
+    <button class="tab"     onclick="goTab('plataformas')">Plataformas</button>
+    <button class="tab"     onclick="goTab('campanas')">Campañas</button>
+    <button class="tab"     onclick="goTab('menu')">Menú Digital</button>
+    <button class="tab"     onclick="goTab('reportes')">Reportes</button>
+    <button class="tab"     onclick="goTab('soporte')">Soporte</button>
   </div>
 
   <div class="main">
 
     <!-- ═══ RESUMEN ═══ -->
-    <div id="t-resumen" class="panel on fi">
+    <div id="t-resumen" class="panel on fadein">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
         <div>
           <h1 class="pf" style="font-size:1.6rem;font-weight:700;line-height:1.15;">Buen día, <span id="greeting-name">Mauricio</span> 👋</h1>
@@ -228,7 +288,7 @@ tr:hover td{background:rgba(0,0,0,.01);}
         </div>
         <div style="display:flex;gap:10px;flex-wrap:wrap;">
           <button class="btn btn-o btn-sm" onclick="goTab('reportes')">📥 Ver reportes</button>
-          <button class="btn btn-r btn-sm" onclick="goTab('soporte')">💬 Hablar con mi GM</button>
+          <button class="btn btn-r btn-sm" onclick="openCal()">📅 Agendar reunión</button>
         </div>
       </div>
 
@@ -236,12 +296,12 @@ tr:hover td{background:rgba(0,0,0,.01);}
         <div class="scard">
           <div class="scard-n" style="color:var(--red);" id="stat-pedidos">—</div>
           <div class="scard-l">Pedidos este mes</div>
-          <div class="scard-d up" id="stat-pedidos-d">↑ Cargando...</div>
+          <div class="scard-d up" id="stat-pedidos-d">Cargando...</div>
         </div>
         <div class="scard">
           <div class="scard-n" style="color:var(--green);" id="stat-ventas">—</div>
           <div class="scard-l">Ventas totales S/</div>
-          <div class="scard-d up" id="stat-ventas-d">↑ Cargando...</div>
+          <div class="scard-d up" id="stat-ventas-d">Cargando...</div>
         </div>
         <div class="scard">
           <div class="scard-n" id="stat-rating">—</div>
@@ -255,72 +315,80 @@ tr:hover td{background:rgba(0,0,0,.01);}
         </div>
       </div>
 
-      <!-- GRAFICO DE PEDIDOS -->
       <div class="chart-wrap">
         <div class="chart-head">
           <div>
             <div class="chart-title">Pedidos por semana</div>
-            <div class="chart-sub">Ultimas 8 semanas vs periodo anterior</div>
+            <div class="chart-sub">Últimas 8 semanas vs periodo anterior</div>
           </div>
           <div class="chart-legend">
-            <div class="leg-item"><div class="leg-dot" style="background:var(--red);"></div>Este periodo</div>
-            <div class="leg-item"><div class="leg-dot" style="background:var(--cream2);border:1px solid #ccc;"></div>Periodo anterior</div>
+            <div class="leg-item"><div class="leg-dot" style="background:var(--red)"></div>Este periodo</div>
+            <div class="leg-item"><div class="leg-dot" style="background:var(--cream2);border:1px solid #ccc"></div>Periodo anterior</div>
           </div>
         </div>
         <div class="bar-chart" id="bar-chart"></div>
       </div>
 
       <div class="g2" style="margin-bottom:20px;">
-        <!-- ALERTAS -->
         <div class="card">
           <div class="ct">Novedades de tu cuenta</div>
-          <div style="display:flex;flex-direction:column;gap:10px;" id="novedades-list">
+          <div style="display:flex;flex-direction:column;gap:10px;">
             <div style="padding:12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;font-size:.84rem;">
               <div style="font-weight:600;color:var(--green);margin-bottom:3px;">🟢 Campaña activa en Rappi</div>
               Tu descuento del 20% está generando +45% en pedidos esta semana.
+              <button onclick="goTab('campanas')" style="display:block;margin-top:6px;padding:5px 12px;background:var(--green);color:white;border:none;border-radius:6px;font-size:.74rem;cursor:pointer;">Ver campaña →</button>
             </div>
             <div style="padding:12px;background:#fff8f7;border:1px solid #fecaca;border-radius:8px;font-size:.84rem;">
-              <div style="font-weight:600;color:var(--red);margin-bottom:3px;">🔴 Accion requerida</div>
-              Sube la foto de tu combo premium. Tu equipo la necesita para la campaña de la próxima semana.
-              <button onclick="goTab('menu')" style="display:block;margin-top:6px;padding:5px 12px;background:var(--red);color:white;border:none;border-radius:6px;font-size:.74rem;cursor:pointer;font-family:'DM Sans',sans-serif;">Ir a Menú Digital →</button>
+              <div style="font-weight:600;color:var(--red);margin-bottom:3px;">🔴 Acción requerida</div>
+              Sube la foto de tu combo premium para la campaña de la próxima semana.
+              <button onclick="goTab('menu')" style="display:block;margin-top:6px;padding:5px 12px;background:var(--red);color:white;border:none;border-radius:6px;font-size:.74rem;cursor:pointer;">Ir a Menú Digital →</button>
             </div>
             <div style="padding:12px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;font-size:.84rem;">
               <div style="font-weight:600;color:var(--blue);margin-bottom:3px;">🔵 Reporte enero disponible</div>
-              Tu resumen mensual está listo con todas las métricas.
-              <button onclick="goTab('reportes')" style="display:block;margin-top:6px;padding:5px 12px;background:var(--blue);color:white;border:none;border-radius:6px;font-size:.74rem;cursor:pointer;font-family:'DM Sans',sans-serif;">Ver reporte →</button>
+              Tu resumen mensual está listo para descargar.
+              <button onclick="goTab('reportes')" style="display:block;margin-top:6px;padding:5px 12px;background:var(--blue);color:white;border:none;border-radius:6px;font-size:.74rem;cursor:pointer;">Descargar PDF →</button>
             </div>
           </div>
         </div>
-
-        <!-- TOP PLATOS -->
         <div class="card">
           <div class="ct">Top platos del mes</div>
           <div style="display:flex;flex-direction:column;gap:12px;" id="top-items"></div>
         </div>
       </div>
 
-      <!-- PLATAFORMAS -->
       <div class="card">
         <div class="ct">Rendimiento por plataforma</div>
-        <div class="g3" id="platforms-grid"></div>
+        <div class="g3" id="platforms-mini"></div>
       </div>
     </div>
 
     <!-- ═══ VENTAS ═══ -->
-    <div id="t-ventas" class="panel fi">
-      <h2 class="pf" style="font-size:1.4rem;margin-bottom:20px;">Ventas y Pedidos</h2>
+    <div id="t-ventas" class="panel fadein">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
+        <h2 class="pf" style="font-size:1.4rem;">Ventas y Pedidos</h2>
+        <div style="display:flex;gap:8px;">
+          <select class="fi" id="ventas-mes" onchange="renderVentasPanel()" style="width:auto;padding:8px 12px;">
+            <option value="feb">Febrero 2025</option>
+            <option value="ene">Enero 2025</option>
+            <option value="dic">Diciembre 2024</option>
+          </select>
+          <button class="btn btn-o btn-sm" onclick="exportarVentasCSV()">📤 Exportar CSV</button>
+        </div>
+      </div>
 
       <div class="stats-row" style="grid-template-columns:repeat(3,1fr);">
-        <div class="scard"><div class="scard-n" style="color:var(--green);">S/ 18,420</div><div class="scard-l">Ventas totales feb.</div><div class="scard-d up">↑ +38% vs ene.</div></div>
-        <div class="scard"><div class="scard-n">382</div><div class="scard-l">Pedidos totales</div><div class="scard-d up">↑ +45% vs ene.</div></div>
-        <div class="scard"><div class="scard-n" style="color:var(--gold);">S/ 48</div><div class="scard-l">Ticket promedio</div><div class="scard-d up">↑ +8% vs ene.</div></div>
+        <div class="scard"><div class="scard-n" style="color:var(--green);" id="v-total">S/ 18,420</div><div class="scard-l">Ventas totales</div><div class="scard-d up">↑ +38% vs mes anterior</div></div>
+        <div class="scard"><div class="scard-n" id="v-pedidos">382</div><div class="scard-l">Pedidos</div><div class="scard-d up">↑ +45% vs mes anterior</div></div>
+        <div class="scard"><div class="scard-n" style="color:var(--gold);" id="v-ticket">S/ 48</div><div class="scard-l">Ticket promedio</div><div class="scard-d up">↑ +8% vs mes anterior</div></div>
       </div>
 
       <div class="chart-wrap">
         <div class="chart-head">
-          <div><div class="chart-title">Ventas diarias — Febrero 2025</div><div class="chart-sub">S/ por dia</div></div>
+          <div><div class="chart-title">Ventas diarias</div><div class="chart-sub">S/ por día</div></div>
+          <button class="btn btn-o btn-sm" onclick="exportarVentasCSV()">📤 Exportar</button>
         </div>
         <div id="ventas-chart" style="display:flex;align-items:flex-end;gap:4px;height:140px;padding:0 4px;"></div>
+        <div id="ventas-labels" style="display:flex;justify-content:space-between;font-size:.68rem;color:var(--soft);margin-top:6px;padding:0 4px;"></div>
       </div>
 
       <div class="g2">
@@ -328,132 +396,192 @@ tr:hover td{background:rgba(0,0,0,.01);}
           <div class="ct">Pedidos por hora (promedio)</div>
           <div id="hour-chart" style="display:flex;align-items:flex-end;gap:5px;height:100px;margin-bottom:6px;"></div>
           <div style="display:flex;justify-content:space-between;font-size:.68rem;color:var(--soft);padding:0 2px;">
-            <span>11am</span><span>1pm</span><span>3pm</span><span>5pm</span><span>7pm</span><span>9pm</span>
+            <span>11am</span><span>12pm</span><span>1pm</span><span>2pm</span><span>3pm</span><span>5pm</span><span>7pm</span><span>9pm</span>
           </div>
         </div>
         <div class="card">
-          <div class="ct">Pedidos por dia de semana</div>
+          <div class="ct">Pedidos por día de semana</div>
           <div id="day-chart" style="display:flex;align-items:flex-end;gap:8px;height:100px;margin-bottom:6px;"></div>
           <div style="display:flex;justify-content:space-between;font-size:.68rem;color:var(--soft);padding:0 4px;">
-            <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sab</span><span>Dom</span>
+            <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
           </div>
         </div>
       </div>
 
       <div class="card" style="margin-top:16px;">
-        <div class="ct">Ultimos pedidos</div>
+        <div class="ct">Detalle por día</div>
         <table>
           <tr><th>Fecha</th><th>Plataforma</th><th>Pedidos</th><th>Ventas</th><th>Ticket prom.</th><th>Rating</th></tr>
-          <tr><td>24 Feb</td><td><span class="bg bg-r">Rappi</span></td><td><strong style="color:var(--ch);">22</strong></td><td>S/ 1,056</td><td>S/ 48</td><td>⭐ 4.9</td></tr>
-          <tr><td>23 Feb</td><td><span class="bg bg-b">PedidosYa</span></td><td><strong style="color:var(--ch);">15</strong></td><td>S/ 660</td><td>S/ 44</td><td>⭐ 4.7</td></tr>
-          <tr><td>23 Feb</td><td><span class="bg bg-r">Rappi</span></td><td><strong style="color:var(--ch);">28</strong></td><td>S/ 1,428</td><td>S/ 51</td><td>⭐ 4.8</td></tr>
-          <tr><td>22 Feb</td><td><span class="bg bg-r">Rappi</span></td><td><strong style="color:var(--ch);">19</strong></td><td>S/ 855</td><td>S/ 45</td><td>⭐ 5.0</td></tr>
-          <tr><td>21 Feb</td><td><span class="bg bg-p">Didi Food</span></td><td><strong style="color:var(--ch);">11</strong></td><td>S/ 473</td><td>S/ 43</td><td>⭐ 4.6</td></tr>
+          <tr><td>24 Feb</td><td><span class="bg bg-r">Rappi</span></td><td><strong>22</strong></td><td>S/ 1,056</td><td>S/ 48</td><td>⭐ 4.9</td></tr>
+          <tr><td>23 Feb</td><td><span class="bg bg-b">PedidosYa</span></td><td><strong>15</strong></td><td>S/ 660</td><td>S/ 44</td><td>⭐ 4.7</td></tr>
+          <tr><td>23 Feb</td><td><span class="bg bg-r">Rappi</span></td><td><strong>28</strong></td><td>S/ 1,428</td><td>S/ 51</td><td>⭐ 4.8</td></tr>
+          <tr><td>22 Feb</td><td><span class="bg bg-r">Rappi</span></td><td><strong>19</strong></td><td>S/ 855</td><td>S/ 45</td><td>⭐ 5.0</td></tr>
+          <tr><td>21 Feb</td><td><span class="bg bg-p">Didi Food</span></td><td><strong>11</strong></td><td>S/ 473</td><td>S/ 43</td><td>⭐ 4.6</td></tr>
+          <tr><td>20 Feb</td><td><span class="bg bg-r">Rappi</span></td><td><strong>25</strong></td><td>S/ 1,175</td><td>S/ 47</td><td>⭐ 4.8</td></tr>
+          <tr><td>19 Feb</td><td><span class="bg bg-b">PedidosYa</span></td><td><strong>18</strong></td><td>S/ 774</td><td>S/ 43</td><td>⭐ 4.9</td></tr>
         </table>
       </div>
     </div>
 
+    <!-- ═══ PLATAFORMAS ═══ -->
+    <div id="t-plataformas" class="panel fadein">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:12px;">
+        <h2 class="pf" style="font-size:1.4rem;">Plataformas conectadas</h2>
+        <span class="bg bg-g">3 / 3 activas</span>
+      </div>
+      <p style="font-size:.88rem;color:var(--soft);margin-bottom:20px;">Tu equipo Sazón gestiona estas cuentas directamente. Los datos se sincronizan cada 24 horas.</p>
+
+      <div class="g3" style="margin-bottom:20px;" id="plat-cards"></div>
+
+      <div class="card" style="margin-bottom:20px;">
+        <div class="ct">Comparación de rendimiento</div>
+        <table>
+          <tr><th>Plataforma</th><th>Pedidos/mes</th><th>Ventas</th><th>Ticket prom.</th><th>Rating</th><th>Comisión</th><th>Tendencia</th></tr>
+          <tr>
+            <td><span class="bg bg-r">Rappi</span></td>
+            <td><strong>228</strong></td><td>S/ 10,944</td><td>S/ 48</td>
+            <td>⭐ 4.9</td><td>24.5%</td>
+            <td><span style="color:var(--green);font-weight:600;">↑ +52%</span></td>
+          </tr>
+          <tr>
+            <td><span class="bg bg-b">PedidosYa</span></td>
+            <td><strong>103</strong></td><td>S/ 4,532</td><td>S/ 44</td>
+            <td>⭐ 4.7</td><td>26.0%</td>
+            <td><span style="color:var(--green);font-weight:600;">↑ +38%</span></td>
+          </tr>
+          <tr>
+            <td><span class="bg bg-p">Didi Food</span></td>
+            <td><strong>51</strong></td><td>S/ 2,449</td><td>S/ 48</td>
+            <td>⭐ 4.6</td><td>25.2%</td>
+            <td><span style="color:var(--green);font-weight:600;">↑ +28%</span></td>
+          </tr>
+        </table>
+        <div style="margin-top:14px;padding:12px;background:var(--cream2);border-radius:8px;font-size:.82rem;color:var(--soft);">
+          💡 <strong>Nota:</strong> Tu equipo Sazón negoció la comisión de Rappi de 28% → 24.5%, ahorrándote S/ 788 este mes.
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="ct">Credenciales de plataformas (solo tu equipo Sazón las gestiona)</div>
+        <div id="creds-list"></div>
+        <div style="margin-top:16px;padding:14px;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;font-size:.82rem;">
+          <strong style="color:#92400e;">🔒 Seguridad:</strong> Tus credenciales se almacenan de forma cifrada y solo son accesibles por tu Growth Manager asignado. Nunca se comparten con terceros.
+        </div>
+      </div>
+    </div>
+
     <!-- ═══ CAMPAÑAS ═══ -->
-    <div id="t-campanas" class="panel fi">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+    <div id="t-campanas" class="panel fadein">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
         <h2 class="pf" style="font-size:1.4rem;">Campañas activas</h2>
-        <button class="btn btn-r btn-sm" onclick="goTab('soporte')">+ Solicitar nueva campaña</button>
+        <button class="btn btn-r btn-sm" onclick="solicitarCampana()">+ Solicitar nueva campaña</button>
       </div>
 
       <div class="stats-row" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px;">
-        <div class="scard"><div class="scard-n">3</div><div class="scard-l">Campañas activas</div><div class="scard-d up">↑ Este mes</div></div>
-        <div class="scard"><div class="scard-n" style="color:var(--green);">+45%</div><div class="scard-l">Incremento promedio</div><div class="scard-d up">↑ Con campaña vs sin</div></div>
-        <div class="scard"><div class="scard-n" style="color:var(--gold);">4.2x</div><div class="scard-l">Retorno de inversion</div><div class="scard-d up">↑ ROAS actual</div></div>
+        <div class="scard"><div class="scard-n">3</div><div class="scard-l">Campañas activas</div><div class="scard-d up">Este mes</div></div>
+        <div class="scard"><div class="scard-n" style="color:var(--green);">+45%</div><div class="scard-l">Incremento promedio</div><div class="scard-d up">Con campaña vs sin</div></div>
+        <div class="scard"><div class="scard-n" style="color:var(--gold);">4.2x</div><div class="scard-l">Retorno inversión</div><div class="scard-d up">ROAS actual</div></div>
       </div>
 
-      <div class="g3" id="campanas-grid"></div>
+      <div class="g3" id="campanas-grid" style="margin-bottom:20px;"></div>
 
-      <div class="card" style="margin-top:16px;">
-        <div class="ct">Historico de campañas</div>
+      <div class="card">
+        <div class="ct">Histórico de campañas</div>
         <table>
-          <tr><th>Periodo</th><th>Tipo</th><th>Plataforma</th><th>Inversion</th><th>Ventas extra</th><th>ROAS</th><th>Estado</th></tr>
+          <tr><th>Periodo</th><th>Tipo</th><th>Plataforma</th><th>Inversión</th><th>Ventas extra</th><th>ROAS</th><th>Estado</th></tr>
           <tr><td>Feb 2025</td><td>Descuento 20%</td><td><span class="bg bg-r">Rappi</span></td><td>S/ 1,200</td><td style="color:var(--green);">S/ 5,040</td><td><strong>4.2x</strong></td><td><span class="bg bg-g">Activa</span></td></tr>
-          <tr><td>Ene 2025</td><td>Envio gratis</td><td><span class="bg bg-b">PedidosYa</span></td><td>S/ 800</td><td style="color:var(--green);">S/ 2,960</td><td><strong>3.7x</strong></td><td><span class="bg bg-k">Finalizada</span></td></tr>
+          <tr><td>Ene 2025</td><td>Envío gratis</td><td><span class="bg bg-b">PedidosYa</span></td><td>S/ 800</td><td style="color:var(--green);">S/ 2,960</td><td><strong>3.7x</strong></td><td><span class="bg bg-k">Finalizada</span></td></tr>
           <tr><td>Ene 2025</td><td>Destacado</td><td><span class="bg bg-r">Rappi</span></td><td>S/ 600</td><td style="color:var(--green);">S/ 1,980</td><td><strong>3.3x</strong></td><td><span class="bg bg-k">Finalizada</span></td></tr>
           <tr><td>Dic 2024</td><td>Navidad combo</td><td><span class="bg bg-r">Rappi</span></td><td>S/ 1,500</td><td style="color:var(--green);">S/ 7,500</td><td><strong>5.0x</strong></td><td><span class="bg bg-k">Finalizada</span></td></tr>
         </table>
       </div>
     </div>
 
-    <!-- ═══ MENU DIGITAL ═══ -->
-    <div id="t-menu" class="panel fi">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;">
+    <!-- ═══ MENU ═══ -->
+    <div id="t-menu" class="panel fadein">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
         <h2 class="pf" style="font-size:1.4rem;">Menú Digital</h2>
-        <button class="btn btn-r btn-sm" onclick="goTab('soporte')">📤 Enviar fotos nuevas</button>
+        <button class="btn btn-r btn-sm" onclick="document.getElementById('m-fotos').classList.add('open')">📤 Subir fotos nuevas</button>
       </div>
 
-      <div style="padding:16px;background:#fff8f7;border:1px solid #fecaca;border-radius:10px;margin-bottom:20px;font-size:.85rem;">
-        <strong style="color:var(--red);">⚠️ Accion requerida:</strong> Tu equipo Sazón necesita la foto del <strong>Combo Premium Smash</strong> para la campaña de la próxima semana. Envíala por WhatsApp con el asunto "FOTO MENU".
+      <div style="padding:14px 18px;background:#fff8f7;border:1px solid #fecaca;border-radius:10px;margin-bottom:20px;font-size:.85rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
+        <span>⚠️ <strong>Acción requerida:</strong> Necesitamos la foto del <strong>Combo Premium Smash</strong> para la campaña de la próxima semana.</span>
+        <button class="btn btn-r btn-sm" onclick="document.getElementById('m-fotos').classList.add('open')">Subir ahora</button>
       </div>
 
-      <div class="g3" id="menu-grid"></div>
+      <div class="g3" id="menu-grid" style="margin-bottom:20px;"></div>
 
-      <div class="card" style="margin-top:16px;">
-        <div class="ct">Optimizaciones realizadas por Sazon</div>
+      <div class="card">
+        <div class="ct">Optimizaciones realizadas por Sazón</div>
         <table>
-          <tr><th>Fecha</th><th>Item</th><th>Cambio</th><th>Impacto</th></tr>
-          <tr><td>18 Feb</td><td>Smash Clásico</td><td>Foto + descripcion optimizada</td><td style="color:var(--green);">+22% clics</td></tr>
-          <tr><td>15 Feb</td><td>Combo Doble</td><td>Precio ancla ajustado</td><td style="color:var(--green);">+18% conv.</td></tr>
-          <tr><td>10 Feb</td><td>Bebidas</td><td>Orden de presentacion</td><td style="color:var(--green);">+12% ticket</td></tr>
-          <tr><td>01 Feb</td><td>Menu completo</td><td>Auditoria inicial y restructura</td><td style="color:var(--green);">Base optimizada</td></tr>
+          <tr><th>Fecha</th><th>Ítem</th><th>Cambio realizado</th><th>Impacto medido</th></tr>
+          <tr><td>18 Feb</td><td>Smash Clásico</td><td>Foto + descripción optimizada</td><td style="color:var(--green);">+22% clics</td></tr>
+          <tr><td>15 Feb</td><td>Combo Doble</td><td>Precio ancla ajustado</td><td style="color:var(--green);">+18% conversión</td></tr>
+          <tr><td>10 Feb</td><td>Bebidas</td><td>Orden de presentación</td><td style="color:var(--green);">+12% ticket</td></tr>
+          <tr><td>01 Feb</td><td>Menú completo</td><td>Auditoría inicial y restructura</td><td style="color:var(--green);">Base optimizada</td></tr>
         </table>
       </div>
     </div>
 
     <!-- ═══ REPORTES ═══ -->
-    <div id="t-reportes" class="panel fi">
-      <h2 class="pf" style="font-size:1.4rem;margin-bottom:20px;">Reportes mensuales</h2>
-
-      <div class="alert-bar" style="padding:14px 18px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;margin-bottom:20px;font-size:.85rem;">
-        📊 <strong>Reporte de Enero 2025 disponible.</strong> Tu resumen completo con análisis de crecimiento, campañas y recomendaciones para febrero está listo.
+    <div id="t-reportes" class="panel fadein">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
+        <h2 class="pf" style="font-size:1.4rem;">Reportes mensuales</h2>
       </div>
-
+      <p style="font-size:.88rem;color:var(--soft);margin-bottom:20px;">Cada reporte incluye análisis completo de ventas, campañas, métricas de plataforma y recomendaciones.</p>
+      <div style="padding:14px 18px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;margin-bottom:20px;font-size:.85rem;">
+        📊 <strong>Reporte de Enero 2025 disponible.</strong> Tu resumen completo con análisis de crecimiento está listo para descargar.
+      </div>
       <div style="display:flex;flex-direction:column;gap:12px;" id="reportes-list"></div>
     </div>
 
     <!-- ═══ SOPORTE ═══ -->
-    <div id="t-soporte" class="panel fi">
+    <div id="t-soporte" class="panel fadein">
       <h2 class="pf" style="font-size:1.4rem;margin-bottom:6px;">Tu Growth Manager</h2>
-      <p style="font-size:.88rem;color:var(--soft);margin-bottom:20px;">Nuestro equipo está disponible para cualquier consulta o solicitud.</p>
-
+      <p style="font-size:.88rem;color:var(--soft);margin-bottom:20px;">Equipo disponible de lunes a sábado 9am–7pm.</p>
       <div class="g2" style="margin-bottom:20px;">
         <div class="card" style="display:flex;gap:16px;align-items:flex-start;">
           <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--red),var(--gold));display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;">👤</div>
-          <div>
-            <div style="font-weight:600;margin-bottom:2px;">Tu Growth Manager</div>
-            <div style="font-size:.8rem;color:var(--soft);margin-bottom:10px;">Sazon Growth Partner · Equipo Activo</div>
-            <div style="display:flex;gap:6px;flex-wrap:wrap;">
-              <span class="bg bg-g">● En linea</span>
-              <span class="bg bg-k">Resp. en &lt;2h</span>
+          <div style="flex:1;">
+            <div style="font-weight:600;margin-bottom:2px;">Growth Manager Sazón</div>
+            <div style="font-size:.8rem;color:var(--soft);margin-bottom:12px;">Equipo Activo · Responde en menos de 2h</div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap;">
+              <span class="bg bg-g">● En línea</span>
+              <span class="bg bg-k">Resp. &lt;2h</span>
             </div>
+            <button class="btn btn-r btn-sm" style="margin-top:14px;width:100%;" onclick="contactarWA()">💬 Enviar WhatsApp directo</button>
           </div>
         </div>
         <div class="card">
-          <div class="ct">Proxima reunion de seguimiento</div>
+          <div class="ct">Próxima reunión de seguimiento</div>
           <div style="font-size:1.1rem;font-weight:600;margin-bottom:4px;">Viernes 28 Feb · 10:00 AM</div>
-          <div style="font-size:.83rem;color:var(--soft);margin-bottom:14px;">Revision de metricas de febrero + plan de campañas marzo</div>
-          <button class="btn btn-o btn-sm">📅 Ver en calendario</button>
+          <div style="font-size:.83rem;color:var(--soft);margin-bottom:14px;">Revisión métricas de febrero + plan campañas marzo</div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;">
+            <button class="btn btn-r btn-sm" onclick="openCal()">📅 Agendar nueva reunión</button>
+            <button class="btn btn-o btn-sm" onclick="agregarCalGoogle()">+ Agregar a Google Calendar</button>
+          </div>
         </div>
       </div>
-
       <div class="g2">
         <div class="card">
-          <div class="ct">Enviar mensaje directo</div>
+          <div class="ct">Enviar mensaje al equipo</div>
           <div style="display:flex;flex-direction:column;gap:10px;">
-            <select style="background:var(--cream2);border:1px solid var(--border2);padding:10px 13px;border-radius:8px;font-size:.86rem;outline:none;cursor:pointer;">
-              <option>Consulta sobre campañas</option>
-              <option>Enviar fotos de menú</option>
-              <option>Solicitar nueva campaña</option>
-              <option>Reporte personalizado</option>
-              <option>Otro</option>
-            </select>
-            <textarea placeholder="Describe tu consulta o solicitud..." rows="4" style="background:var(--cream2);border:1px solid var(--border2);padding:12px 13px;border-radius:8px;font-size:.86rem;resize:none;outline:none;font-family:'DM Sans',sans-serif;"></textarea>
-            <button class="btn btn-r" onclick="sendSoporte()">Enviar mensaje → WhatsApp</button>
+            <div>
+              <label class="fl">Tipo de consulta</label>
+              <select class="fi" id="sop-tipo">
+                <option>Consulta sobre campañas</option>
+                <option>Enviar fotos de menú</option>
+                <option>Solicitar nueva campaña</option>
+                <option>Reporte personalizado</option>
+                <option>Revisión de métricas</option>
+                <option>Otro</option>
+              </select>
+            </div>
+            <div>
+              <label class="fl">Mensaje</label>
+              <textarea id="sop-msg" class="fi" placeholder="Describe tu consulta o solicitud..." rows="4"></textarea>
+            </div>
+            <button class="btn btn-r" onclick="sendSoporte()">Enviar por WhatsApp →</button>
           </div>
         </div>
         <div class="card">
@@ -468,8 +596,8 @@ tr:hover td{background:rgba(0,0,0,.01);}
               <div style="color:var(--soft);">Propuesta lista el 1 de marzo</div>
             </div>
             <div style="padding:12px;background:var(--cream2);border-radius:8px;font-size:.82rem;">
-              <div style="display:flex;justify-content:space-between;margin-bottom:3px;"><strong>Negociacion comision Rappi</strong><span class="bg bg-g">Completado</span></div>
-              <div style="color:var(--soft);">Comision reducida de 28% a 24.5%</div>
+              <div style="display:flex;justify-content:space-between;margin-bottom:3px;"><strong>Negociación comisión Rappi</strong><span class="bg bg-g">Completado</span></div>
+              <div style="color:var(--soft);">Comisión reducida de 28% → 24.5%</div>
             </div>
           </div>
         </div>
@@ -479,67 +607,190 @@ tr:hover td{background:rgba(0,0,0,.01);}
   </div><!-- /main -->
 </div><!-- /app -->
 
+<!-- ═══ MODAL: CALENDARIO ═══ -->
+<div class="modal-bg" id="m-cal">
+  <div class="modal" style="width:460px;">
+    <button class="modal-close" onclick="document.getElementById('m-cal').classList.remove('open')">×</button>
+    <h3>📅 Agendar reunión de seguimiento</h3>
+    <p style="font-size:.84rem;color:var(--soft);margin-bottom:16px;">Selecciona un día y horario disponible. Tu Growth Manager confirmará por WhatsApp.</p>
+    <div class="cal-nav">
+      <button onclick="calPrev()">← Anterior</button>
+      <strong id="cal-mes-label" style="font-size:.9rem;"></strong>
+      <button onclick="calNext()">Siguiente →</button>
+    </div>
+    <div class="cal-head">
+      <span>Dom</span><span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span>
+    </div>
+    <div class="cal-grid" id="cal-grid"></div>
+    <div id="cal-slots-wrap" style="display:none;">
+      <div style="font-size:.82rem;font-weight:600;margin-bottom:8px;" id="cal-slots-title">Horarios disponibles</div>
+      <div class="time-slots" id="cal-slots"></div>
+    </div>
+    <div id="cal-confirm" style="display:none;margin-top:16px;">
+      <div style="padding:14px;background:var(--green2);border:1px solid rgba(22,163,74,.2);border-radius:10px;font-size:.84rem;margin-bottom:14px;" id="cal-confirm-text"></div>
+      <div style="display:flex;gap:8px;">
+        <button class="btn btn-r" style="flex:1;" onclick="confirmarReunion()">✓ Confirmar por WhatsApp</button>
+        <button class="btn btn-o" onclick="document.getElementById('cal-confirm').style.display='none';document.getElementById('cal-slots-wrap').style.display='block'">Cambiar</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: SUBIR FOTOS ═══ -->
+<div class="modal-bg" id="m-fotos">
+  <div class="modal">
+    <button class="modal-close" onclick="document.getElementById('m-fotos').classList.remove('open')">×</button>
+    <h3>📤 Subir fotos de menú</h3>
+    <p style="font-size:.84rem;color:var(--soft);margin-bottom:16px;">Sube las fotos de tus platos. Tu equipo las optimiza y actualiza en las plataformas en 24-48h.</p>
+
+    <div style="margin-bottom:14px;">
+      <label class="fl">Nombre del plato</label>
+      <input type="text" class="fi" id="foto-plato" placeholder="Ej: Combo Premium Smash">
+    </div>
+    <div style="margin-bottom:14px;">
+      <label class="fl">Descripción breve (opcional)</label>
+      <textarea class="fi" rows="2" id="foto-desc" placeholder="Ej: Incluye papas y bebida, perfecto para compartir"></textarea>
+    </div>
+
+    <div class="upload-zone" id="upload-zone" onclick="document.getElementById('foto-input').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleDrop(event)">
+      <input type="file" id="foto-input" multiple accept="image/*" onchange="handleFiles(this.files)">
+      <div style="font-size:2rem;margin-bottom:8px;">📷</div>
+      <div style="font-weight:600;margin-bottom:4px;">Arrastra fotos aquí o haz clic</div>
+      <div style="font-size:.78rem;color:var(--soft);">JPG, PNG · Mínimo 800x600px · Máx 10MB</div>
+    </div>
+    <div id="fotos-preview" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;"></div>
+
+    <div style="display:flex;gap:10px;margin-top:16px;">
+      <button class="btn btn-r" style="flex:1;" onclick="enviarFotos()">Enviar por WhatsApp →</button>
+      <button class="btn btn-o" onclick="document.getElementById('m-fotos').classList.remove('open')">Cancelar</button>
+    </div>
+    <p style="font-size:.74rem;color:var(--soft);margin-top:8px;text-align:center;">Las fotos se enviarán a tu Growth Manager junto con el nombre del plato.</p>
+  </div>
+</div>
+
+<!-- ═══ MODAL: SOLICITAR CAMPAÑA ═══ -->
+<div class="modal-bg" id="m-campana">
+  <div class="modal">
+    <button class="modal-close" onclick="document.getElementById('m-campana').classList.remove('open')">×</button>
+    <h3>📣 Solicitar nueva campaña</h3>
+    <div style="display:flex;flex-direction:column;gap:12px;">
+      <div>
+        <label class="fl">Plataforma</label>
+        <select class="fi" id="camp-plat">
+          <option>Rappi</option><option>PedidosYa</option><option>Didi Food</option><option>Todas</option>
+        </select>
+      </div>
+      <div>
+        <label class="fl">Tipo de campaña</label>
+        <select class="fi" id="camp-tipo">
+          <option>Descuento en productos</option>
+          <option>Envío gratis</option>
+          <option>2x1 en combo</option>
+          <option>Destacado en app</option>
+          <option>Combo especial</option>
+        </select>
+      </div>
+      <div class="g2">
+        <div>
+          <label class="fl">Inversión mensual S/</label>
+          <input type="number" class="fi" id="camp-inv" placeholder="800">
+        </div>
+        <div>
+          <label class="fl">Duración</label>
+          <select class="fi" id="camp-dur">
+            <option>1 semana</option><option>2 semanas</option><option>1 mes</option>
+          </select>
+        </div>
+      </div>
+      <div>
+        <label class="fl">Detalle adicional (opcional)</label>
+        <textarea class="fi" rows="3" id="camp-nota" placeholder="Ej: Quiero enfocarme en el Smash Clásico durante el fin de semana"></textarea>
+      </div>
+      <button class="btn btn-r" onclick="enviarSolicitudCampana()">Enviar solicitud por WhatsApp →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═══ MODAL: PDF LOADING ═══ -->
+<div class="modal-bg" id="m-pdf">
+  <div class="modal" style="width:340px;text-align:center;padding:40px 30px;">
+    <div style="font-size:3rem;margin-bottom:16px;">📊</div>
+    <h3 style="margin-bottom:8px;">Generando tu reporte...</h3>
+    <p style="font-size:.84rem;color:var(--soft);margin-bottom:20px;" id="pdf-status">Preparando datos...</p>
+    <div style="display:flex;justify-content:center;">
+      <div class="pdf-loading"><span class="spin">⟳</span> Procesando...</div>
+    </div>
+  </div>
+</div>
+
 <script>
-// ── DATA DEL CLIENTE (en produccion viene de Supabase/API) ────────────────────
+// ─── DATA ────────────────────────────────────────────────────────────────────
+const WA_NUMBER = "51952363643";
+
 const CLIENTES = {
   "mauricio@mrsmash.pe": {
     nombre: "Mauricio",
     restaurante: "Mr Smash",
     plan: "Growth",
-    gm: "Equipo Sazon",
-    wa: "51952363643",
-    stats: { pedidos: 382, ventas: 18420, rating: 4.8, ticket: 48 },
-    pedidos_hist: [180, 210, 240, 265, 290, 310, 345, 382],   // 8 semanas
-    pedidos_prev: [120, 145, 168, 190, 212, 230, 255, 270],
+    wa: WA_NUMBER,
+    stats: { pedidos:382, ventas:18420, rating:4.8, ticket:48 },
+    pedidos_hist: [180,210,240,265,290,310,345,382],
+    pedidos_prev: [120,145,168,190,212,230,255,270],
     semanas: ["5 ene","12 ene","19 ene","26 ene","2 feb","9 feb","16 feb","23 feb"],
-    by_hour: [2, 4, 6, 8, 14, 18, 22, 20, 16, 12, 8, 4],   // 11am-9pm
-    by_day:  [38, 52, 45, 55, 68, 82, 42],                  // lun-dom
-    ventas_diarias: Array.from({length:24},(_,i)=>Math.floor(Math.random()*600+300+i*20)),
+    by_hour: [3,5,8,10,16,20,22,18,15,12,9,5],
+    by_day:  [38,52,45,55,68,82,42],
+    ventas_diarias: [820,950,1100,780,880,1250,1480,920,1050,1380,1600,1100,890,1020,1350,1580,1200,950,1100,1420,1650,1300,980,1120],
     top_items: [
-      { n:"Smash Clásico",        pct:32, ventas:5894 },
-      { n:"Combo Doble",          pct:24, ventas:4421 },
-      { n:"Smash con Queso",      pct:18, ventas:3316 },
-      { n:"Papas Sazonadas",      pct:14, ventas:2579 },
-      { n:"Bebida del día",       pct:12, ventas:2211 },
+      {n:"Smash Clásico",    pct:32, ventas:5894},
+      {n:"Combo Doble",      pct:24, ventas:4421},
+      {n:"Smash con Queso",  pct:18, ventas:3316},
+      {n:"Papas Sazonadas",  pct:14, ventas:2579},
+      {n:"Bebida del día",   pct:12, ventas:2211},
     ],
     plataformas: [
-      { n:"Rappi",     ico:"🛵", pedidos:228, ventas:10944, rating:4.9, color:"var(--red)" },
-      { n:"PedidosYa", ico:"🟡", pedidos:103, ventas:4532,  rating:4.7, color:"#f59e0b" },
-      { n:"Didi Food", ico:"🟠", pedidos:51,  ventas:2449,  rating:4.6, color:"#f97316" },
+      {n:"Rappi",     ico:"🛵",  pedidos:228, ventas:10944, rating:4.9, comision:"24.5%", color:"#ef4444", status:"connected"},
+      {n:"PedidosYa", ico:"🟡",  pedidos:103, ventas:4532,  rating:4.7, comision:"26.0%", color:"#f59e0b", status:"connected"},
+      {n:"Didi Food", ico:"🟠",  pedidos:51,  ventas:2449,  rating:4.6, comision:"25.2%", color:"#f97316", status:"connected"},
+    ],
+    creds: [
+      {plat:"Rappi",     user:"mr.smash.delivery",     last_sync:"Hoy 06:00", status:"connected"},
+      {plat:"PedidosYa", user:"mrsmash@gmail.com",     last_sync:"Hoy 06:05", status:"connected"},
+      {plat:"Didi Food", user:"mrsmash.didi",           last_sync:"Hoy 06:10", status:"connected"},
     ],
     campanas: [
-      { t:"Descuento 20% — Smash Clasico", plat:"Rappi", tipo:"Descuento", inv:1200, extra:5040, roas:4.2, activa:true, vence:"28 Feb" },
-      { t:"Envio gratis fin de semana",    plat:"PedidosYa", tipo:"Envio gratis", inv:600, extra:2220, roas:3.7, activa:true, vence:"28 Feb" },
-      { t:"Destacado almuerzo",            plat:"Didi Food", tipo:"Destacado", inv:400, extra:1480, roas:3.7, activa:true, vence:"28 Feb" },
+      {t:"Descuento 20% — Smash Clásico", plat:"Rappi",     tipo:"Descuento", inv:1200, extra:5040, roas:4.2, vence:"28 Feb"},
+      {t:"Envío gratis fin de semana",    plat:"PedidosYa", tipo:"Envío gratis", inv:600, extra:2220, roas:3.7, vence:"28 Feb"},
+      {t:"Destacado almuerzo",            plat:"Didi Food",  tipo:"Destacado",  inv:400, extra:1480, roas:3.7, vence:"28 Feb"},
     ],
     menu: [
-      { n:"Smash Clásico",   precio:38, ventas:"Alta", foto:"✅", opt:"✅", badge:"bg-g", badge_t:"Optimizado" },
-      { n:"Combo Doble",     precio:55, ventas:"Alta", foto:"✅", opt:"✅", badge:"bg-g", badge_t:"Optimizado" },
-      { n:"Smash con Queso", precio:42, ventas:"Media",foto:"✅", opt:"✅", badge:"bg-g", badge_t:"Optimizado" },
-      { n:"Combo Premium",   precio:68, ventas:"—",    foto:"❌", opt:"❌", badge:"bg-r", badge_t:"Foto pendiente" },
-      { n:"Papas Sazonadas", precio:15, ventas:"Alta", foto:"✅", opt:"✅", badge:"bg-g", badge_t:"Optimizado" },
-      { n:"Bebida del dia",  precio:12, ventas:"Media",foto:"⚠️", opt:"✅", badge:"bg-o", badge_t:"Foto mejorable" },
+      {n:"Smash Clásico",   precio:38, ventas:"Alta",  foto:"✅", opt:"✅", badge:"bg-g", badge_t:"Optimizado"},
+      {n:"Combo Doble",     precio:55, ventas:"Alta",  foto:"✅", opt:"✅", badge:"bg-g", badge_t:"Optimizado"},
+      {n:"Smash con Queso", precio:42, ventas:"Media", foto:"✅", opt:"✅", badge:"bg-g", badge_t:"Optimizado"},
+      {n:"Combo Premium",   precio:68, ventas:"—",     foto:"❌", opt:"❌", badge:"bg-r", badge_t:"Foto pendiente"},
+      {n:"Papas Sazonadas", precio:15, ventas:"Alta",  foto:"✅", opt:"✅", badge:"bg-g", badge_t:"Optimizado"},
+      {n:"Bebida del día",  precio:12, ventas:"Media", foto:"⚠️", opt:"✅", badge:"bg-o", badge_t:"Foto mejorable"},
     ],
     reportes: [
-      { mes:"Enero 2025", estado:"Disponible", pedidos:267, ventas:12816, crec:"+38%", link:"#" },
-      { mes:"Diciembre 2024", estado:"Disponible", pedidos:195, ventas:9360, crec:"+22%", link:"#" },
-      { mes:"Noviembre 2024", estado:"Disponible", pedidos:160, ventas:7680, crec:"Linea base", link:"#" },
+      {mes:"Enero 2025",     pedidos:267, ventas:12816, crec:"+38%", rating:4.7, campanas:3},
+      {mes:"Diciembre 2024", pedidos:195, ventas:9360,  crec:"+22%", rating:4.6, campanas:2},
+      {mes:"Noviembre 2024", pedidos:160, ventas:7680,  crec:"Línea base", rating:4.5, campanas:1},
     ]
   }
 };
 
 let currentClient = null;
+let uploadedFiles = [];
 
+// ─── AUTH ────────────────────────────────────────────────────────────────────
 function loginCliente() {
   const em = document.getElementById("cl-email").value.trim().toLowerCase();
   const cl = CLIENTES[em];
+  const msg = document.getElementById("cl-msg");
   if (!cl) {
-    const msg = document.getElementById("cl-msg");
     msg.textContent = "Email no encontrado. Usa mauricio@mrsmash.pe para la demo.";
     msg.className = "lmsg lerr";
     return;
   }
-  const msg = document.getElementById("cl-msg");
   msg.textContent = "Accediendo...";
   msg.className = "lmsg lok";
   currentClient = cl;
@@ -551,86 +802,78 @@ function loginCliente() {
 }
 
 function logoutCliente() {
-  if (!confirm("Cerrar sesion?")) return;
+  if (!confirm("¿Cerrar sesión?")) return;
   document.getElementById("app").classList.remove("on");
   document.getElementById("login").style.display = "flex";
   currentClient = null;
 }
 
-function toggleNotif() {
-  const p = document.getElementById("notif-panel");
-  p.classList.toggle("on");
-  document.getElementById("notif-dot").style.display = "none";
-}
-
-document.addEventListener("click", e => {
-  const np = document.getElementById("notif-panel");
-  if (np.classList.contains("on") && !e.target.closest(".notif") && !e.target.closest(".notif-panel")) {
-    np.classList.remove("on");
-  }
+document.addEventListener("keydown", e => {
+  if (e.key === "Enter" && document.getElementById("login").style.display !== "none") loginCliente();
 });
 
+// ─── NAVIGATION ──────────────────────────────────────────────────────────────
 function goTab(id) {
   document.querySelectorAll(".tab").forEach(b => b.classList.remove("on"));
-  document.querySelectorAll(".panel").forEach(p => p.classList.remove("on"));
-  document.querySelector(`.tab[onclick="goTab('${id}')"]`).classList.add("on");
+  document.querySelectorAll(".panel").forEach(p => { p.classList.remove("on"); p.classList.remove("fadein"); });
+  const btn = document.querySelector(`.tab[onclick="goTab('${id}')"]`);
+  if (btn) btn.classList.add("on");
   const p = document.getElementById("t-" + id);
-  p.classList.add("on");
-  void p.offsetWidth;
-  p.classList.add("fi");
+  if (p) { p.classList.add("on"); void p.offsetWidth; p.classList.add("fadein"); }
 }
 
+function toggleNotif() {
+  document.getElementById("notif-panel").classList.toggle("on");
+  document.getElementById("notif-dot").style.display = "none";
+}
+document.addEventListener("click", e => {
+  const np = document.getElementById("notif-panel");
+  if (np.classList.contains("on") && !e.target.closest(".notif-btn") && !e.target.closest(".notif-panel"))
+    np.classList.remove("on");
+});
+
+// ─── RENDER ALL ───────────────────────────────────────────────────────────────
 function renderAll() {
   const c = currentClient;
   document.getElementById("rest-name").textContent = c.restaurante;
   document.getElementById("greeting-name").textContent = c.nombre;
-
-  // Stats con animacion
   animateNum("stat-pedidos", 0, c.stats.pedidos, "");
   animateNum("stat-ventas",  0, c.stats.ventas,  "S/ ");
-  document.getElementById("stat-rating").textContent = c.stats.rating + " ⭐";
-  document.getElementById("stat-ticket").textContent = "S/ " + c.stats.ticket;
-  document.getElementById("stat-pedidos-d").innerHTML = '<span class="up">↑ +45% vs mes anterior</span>';
-  document.getElementById("stat-ventas-d").innerHTML  = '<span class="up">↑ +38% vs mes anterior</span>';
-  document.getElementById("stat-rating-d").innerHTML  = '<span class="up">↑ +0.3 vs mes anterior</span>';
-  document.getElementById("stat-ticket-d").innerHTML  = '<span class="up">↑ +8% vs mes anterior</span>';
-
-  renderBarChart();
-  renderTopItems();
-  renderPlatforms();
-  renderCampanas();
-  renderMenu();
-  renderReportes();
-  renderVentasChart();
-  renderHourChart();
-  renderDayChart();
+  document.getElementById("stat-rating").textContent   = c.stats.rating + " ⭐";
+  document.getElementById("stat-ticket").textContent   = "S/ " + c.stats.ticket;
+  document.getElementById("stat-pedidos-d").innerHTML  = '<span class="up">↑ +45% vs mes anterior</span>';
+  document.getElementById("stat-ventas-d").innerHTML   = '<span class="up">↑ +38% vs mes anterior</span>';
+  document.getElementById("stat-rating-d").innerHTML   = '<span class="up">↑ +0.3 vs mes anterior</span>';
+  document.getElementById("stat-ticket-d").innerHTML   = '<span class="up">↑ +8% vs mes anterior</span>';
+  renderBarChart(); renderTopItems(); renderPlatformsMini();
+  renderPlatCards(); renderCredsList();
+  renderCampanas(); renderMenu(); renderReportes();
+  renderVentasChart(); renderHourChart(); renderDayChart();
 }
 
 function animateNum(id, from, to, prefix) {
   const el = document.getElementById(id);
-  const dur = 800, fps = 40, steps = dur / fps;
+  const steps = 30, inc = (to - from) / steps;
   let i = 0;
-  const inc = (to - from) / steps;
   const t = setInterval(() => {
-    i++;
-    const v = Math.round(from + inc * i);
+    i++; const v = Math.round(from + inc * i);
     el.textContent = prefix + v.toLocaleString();
     if (i >= steps) { clearInterval(t); el.textContent = prefix + to.toLocaleString(); }
-  }, fps);
+  }, 22);
 }
 
+// ─── CHARTS ──────────────────────────────────────────────────────────────────
 function renderBarChart() {
   const c = currentClient;
   const max = Math.max(...c.pedidos_hist, ...c.pedidos_prev);
-  const chart = document.getElementById("bar-chart");
-  chart.innerHTML = c.pedidos_hist.map((v, i) => {
+  document.getElementById("bar-chart").innerHTML = c.pedidos_hist.map((v, i) => {
     const hp = Math.round((v / max) * 110);
     const pp = Math.round((c.pedidos_prev[i] / max) * 110);
     return `<div class="bar-group">
-      <div class="bar-val">${v}</div>
+      <div style="font-size:.65rem;color:var(--soft)">${v}</div>
       <div class="bar-wrap">
-        <div class="bar tooltip" data-tip="${c.semanas[i]}: ${c.pedidos_prev[i]} pedidos" style="width:18px;height:${pp}px;background:var(--cream2);border:1px solid #ccc;"></div>
-        <div class="bar tooltip" data-tip="${c.semanas[i]}: ${v} pedidos" style="width:18px;height:${hp}px;background:var(--red);"></div>
+        <div class="bar tooltip" data-tip="Ant: ${c.pedidos_prev[i]}" style="width:16px;height:${pp}px;background:var(--cream2);border:1px solid #ccc;"></div>
+        <div class="bar tooltip" data-tip="${c.semanas[i]}: ${v} ped." style="width:16px;height:${hp}px;background:var(--red);"></div>
       </div>
       <div class="bar-label">${c.semanas[i].split(" ")[0]}</div>
     </div>`;
@@ -638,61 +881,116 @@ function renderBarChart() {
 }
 
 function renderTopItems() {
-  const c = currentClient;
-  document.getElementById("top-items").innerHTML = c.top_items.map((it, i) => `
+  document.getElementById("top-items").innerHTML = currentClient.top_items.map((it, i) => `
     <div>
       <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
         <span style="font-size:.84rem;font-weight:500;">${i+1}. ${it.n}</span>
-        <span style="font-size:.78rem;color:var(--soft);">S/ ${it.ventas.toLocaleString()}</span>
+        <span style="font-size:.78rem;color:var(--soft)">S/ ${it.ventas.toLocaleString()}</span>
       </div>
-      <div class="pbar"><div class="pbar-f" style="width:${it.pct*2.8}%;background:${i===0?'var(--red)':i===1?'var(--gold)':'var(--cream2)'};${i>1?'border:1px solid #ccc;':''}"></div></div>
+      <div class="pbar"><div class="pbar-f" style="width:${it.pct*2.8}%;background:${i===0?'var(--red)':i===1?'var(--gold)':'#d1d5db'}"></div></div>
     </div>`).join("");
 }
 
-function renderPlatforms() {
-  const c = currentClient;
-  document.getElementById("platforms-grid").innerHTML = c.plataformas.map(p => `
-    <div style="text-align:center;padding:18px;background:var(--cream2);border-radius:10px;">
+function renderPlatformsMini() {
+  document.getElementById("platforms-mini").innerHTML = currentClient.plataformas.map(p => `
+    <div style="text-align:center;padding:18px;background:var(--cream2);border-radius:10px;cursor:pointer;" onclick="goTab('plataformas')">
       <div style="font-size:1.4rem;margin-bottom:8px;">${p.ico}</div>
       <div style="font-weight:700;margin-bottom:6px;">${p.n}</div>
       <div style="font-size:.78rem;color:var(--soft);margin-bottom:4px;">${p.pedidos} pedidos</div>
-      <div style="font-size:.82rem;font-weight:600;color:var(--green);">S/ ${p.ventas.toLocaleString()}</div>
-      <div style="font-size:.76rem;color:var(--soft);margin-top:4px;">⭐ ${p.rating}</div>
+      <div style="font-size:.82rem;font-weight:600;color:var(--green)">S/ ${p.ventas.toLocaleString()}</div>
+      <div style="font-size:.76rem;color:var(--soft);margin-top:4px">⭐ ${p.rating}</div>
       <div style="height:4px;background:rgba(0,0,0,.1);border-radius:100px;margin-top:10px;overflow:hidden;">
-        <div style="width:${Math.round((p.pedidos/382)*100)}%;height:100%;background:${p.color};border-radius:100px;"></div>
+        <div style="width:${Math.round((p.pedidos/382)*100)}%;height:100%;background:${p.color};border-radius:100px"></div>
       </div>
     </div>`).join("");
 }
 
+function renderPlatCards() {
+  document.getElementById("plat-cards").innerHTML = currentClient.plataformas.map(p => `
+    <div class="plat-card connected">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
+        <div style="display:flex;align-items:center;gap:10px;">
+          <span style="font-size:1.6rem">${p.ico}</span>
+          <div>
+            <div style="font-weight:700;">${p.n}</div>
+            <div style="font-size:.72rem;color:var(--soft)">Comisión: ${p.comision}</div>
+          </div>
+        </div>
+        <span class="bg bg-g">● Activa</span>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:.82rem;">
+        <div style="background:rgba(0,0,0,.04);border-radius:8px;padding:10px;text-align:center;">
+          <div style="font-weight:700;font-size:1.1rem">${p.pedidos}</div>
+          <div style="color:var(--soft);font-size:.7rem">Pedidos/mes</div>
+        </div>
+        <div style="background:rgba(0,0,0,.04);border-radius:8px;padding:10px;text-align:center;">
+          <div style="font-weight:700;font-size:1.1rem;color:var(--green)">S/${(p.ventas/1000).toFixed(1)}k</div>
+          <div style="color:var(--soft);font-size:.7rem">Ventas/mes</div>
+        </div>
+      </div>
+      <div style="display:flex;align-items:center;gap:6px;margin-top:12px;font-size:.74rem;color:var(--soft)">
+        <div class="status-dot green"></div> Gestionado por Sazón · ⭐ ${p.rating}
+      </div>
+    </div>`).join("");
+}
+
+function renderCredsList() {
+  document.getElementById("creds-list").innerHTML = currentClient.creds.map(cr => `
+    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);">
+      <div style="display:flex;align-items:center;gap:12px;">
+        <div class="status-dot ${cr.status==='connected'?'green':'yellow'}"></div>
+        <div>
+          <div style="font-weight:600;font-size:.87rem">${cr.plat}</div>
+          <div style="font-size:.74rem;color:var(--soft)">Usuario: ${cr.user}</div>
+        </div>
+      </div>
+      <div style="text-align:right;">
+        <span class="bg ${cr.status==='connected'?'bg-g':'bg-o'}">${cr.status==='connected'?'Activa':'Pendiente'}</span>
+        <div style="font-size:.7rem;color:var(--soft);margin-top:3px">Última sync: ${cr.last_sync}</div>
+      </div>
+    </div>`).join("") + `
+    <div style="margin-top:14px;">
+      <button class="btn btn-o btn-sm" onclick="syncPlatforms()">🔄 Sincronizar datos ahora</button>
+    </div>`;
+}
+
+function syncPlatforms() {
+  const btn = event.currentTarget;
+  btn.textContent = "⟳ Sincronizando...";
+  btn.disabled = true;
+  setTimeout(() => {
+    btn.textContent = "✅ Sincronizado";
+    setTimeout(() => { btn.textContent = "🔄 Sincronizar datos ahora"; btn.disabled = false; }, 2000);
+  }, 2200);
+}
+
 function renderCampanas() {
-  const c = currentClient;
-  document.getElementById("campanas-grid").innerHTML = c.campanas.map(ca => `
+  document.getElementById("campanas-grid").innerHTML = currentClient.campanas.map(ca => `
     <div class="camp-card">
       <div class="camp-plat">${ca.plat}</div>
-      <div style="font-weight:600;margin-bottom:6px;">${ca.t}</div>
-      <div style="font-size:.78rem;color:var(--soft);margin-bottom:12px;">Vence: ${ca.vence}</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;">
+      <div style="font-weight:600;margin-bottom:6px">${ca.t}</div>
+      <div style="font-size:.78rem;color:var(--soft);margin-bottom:12px">Vence: ${ca.vence}</div>
+      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
         <span class="bg bg-g">Activa</span>
         <span class="bg bg-k">${ca.tipo}</span>
       </div>
-      <div style="display:flex;justify-content:space-between;font-size:.82rem;border-top:1px solid var(--border);padding-top:10px;">
-        <div><div style="color:var(--soft);">Inversion</div><strong>S/ ${ca.inv.toLocaleString()}</strong></div>
-        <div><div style="color:var(--soft);">Ventas extra</div><strong style="color:var(--green);">S/ ${ca.extra.toLocaleString()}</strong></div>
-        <div><div style="color:var(--soft);">ROAS</div><strong>${ca.roas}x</strong></div>
+      <div style="display:flex;justify-content:space-between;font-size:.82rem;border-top:1px solid var(--border);padding-top:10px">
+        <div><div style="color:var(--soft)">Inversión</div><strong>S/ ${ca.inv.toLocaleString()}</strong></div>
+        <div><div style="color:var(--soft)">Ventas extra</div><strong style="color:var(--green)">S/ ${ca.extra.toLocaleString()}</strong></div>
+        <div><div style="color:var(--soft)">ROAS</div><strong>${ca.roas}x</strong></div>
       </div>
     </div>`).join("");
 }
 
 function renderMenu() {
-  const c = currentClient;
-  document.getElementById("menu-grid").innerHTML = c.menu.map(m => `
+  document.getElementById("menu-grid").innerHTML = currentClient.menu.map(m => `
     <div class="camp-card">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;">
-        <div style="font-weight:600;font-size:.88rem;">${m.n}</div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
+        <div style="font-weight:600;font-size:.88rem">${m.n}</div>
         <span class="bg ${m.badge}">${m.badge_t}</span>
       </div>
-      <div style="font-size:.78rem;color:var(--soft);margin-bottom:8px;">S/ ${m.precio}</div>
-      <div style="display:flex;gap:12px;font-size:.78rem;">
+      <div style="font-size:.78rem;color:var(--soft);margin-bottom:8px">S/ ${m.precio}</div>
+      <div style="display:flex;gap:12px;font-size:.78rem">
         <span>Foto: ${m.foto}</span>
         <span>Copy: ${m.opt}</span>
         <span>Ventas: ${m.ventas}</span>
@@ -701,30 +999,32 @@ function renderMenu() {
 }
 
 function renderReportes() {
-  const c = currentClient;
-  document.getElementById("reportes-list").innerHTML = c.reportes.map(r => `
-    <div class="rep-card" onclick="alert('Descargando reporte de ${r.mes}...\n\nEn produccion: genera y descarga el PDF automaticamente.')">
+  document.getElementById("reportes-list").innerHTML = currentClient.reportes.map((r, i) => `
+    <div class="rep-card" onclick="generarPDF('${r.mes}', ${r.pedidos}, ${r.ventas}, '${r.crec}', ${r.rating}, ${r.campanas})">
       <div class="rep-ico">📊</div>
-      <div style="flex:1;">
-        <div style="font-weight:600;margin-bottom:3px;">${r.mes}</div>
-        <div style="font-size:.78rem;color:var(--soft);">${r.pedidos} pedidos · S/ ${r.ventas.toLocaleString()} ventas · Crecimiento: ${r.crec}</div>
+      <div style="flex:1">
+        <div style="font-weight:600;margin-bottom:3px">${r.mes}</div>
+        <div style="font-size:.78rem;color:var(--soft)">${r.pedidos} pedidos · S/ ${r.ventas.toLocaleString()} · Crecimiento: ${r.crec} · Rating: ⭐${r.rating}</div>
       </div>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <span class="bg bg-g">${r.estado}</span>
-        <button class="btn btn-o btn-sm">📥 Descargar PDF</button>
+      <div style="display:flex;gap:8px;align-items:center">
+        <span class="bg bg-g">Disponible</span>
+        <button class="btn btn-r btn-sm" onclick="event.stopPropagation();generarPDF('${r.mes}',${r.pedidos},${r.ventas},'${r.crec}',${r.rating},${r.campanas})">📥 Descargar PDF</button>
       </div>
     </div>`).join("");
 }
 
 function renderVentasChart() {
-  const dias = currentClient.ventas_diarias.slice(0, 24);
+  const dias = currentClient.ventas_diarias;
   const max = Math.max(...dias);
+  const labels = [];
   document.getElementById("ventas-chart").innerHTML = dias.map((v, i) => {
-    const h = Math.round((v / max) * 120);
-    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;">
-      <div class="tooltip" data-tip="Dia ${i+1}: S/${v}" style="width:100%;height:${h}px;background:${i===dias.length-1?'var(--red)':'var(--cream2)'};border:1px solid rgba(0,0,0,.08);border-radius:3px 3px 0 0;transition:opacity .2s;cursor:pointer;" onmouseover="this.style.opacity=.7" onmouseout="this.style.opacity=1"></div>
+    labels.push(i % 5 === 0 ? (i+1) + " Feb" : "");
+    const h = Math.round((v / max) * 130);
+    return `<div style="flex:1;display:flex;align-items:flex-end">
+      <div class="tooltip" data-tip="${i+1} Feb: S/${v.toLocaleString()}" style="width:100%;height:${h}px;background:${i===dias.length-1?'var(--red)':'#e8e0d4'};border:1px solid rgba(0,0,0,.06);border-radius:3px 3px 0 0;transition:opacity .2s;cursor:pointer" onmouseover="this.style.opacity=.7" onmouseout="this.style.opacity=1"></div>
     </div>`;
   }).join("");
+  document.getElementById("ventas-labels").innerHTML = labels.map(l => `<span>${l}</span>`).join("");
 }
 
 function renderHourChart() {
@@ -732,9 +1032,9 @@ function renderHourChart() {
   const max = Math.max(...h);
   document.getElementById("hour-chart").innerHTML = h.map((v, i) => {
     const ht = Math.round((v / max) * 85);
-    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;">
-      <div style="font-size:.62rem;color:var(--soft);">${v}</div>
-      <div class="tooltip" data-tip="${11+Math.floor(i*10/6)}:00 — ${v} pedidos" style="width:100%;height:${ht}px;background:${ht>60?'var(--red)':'var(--cream2)'};border:1px solid rgba(0,0,0,.08);border-radius:3px 3px 0 0;"></div>
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">
+      <div style="font-size:.6rem;color:var(--soft)">${v}</div>
+      <div class="tooltip" data-tip="${11+i}:00 — ${v} ped." style="width:100%;height:${ht}px;background:${v>=18?'var(--red)':'#ddd6c8'};border-radius:3px 3px 0 0"></div>
     </div>`;
   }).join("");
 }
@@ -742,29 +1042,469 @@ function renderHourChart() {
 function renderDayChart() {
   const d = currentClient.by_day;
   const max = Math.max(...d);
-  const dias = ["L","M","X","J","V","S","D"];
+  const nms = ["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
   document.getElementById("day-chart").innerHTML = d.map((v, i) => {
     const ht = Math.round((v / max) * 85);
-    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px;">
-      <div style="font-size:.62rem;color:var(--soft);">${v}</div>
-      <div class="tooltip" data-tip="${dias[i]}: ${v} pedidos" style="width:100%;height:${ht}px;background:${i>=4?'var(--red)':'var(--cream2)'};border:1px solid rgba(0,0,0,.08);border-radius:3px 3px 0 0;"></div>
+    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">
+      <div style="font-size:.6rem;color:var(--soft)">${v}</div>
+      <div class="tooltip" data-tip="${nms[i]}: ${v} ped." style="width:100%;height:${ht}px;background:${i>=4?'var(--red)':'#ddd6c8'};border-radius:3px 3px 0 0"></div>
     </div>`;
   }).join("");
 }
 
-function sendSoporte() {
-  const sel = document.querySelector('#t-soporte select');
-  const ta  = document.querySelector('#t-soporte textarea');
-  const msg = sel.value + (ta.value ? "\n\n" + ta.value : "");
-  const wa  = "https://wa.me/" + currentClient.wa + "?text=" + encodeURIComponent(
-    "Hola, soy " + currentClient.nombre + " de " + currentClient.restaurante + ".\n\nConsulta: " + msg
-  );
-  window.open(wa, "_blank", "noopener,noreferrer");
-  ta.value = "";
+// ─── PDF GENERATION ───────────────────────────────────────────────────────────
+function generarPDF(mes, pedidos, ventas, crec, rating, campanas) {
+  const m = document.getElementById("m-pdf");
+  const st = document.getElementById("pdf-status");
+  m.classList.add("open");
+  st.textContent = "Preparando datos...";
+
+  setTimeout(() => { st.textContent = "Generando reporte..."; }, 600);
+  setTimeout(() => { st.textContent = "Aplicando formato Sazón..."; }, 1200);
+  setTimeout(() => {
+    try {
+      const { jsPDF } = window.jspdf;
+      const doc = new jsPDF({ unit:"mm", format:"a4" });
+      const W = 210, ml = 20, mr = 190;
+      let y = 0;
+
+      // Header fondo rojo
+      doc.setFillColor(200, 57, 43);
+      doc.rect(0, 0, W, 42, "F");
+      doc.setFont("helvetica","bold");
+      doc.setFontSize(22);
+      doc.setTextColor(255,255,255);
+      doc.text("SAZÓN GROWTH PARTNER", ml, 18);
+      doc.setFontSize(11);
+      doc.setFont("helvetica","normal");
+      doc.text("Reporte de Rendimiento · " + mes, ml, 28);
+      doc.setFontSize(9);
+      doc.text("Cliente: " + currentClient.restaurante + " · Plan: " + currentClient.plan, ml, 36);
+
+      y = 54;
+      // Sección: Resumen ejecutivo
+      doc.setFont("helvetica","bold");
+      doc.setFontSize(13);
+      doc.setTextColor(26,26,26);
+      doc.text("Resumen Ejecutivo", ml, y);
+      y += 2;
+      doc.setDrawColor(200,57,43);
+      doc.setLineWidth(0.5);
+      doc.line(ml, y, mr, y);
+      y += 8;
+
+      // Stat boxes
+      const boxes = [
+        {l:"PEDIDOS TOTALES", v: pedidos.toString()},
+        {l:"VENTAS TOTALES", v:"S/ "+ventas.toLocaleString()},
+        {l:"CRECIMIENTO", v:crec},
+        {l:"RATING PROMEDIO", v:"⭐ "+rating},
+      ];
+      const bw = 40, bh = 22, gap = 2;
+      boxes.forEach((b, i) => {
+        const bx = ml + i*(bw+gap);
+        doc.setFillColor(245,239,224);
+        doc.roundedRect(bx, y, bw, bh, 2, 2, "F");
+        doc.setFont("helvetica","bold");
+        doc.setFontSize(14);
+        doc.setTextColor(200,57,43);
+        doc.text(b.v, bx + bw/2, y+13, {align:"center"});
+        doc.setFont("helvetica","normal");
+        doc.setFontSize(6);
+        doc.setTextColor(90,78,62);
+        doc.text(b.l, bx + bw/2, y+20, {align:"center"});
+      });
+      y += 34;
+
+      // Sección: Pedidos por semana
+      doc.setFont("helvetica","bold");
+      doc.setFontSize(11);
+      doc.setTextColor(26,26,26);
+      doc.text("Evolución de Pedidos — Últimas 8 Semanas", ml, y);
+      y += 6;
+      const hist = currentClient.pedidos_hist;
+      const maxH = Math.max(...hist);
+      const chH = 35, chW = mr - ml, barW = chW / hist.length - 2;
+      hist.forEach((v, i) => {
+        const bh2 = (v / maxH) * chH;
+        const bx = ml + i * (chW / hist.length);
+        doc.setFillColor(200,57,43);
+        doc.rect(bx, y + chH - bh2, barW, bh2, "F");
+        doc.setFontSize(6);
+        doc.setTextColor(90,78,62);
+        doc.setFont("helvetica","normal");
+        doc.text(String(v), bx + barW/2, y + chH - bh2 - 1, {align:"center"});
+        doc.text(currentClient.semanas[i].split(" ")[0], bx + barW/2, y + chH + 5, {align:"center"});
+      });
+      y += chH + 12;
+
+      // Sección: Plataformas
+      doc.setFont("helvetica","bold");
+      doc.setFontSize(11);
+      doc.setTextColor(26,26,26);
+      doc.text("Rendimiento por Plataforma", ml, y);
+      y += 6;
+      doc.setFillColor(237,228,206);
+      doc.rect(ml, y, mr-ml, 7, "F");
+      ["PLATAFORMA","PEDIDOS","VENTAS","RATING","COMISIÓN"].forEach((h2, i) => {
+        doc.setFont("helvetica","bold"); doc.setFontSize(7); doc.setTextColor(90,78,62);
+        doc.text(h2, ml + [0,32,66,110,145][i], y+5);
+      });
+      y += 9;
+      currentClient.plataformas.forEach(p => {
+        doc.setFont("helvetica","normal"); doc.setFontSize(8.5); doc.setTextColor(26,26,26);
+        doc.text(p.n, ml, y+4);
+        doc.text(String(p.pedidos), ml+32, y+4);
+        doc.text("S/ "+p.ventas.toLocaleString(), ml+66, y+4);
+        doc.text("★ "+p.rating, ml+110, y+4);
+        doc.text(p.comision, ml+145, y+4);
+        doc.setDrawColor(220,213,200); doc.setLineWidth(0.2);
+        doc.line(ml, y+7, mr, y+7);
+        y += 8;
+      });
+      y += 4;
+
+      // Sección: Campañas
+      doc.setFont("helvetica","bold");
+      doc.setFontSize(11);
+      doc.setTextColor(26,26,26);
+      doc.text("Campañas del Mes", ml, y);
+      y += 6;
+      doc.setFillColor(237,228,206);
+      doc.rect(ml, y, mr-ml, 7, "F");
+      ["CAMPAÑA","PLATAFORMA","INVERSIÓN","VENTAS EXTRA","ROAS"].forEach((h3, i) => {
+        doc.setFont("helvetica","bold"); doc.setFontSize(7); doc.setTextColor(90,78,62);
+        doc.text(h3, ml + [0,60,95,125,165][i], y+5);
+      });
+      y += 9;
+      currentClient.campanas.forEach(ca => {
+        doc.setFont("helvetica","normal"); doc.setFontSize(8); doc.setTextColor(26,26,26);
+        doc.text(ca.t.substring(0,28), ml, y+4);
+        doc.text(ca.plat, ml+60, y+4);
+        doc.text("S/"+ca.inv, ml+95, y+4);
+        doc.text("S/"+ca.extra, ml+125, y+4);
+        doc.text(ca.roas+"x", ml+165, y+4);
+        doc.setDrawColor(220,213,200); doc.setLineWidth(0.2);
+        doc.line(ml, y+7, mr, y+7);
+        y += 8;
+      });
+      y += 8;
+
+      // Recomendaciones
+      doc.setFillColor(200,57,43);
+      doc.rect(0, y, W, 6, "F");
+      y += 12;
+      doc.setFont("helvetica","bold"); doc.setFontSize(11); doc.setTextColor(26,26,26);
+      doc.text("Recomendaciones para el Próximo Mes", ml, y);
+      y += 7;
+      const recs = [
+        "1. Subir foto del Combo Premium para activar campaña en Rappi (potencial +S/1,800/mes)",
+        "2. Ampliar descuento a PedidosYa — tendencia creciente sugiere mayor conversión",
+        "3. Revisar descripción de Bebida del día — foto mejorable afecta clics",
+        "4. Evaluar campaña '2x1 lunes' en Didi Food para aumentar volumen en días bajos",
+      ];
+      recs.forEach(r => {
+        doc.setFont("helvetica","normal"); doc.setFontSize(8.5); doc.setTextColor(26,26,26);
+        doc.text(r, ml, y); y += 7;
+      });
+
+      // Footer
+      doc.setFillColor(26,26,26);
+      doc.rect(0, 277, W, 20, "F");
+      doc.setFont("helvetica","normal"); doc.setFontSize(8); doc.setTextColor(255,255,255);
+      doc.text("Sazón Growth Partner · comercial@sazonpartner.com", ml, 287);
+      doc.setTextColor(200,57,43);
+      doc.text("sazonpartner.com", mr, 287, {align:"right"});
+
+      doc.save("Sazon_Reporte_" + mes.replace(/ /g,"_") + ".pdf");
+      m.classList.remove("open");
+    } catch(e) {
+      console.error(e);
+      st.textContent = "Error al generar. Intentando alternativa...";
+      setTimeout(() => { m.classList.remove("open"); imprimirReporte(mes, pedidos, ventas, crec, rating); }, 800);
+    }
+  }, 1800);
 }
 
+function imprimirReporte(mes, pedidos, ventas, crec, rating) {
+  const w = window.open("", "_blank");
+  w.document.write(`<!DOCTYPE html><html><head><title>Reporte ${mes} - ${currentClient.restaurante}</title>
+  <style>
+    body{font-family:Arial,sans-serif;margin:0;padding:0;color:#1A1A1A;}
+    .header{background:#C8392B;color:white;padding:30px 40px;}
+    .header h1{margin:0;font-size:24px;}
+    .header p{margin:8px 0 0;opacity:.8;}
+    .body{padding:30px 40px;}
+    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0;}
+    .stat{background:#F5EFE0;padding:16px;border-radius:8px;text-align:center;}
+    .stat-n{font-size:22px;font-weight:700;color:#C8392B;}
+    .stat-l{font-size:11px;color:#5A4E3E;text-transform:uppercase;margin-top:4px;}
+    table{width:100%;border-collapse:collapse;margin:16px 0;}
+    th{background:#EDE4CE;padding:8px 12px;text-align:left;font-size:11px;}
+    td{padding:8px 12px;border-bottom:1px solid #f0e8d8;}
+    h2{color:#C8392B;border-bottom:2px solid #C8392B;padding-bottom:6px;}
+    @media print{button{display:none}}
+  </style></head><body>
+  <div class="header">
+    <h1>Sazón Growth Partner</h1>
+    <p>Reporte de Rendimiento · ${mes} · ${currentClient.restaurante}</p>
+  </div>
+  <div class="body">
+    <div class="stats">
+      <div class="stat"><div class="stat-n">${pedidos}</div><div class="stat-l">Pedidos</div></div>
+      <div class="stat"><div class="stat-n">S/ ${ventas.toLocaleString()}</div><div class="stat-l">Ventas</div></div>
+      <div class="stat"><div class="stat-n">${crec}</div><div class="stat-l">Crecimiento</div></div>
+      <div class="stat"><div class="stat-n">⭐ ${rating}</div><div class="stat-l">Rating</div></div>
+    </div>
+    <h2>Plataformas</h2>
+    <table><tr><th>Plataforma</th><th>Pedidos</th><th>Ventas</th><th>Rating</th></tr>
+    ${currentClient.plataformas.map(p=>`<tr><td>${p.n}</td><td>${p.pedidos}</td><td>S/ ${p.ventas.toLocaleString()}</td><td>⭐ ${p.rating}</td></tr>`).join("")}
+    </table>
+    <button onclick="window.print()" style="background:#C8392B;color:white;border:none;padding:12px 28px;border-radius:8px;font-size:14px;cursor:pointer;margin-top:8px;">🖨️ Imprimir / Guardar como PDF</button>
+  </div></body></html>`);
+  w.document.close();
+}
+
+// ─── EXPORTAR CSV ────────────────────────────────────────────────────────────
+function exportarVentasCSV() {
+  const rows = [
+    ["Fecha","Plataforma","Pedidos","Ventas (S/)","Ticket Promedio","Rating"],
+    ["24 Feb","Rappi","22","1056","48","4.9"],
+    ["23 Feb","PedidosYa","15","660","44","4.7"],
+    ["23 Feb","Rappi","28","1428","51","4.8"],
+    ["22 Feb","Rappi","19","855","45","5.0"],
+    ["21 Feb","Didi Food","11","473","43","4.6"],
+    ["20 Feb","Rappi","25","1175","47","4.8"],
+    ["19 Feb","PedidosYa","18","774","43","4.9"],
+  ];
+  const csv = rows.map(r => r.join(",")).join("\n");
+  const blob = new Blob(["\uFEFF"+csv], {type:"text/csv;charset=utf-8"});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement("a");
+  a.href = url; a.download = "MrSmash_Ventas_Febrero2025.csv";
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 200);
+}
+
+// ─── CALENDARIO ──────────────────────────────────────────────────────────────
+const SLOTS_DISP = {
+  // dias disponibles por dia del mes (usando numero de dia como key)
+  3:[" 9:00 AM","10:30 AM","3:00 PM"], 4:[" 9:00 AM","11:00 AM"],
+  5:["10:00 AM","2:00 PM","4:00 PM"],  6:[" 9:00 AM","11:30 AM","3:30 PM"],
+  7:["10:00 AM","4:00 PM"],
+  10:["9:00 AM","11:00 AM","3:00 PM"], 11:["10:30 AM","2:00 PM"],
+  12:["9:00 AM","3:00 PM","5:00 PM"],  13:["11:00 AM","4:00 PM"],
+  14:["9:00 AM","10:30 AM"],
+};
+const TAKEN = {4:["9:00 AM"], 10:["11:00 AM"]};
+let calYear = 2025, calMonth = 2; // 0-indexed: 2=marzo
+let selDay = null, selTime = null;
+
+function openCal() {
+  selDay = null; selTime = null;
+  document.getElementById("cal-slots-wrap").style.display = "none";
+  document.getElementById("cal-confirm").style.display = "none";
+  renderCal();
+  document.getElementById("m-cal").classList.add("open");
+}
+
+function renderCal() {
+  const months = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+  document.getElementById("cal-mes-label").textContent = months[calMonth] + " " + calYear;
+  const firstDay = new Date(calYear, calMonth, 1).getDay();
+  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
+  const today = new Date();
+  let html = "";
+  for (let i = 0; i < firstDay; i++) html += `<button class="cal-day empty" disabled></button>`;
+  for (let d = 1; d <= daysInMonth; d++) {
+    const date = new Date(calYear, calMonth, d);
+    const isPast = date < new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const isToday = d===today.getDate() && calMonth===today.getMonth() && calYear===today.getFullYear();
+    const hasSlot = SLOTS_DISP[d];
+    const isSel = d === selDay;
+    const dayOfWeek = date.getDay();
+    const isWeekend = dayOfWeek===0 || dayOfWeek===6;
+    let cls = "cal-day";
+    if (isPast || isWeekend) cls += " past";
+    else if (hasSlot) cls += " has-slot";
+    if (isToday) cls += " today";
+    if (isSel) cls += " selected";
+    const disabled = isPast || isWeekend ? "disabled" : "";
+    html += `<button class="${cls}" ${disabled} onclick="selectDay(${d})">${d}</button>`;
+  }
+  document.getElementById("cal-grid").innerHTML = html;
+}
+
+function calPrev() {
+  calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; }
+  selDay = null; renderCal();
+  document.getElementById("cal-slots-wrap").style.display = "none";
+  document.getElementById("cal-confirm").style.display = "none";
+}
+function calNext() {
+  calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; }
+  selDay = null; renderCal();
+  document.getElementById("cal-slots-wrap").style.display = "none";
+  document.getElementById("cal-confirm").style.display = "none";
+}
+
+function selectDay(d) {
+  selDay = d; selTime = null;
+  renderCal();
+  const slots = SLOTS_DISP[d];
+  const wrap = document.getElementById("cal-slots-wrap");
+  const slotsEl = document.getElementById("cal-slots");
+  const months = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+  if (!slots) {
+    wrap.style.display = "block";
+    document.getElementById("cal-slots-title").textContent = "Sin disponibilidad este día";
+    slotsEl.innerHTML = `<div style="grid-column:1/-1;font-size:.84rem;color:var(--soft);padding:10px 0;">No hay horarios disponibles. Elige otro día.</div>`;
+    return;
+  }
+  const taken = TAKEN[d] || [];
+  document.getElementById("cal-slots-title").textContent = months[calMonth] + " " + d + " — Horarios disponibles";
+  slotsEl.innerHTML = slots.map(s => {
+    const isTaken = taken.includes(s.trim());
+    return `<button class="time-slot${isTaken?' taken':''}" ${isTaken?'disabled':''} onclick="selectTime('${s}','${months[calMonth]} ${d}')">${s}${isTaken?'<br><span style="font-size:.65rem">Ocupado</span>':''}</button>`;
+  }).join("");
+  wrap.style.display = "block";
+  document.getElementById("cal-confirm").style.display = "none";
+}
+
+function selectTime(time, dateStr) {
+  selTime = time;
+  document.querySelectorAll(".time-slot").forEach(b => b.classList.remove("sel"));
+  event.currentTarget.classList.add("sel");
+  const months = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+  document.getElementById("cal-confirm-text").innerHTML =
+    `<strong>Reunión seleccionada:</strong><br>${months[calMonth]} ${selDay}, ${calYear} · ${time.trim()}<br><br>Tu Growth Manager confirmará la disponibilidad por WhatsApp.`;
+  document.getElementById("cal-confirm").style.display = "block";
+}
+
+function confirmarReunion() {
+  const months = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
+  const txt = encodeURIComponent(
+    "Hola, soy " + currentClient.nombre + " de " + currentClient.restaurante + ".\n\n" +
+    "Quiero agendar una reunión de seguimiento:\n" +
+    "📅 Fecha: " + months[calMonth] + " " + selDay + ", " + calYear + "\n" +
+    "🕐 Hora: " + selTime.trim() + "\n\n" +
+    "Por favor confirmar disponibilidad."
+  );
+  document.getElementById("m-cal").classList.remove("open");
+  window.open("https://wa.me/" + WA_NUMBER + "?text=" + txt, "_blank", "noopener,noreferrer");
+}
+
+function agregarCalGoogle() {
+  // Pre-fill con la próxima reunión conocida
+  const dtStart = "20250228T100000";
+  const dtEnd   = "20250228T110000";
+  const title   = encodeURIComponent("Reunión Sazón · " + currentClient.restaurante);
+  const details = encodeURIComponent("Revisión de métricas de febrero + plan de campañas para marzo\n\nGrowth Manager: Equipo Sazón\n\nSazón Growth Partner · sazonpartner.com");
+  const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dtStart}/${dtEnd}&details=${details}`;
+  window.open(url, "_blank", "noopener,noreferrer");
+}
+
+// ─── FOTOS ────────────────────────────────────────────────────────────────────
+function handleFiles(files) {
+  uploadedFiles = Array.from(files);
+  const preview = document.getElementById("fotos-preview");
+  preview.innerHTML = "";
+  uploadedFiles.forEach(f => {
+    const url = URL.createObjectURL(f);
+    preview.innerHTML += `<div style="position:relative">
+      <img src="${url}" style="width:80px;height:80px;object-fit:cover;border-radius:8px;border:2px solid var(--border)">
+      <div style="font-size:.65rem;color:var(--soft);margin-top:4px;text-align:center;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.name}</div>
+    </div>`;
+  });
+  if (uploadedFiles.length) {
+    document.getElementById("upload-zone").style.borderColor = "var(--green)";
+  }
+}
+function handleDrop(e) {
+  e.preventDefault();
+  document.getElementById("upload-zone").classList.remove("drag");
+  handleFiles(e.dataTransfer.files);
+}
+
+function enviarFotos() {
+  const plato = document.getElementById("foto-plato").value.trim();
+  const desc = document.getElementById("foto-desc").value.trim();
+  if (!plato) { document.getElementById("foto-plato").focus(); return; }
+  const msg = encodeURIComponent(
+    "Hola! Envío foto(s) de menú para " + currentClient.restaurante + ".\n\n" +
+    "Plato: " + plato + (desc ? "\nDescripción: " + desc : "") + "\n\n" +
+    (uploadedFiles.length ? "Adjunto " + uploadedFiles.length + " foto(s) en este mensaje." : "")
+  );
+  document.getElementById("m-fotos").classList.remove("open");
+  window.open("https://wa.me/" + WA_NUMBER + "?text=" + msg, "_blank", "noopener,noreferrer");
+  // Reset
+  document.getElementById("foto-plato").value = "";
+  document.getElementById("foto-desc").value = "";
+  document.getElementById("fotos-preview").innerHTML = "";
+  document.getElementById("upload-zone").style.borderColor = "";
+  uploadedFiles = [];
+}
+
+// ─── SOPORTE / CAMPAÑAS ───────────────────────────────────────────────────────
+function sendSoporte() {
+  const tipo = document.getElementById("sop-tipo").value;
+  const msg  = document.getElementById("sop-msg").value.trim();
+  const txt  = encodeURIComponent(
+    "Hola, soy " + currentClient.nombre + " de " + currentClient.restaurante + ".\n\n" +
+    "Consulta: " + tipo + (msg ? "\n\nDetalle: " + msg : "")
+  );
+  window.open("https://wa.me/" + WA_NUMBER + "?text=" + txt, "_blank", "noopener,noreferrer");
+  document.getElementById("sop-msg").value = "";
+}
+
+function contactarWA() {
+  const txt = encodeURIComponent("Hola, soy " + currentClient.nombre + " de " + currentClient.restaurante + ". ¿Está disponible?");
+  window.open("https://wa.me/" + WA_NUMBER + "?text=" + txt, "_blank", "noopener,noreferrer");
+}
+
+function solicitarCampana() {
+  document.getElementById("m-campana").classList.add("open");
+}
+
+function enviarSolicitudCampana() {
+  const plat = document.getElementById("camp-plat").value;
+  const tipo = document.getElementById("camp-tipo").value;
+  const inv  = document.getElementById("camp-inv").value;
+  const dur  = document.getElementById("camp-dur").value;
+  const nota = document.getElementById("camp-nota").value.trim();
+  const txt  = encodeURIComponent(
+    "Hola, soy " + currentClient.nombre + " de " + currentClient.restaurante + ". Quiero solicitar una campaña:\n\n" +
+    "📣 Plataforma: " + plat + "\n" +
+    "🏷️ Tipo: " + tipo + "\n" +
+    "💰 Inversión: S/ " + (inv||"a definir") + "\n" +
+    "📅 Duración: " + dur + (nota ? "\n📝 Nota: " + nota : "")
+  );
+  document.getElementById("m-campana").classList.remove("open");
+  window.open("https://wa.me/" + WA_NUMBER + "?text=" + txt, "_blank", "noopener,noreferrer");
+}
+
+// ─── UTIL ─────────────────────────────────────────────────────────────────────
+function renderVentasPanel() {
+  // Actualizar stats según mes seleccionado
+  const mes = document.getElementById("ventas-mes").value;
+  const data = {
+    feb:{t:"S/ 18,420",p:"382",tk:"S/ 48"},
+    ene:{t:"S/ 12,816",p:"267",tk:"S/ 48"},
+    dic:{t:"S/ 9,360", p:"195",tk:"S/ 48"},
+  };
+  const d = data[mes];
+  document.getElementById("v-total").textContent   = d.t;
+  document.getElementById("v-pedidos").textContent = d.p;
+  document.getElementById("v-ticket").textContent  = d.tk;
+}
+
+// Cerrar modales con ESC o click fuera
 document.addEventListener("keydown", e => {
-  if (e.key === "Enter" && document.getElementById("login").style.display !== "none") loginCliente();
+  if (e.key==="Escape") document.querySelectorAll(".modal-bg.open").forEach(m=>m.classList.remove("open"));
+  if (e.key==="Enter" && document.getElementById("login").style.display !== "none") loginCliente();
+});
+document.querySelectorAll(".modal-bg").forEach(mb => {
+  mb.addEventListener("click", e => { if (e.target === mb && mb.id !== "m-pdf") mb.classList.remove("open"); });
 });
 </script>
 </body>
