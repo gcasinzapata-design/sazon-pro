@@ -2,6 +2,40 @@
   command = "npm run build"
   publish = "dist"
 
+# ── Rutas estáticas — DEBEN ir ANTES del catch-all del SPA ──────────────────
+# El orden importa: Netlify aplica la primera regla que coincide
+
+[[redirects]]
+  from = "/admin"
+  to = "/admin/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin/*"
+  to = "/admin/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/cliente"
+  to = "/cliente/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/cliente/*"
+  to = "/cliente/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/outbound"
+  to = "/outbound/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/outbound/*"
+  to = "/outbound/index.html"
+  status = 200
+
+# ── Rutas del SPA React ──────────────────────────────────────────────────────
 [[redirects]]
   from = "/politicas"
   to = "/index.html"
@@ -12,6 +46,7 @@
   to = "/index.html"
   status = 200
 
+# ── Catch-all del SPA — SIEMPRE AL FINAL ────────────────────────────────────
 [[redirects]]
   from = "/*"
   to = "/index.html"
