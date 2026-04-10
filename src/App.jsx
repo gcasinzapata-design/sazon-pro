@@ -557,11 +557,7 @@ export default function App() {
     if (!em || !em.includes("@")) return;
     // 1. Enviar por WhatsApp al equipo
     const txt = encodeURIComponent(
-      "📧 LEAD de Carlos Chat
-
-Email: " + em + "
-
-Interactuó con Carlos y dejó su email antes de cerrar. Contactar para diagnóstico gratuito."
+      "LEAD Carlos Chat - Email: " + em + " - Interactuo con Carlos antes de cerrar. Contactar urgente."
     );
     // Abrir WA en background (puede fallar si popup bloqueado — sin problema, tenemos netlify form)
     try {
