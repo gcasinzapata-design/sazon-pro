@@ -171,15 +171,36 @@ function parseConvState(history) {
   const last  = uMsgs[uMsgs.length - 1] || "";
   const prev  = uMsgs[uMsgs.length - 2] || "";
 
-  // Pedidos: acepta "200 pedidos", "hacemos 200 al mes", "unas 200 ordenes"
-  const pedRx = /(?:hacemos|tenemos|recibimos|unas?|como|entre|aproximadamente)?\s*(\d{2,4})\s*(?:pedidos?|ordenes?|ventas?|al\s*mes|por\s*mes|mensuales?)/;
-  const pedM  = (full.match(pedRx) || full.match(/(\d{3,4})\s*(?:mes|orden|pedid)/));
-  const pedidos = pedM ? parseInt(pedM[1]) : null;
+  // What did Carlos ask last? Used for context-aware number parsing
+  const aMsgs = history.filter(m => m.role === "assistant");
+  const lastCarlos = (aMsgs[aMsgs.length - 1]?.content || "").toLowerCase();
+  const carlosAskingPedidos = /pedidos|cuántos|cuantos|ordenes/.test(lastCarlos) && !/ticket|promedio|gasta/.test(lastCarlos);
+  const carlosAskingTicket  = /ticket|promedio|gasta|cada cliente/.test(lastCarlos);
 
-  // Ticket: acepta "ticket de 45", "gasta 45 soles", "promedio 45", "cobra 45"
+  // Pedidos: acepta "200 pedidos", "hacemos 200 al mes", "unas 200", "aprox 100", plain "100"
+  const pedRx = /(?:hacemos|tenemos|recibimos|unas?|como|entre|aproximadamente|aprox\.?)?\s*(\d{2,4})\s*(?:pedidos?|ordenes?|ventas?|al\s*mes|por\s*mes|mensuales?)?/;
+  // Context-aware: if Carlos asked about pedidos and user answered a number alone
+  const standaloneNum = last.match(/^(?:aprox\.?\s*)?(\d{2,4})(?:\s*(?:pedidos?|ordenes?|mas\s*o\s*menos|aprox|al\s*mes)?)?$/);
+  const pedRxM = full.match(/(?:hacemos|tenemos|recibimos|unas?|como|entre|aproximadamente|aprox)\s*(\d{2,4})\s*(?:pedidos?|ordenes?|ventas?|al\s*mes|por\s*mes|mensuales?)?/)
+    || full.match(/(\d{2,4})\s*(?:pedidos?|ordenes?|al\s*mes|por\s*mes|mensuales)/);
+  let pedidos = pedRxM ? parseInt(pedRxM[1]) : null;
+  // Context fallback: user sent only a number and Carlos was asking about pedidos
+  if (!pedidos && standaloneNum && carlosAskingPedidos) {
+    pedidos = parseInt(standaloneNum[1]);
+  }
+
+  // Ticket: acepta "ticket de 45", "gasta 45 soles", "s/45", "45 soles", plain "45" if Carlos asked
   const tickRx = /(?:ticket\s*(?:de|es|promedio)?|gasta\s*(?:unos?)?|promedio\s*(?:de)?|cobra\s*(?:unos?)?|s\/\s*)(\d{2,3})(?:\s*soles?)?/;
-  const tickM  = full.match(tickRx);
-  const ticket = tickM ? parseInt(tickM[1]) : null;
+  const tickM  = full.match(tickRx)
+    || full.match(/(\d{2,3})\s*(?:soles?|sol|pens?)/);
+  let ticket = tickM ? parseInt(tickM[1]) : null;
+  // Context fallback: user sent only a number and Carlos was asking about ticket
+  if (!ticket && standaloneNum && carlosAskingTicket) {
+    ticket = parseInt(standaloneNum[1]);
+  }
+  // Sanity: ticket should be 15-300, pedidos 10-9999
+  if (ticket && (ticket < 10 || ticket > 500)) ticket = null;
+  if (pedidos && pedidos > 9999) pedidos = null;
 
   // Plataformas
   const plats = [];
@@ -316,11 +337,20 @@ function carlosFallback(history) {
 
   // Tenemos plataformas, falta pedidos
   if (plats.length > 0 && !pedidos) {
+    // Si Carlos ya hizo esta pregunta antes, pedir de otra forma
+    const yaPregunte = history.filter(m => m.role === "assistant").some(m => /pedidos.*mes|cuántos.*pedidos/i.test(m.content));
+    if (yaPregunte) {
+      return `Para calcular tu ROI solo me falta saber el volumen: ¿manejas más de 100 pedidos al mes, entre 100 y 300, o más de 300?`;
+    }
     return `Bien, ${plats.join(" y ")}! Para calcularte el ROI exacto: ¿cuántos pedidos reciben por mes aproximadamente en total?`;
   }
 
   // Tenemos ticket, falta pedidos
   if (ticket && !pedidos) {
+    const yaPregunte = history.filter(m => m.role === "assistant").some(m => /pedidos.*mes|cuántos.*pedidos/i.test(m.content));
+    if (yaPregunte) {
+      return `Solo me falta el volumen de pedidos. ¿Reciben más de 200 pedidos al mes?`;
+    }
     return `S/${ticket} de ticket promedio, bien. ¿Y cuántos pedidos reciben por mes aproximadamente?`;
   }
 
@@ -696,20 +726,39 @@ export default function App() {
     .csend:disabled{opacity:.4;cursor:default;}
     .dt{width:7px;height:7px;border-radius:50%;background:#ccc;animation:bounce 1.2s ease infinite;}
     .dt:nth-child(2){animation-delay:.15s;}.dt:nth-child(3){animation-delay:.3s;}
+    @media(max-width:1200px){
+      nav{padding:13px 36px!important;}
+      .sec{padding:80px 48px!important;}
+      .hl{padding:130px 48px 80px!important;}
+    }
     @media(max-width:900px){
-      .nomob{display:none!important;}nav{padding:14px 22px!important;}
-      .nl{display:none!important;}.sec{padding:68px 22px!important;}
-      .hl{padding:120px 22px 60px!important;}
-      .g2{grid-template-columns:1fr!important;}.g3{grid-template-columns:1fr!important;}
-      .g4{grid-template-columns:1fr 1fr!important;}.g5{grid-template-columns:repeat(3,1fr)!important;}
+      .nomob{display:none!important;}
+      nav{padding:12px 18px!important;}
+      .nl{display:none!important;}
+      .sec{padding:60px 20px!important;}
+      .hl{padding:110px 20px 60px!important;}
+      .g2{grid-template-columns:1fr!important;}
+      .g3{grid-template-columns:1fr!important;}
+      .g4{grid-template-columns:1fr 1fr!important;}
+      .g5{grid-template-columns:repeat(2,1fr)!important;}
       .gs{position:static!important;}
-      footer{padding:22px 22px!important;flex-direction:column!important;gap:12px!important;text-align:center!important;}
-      .cwin{width:calc(100vw - 32px);}.cw{bottom:16px;right:14px;}
+      footer{padding:22px 20px!important;flex-direction:column!important;gap:12px!important;text-align:center!important;}
+      .cwin{width:calc(100vw - 28px);max-height:80vh;}
+      .cw{bottom:14px;right:14px;}
+      .wa-float-btn{bottom:14px;left:14px;width:48px;height:48px;}
+    }
+    @media(max-width:600px){
+      .g4{grid-template-columns:1fr!important;}
+      .g5{grid-template-columns:repeat(2,1fr)!important;}
+      .sec{padding:52px 16px!important;}
+      .hl{padding:100px 16px 52px!important;}
+      nav{padding:12px 16px!important;}
+      h1,h2{word-break:break-word;}
     }
   `}</style>
 
   {/* ═══ NAV ═══ */}
-  <nav className="anav" style={{position:"fixed",top:0,width:"100%",zIndex:100,display:"flex",alignItems:"center",justifyContent:"space-between",padding:scrolled?"13px 60px":"20px 60px",background:"rgba(245,239,224,.97)",backdropFilter:"blur(12px)",borderBottom:"1px solid rgba(200,57,43,.15)",transition:"padding .3s"}}>
+  <nav className="anav" style={{position:"fixed",top:0,width:"100%",zIndex:100,display:"flex",alignItems:"center",justifyContent:"space-between",padding:scrolled?"12px 40px":"18px 40px",background:"rgba(245,239,224,.97)",backdropFilter:"blur(12px)",borderBottom:"1px solid rgba(200,57,43,.15)",transition:"padding .3s"}}>
     <div className="pf" style={{fontSize:"1.35rem",fontWeight:900,cursor:"pointer",color:"#1A1A1A"}} onClick={()=>window.scrollTo({top:0,behavior:"smooth"})}>
       Saz<span style={{fontFamily:"DM Sans,sans-serif"}}>ó</span>n<span style={{color:"#C8392B"}}>.</span>
     </div>
@@ -726,7 +775,7 @@ export default function App() {
 
   {/* ═══ HERO ═══ */}
   <section id="hero" className="g2" style={{minHeight:"100vh",display:"grid",gridTemplateColumns:"1fr 1fr",background:"#1A1A1A",overflow:"hidden"}}>
-    <div className="hl" style={{display:"flex",flexDirection:"column",justifyContent:"center",padding:"140px 80px 100px",zIndex:2}}>
+    <div className="hl" style={{display:"flex",flexDirection:"column",justifyContent:"center",padding:"clamp(100px,12vw,140px) clamp(20px,6vw,80px) 80px",zIndex:2}}>
       <p className="a1" style={{fontSize:".75rem",fontWeight:500,textTransform:"uppercase",letterSpacing:3,color:"#D4A547",marginBottom:28}}>Growth Partner para Restaurantes</p>
       <h1 className="pf a2" style={{fontSize:"clamp(3rem,5vw,5.2rem)",lineHeight:1.05,color:"white"}}>Tu delivery,<br/>al <em style={{fontStyle:"italic",color:"#C8392B"}}>maximo</em><br/>rendimiento.</h1>
       <p className="a3" style={{marginTop:28,fontSize:"1.05rem",lineHeight:1.7,color:"rgba(255,255,255,.6)",maxWidth:420}}>Somos tu equipo especializado en hacer crecer tus ventas en Rappi, PedidosYa, Didi Food y mas. No somos consultores, somos tu partner real de crecimiento.</p>
@@ -757,7 +806,7 @@ export default function App() {
   </div>
 
   {/* ═══ HOW ═══ */}
-  <section id="how" className="sec" style={{padding:"110px 80px",background:"#1A1A1A"}}>
+  <section id="how" className="sec" style={{padding:"clamp(60px,9vw,110px) clamp(20px,6vw,80px)",background:"#1A1A1A"}}>
     <p className="rv" style={{fontSize:".7rem",fontWeight:500,textTransform:"uppercase",letterSpacing:3,color:"#D4A547",marginBottom:18}}>Metodologia</p>
     <h2 className="pf rv" style={{fontSize:"clamp(2.2rem,3.5vw,3.4rem)",lineHeight:1.1,color:"white"}}>La receta del<br/>crecimiento en 4 pasos.</h2>
     <p className="rv" style={{marginTop:18,maxWidth:500,fontSize:"1rem",lineHeight:1.7,color:"rgba(255,255,255,.5)"}}>Un proceso claro, medible y sin sorpresas. Del diagnostico al resultado.</p>
@@ -774,7 +823,7 @@ export default function App() {
   </section>
 
   {/* ═══ SERVICES ═══ */}
-  <section id="services" className="sec" style={{padding:"110px 80px",background:"#F5EFE0"}}>
+  <section id="services" className="sec" style={{padding:"clamp(60px,9vw,110px) clamp(20px,6vw,80px)",background:"#F5EFE0"}}>
     <div className="g2" style={{display:"grid",gridTemplateColumns:"1fr 2fr",gap:80,alignItems:"start"}}>
       <div className="gs rv" style={{position:"sticky",top:120}}>
         <p style={{fontSize:".7rem",fontWeight:500,textTransform:"uppercase",letterSpacing:3,color:"#C8392B",marginBottom:18}}>Servicios</p>
@@ -798,13 +847,13 @@ export default function App() {
   </section>
 
   {/* ═══ TESTIMONIAL ═══ */}
-  <section style={{background:"#C8392B",color:"white",textAlign:"center",padding:"100px 80px"}}>
+  <section style={{background:"#C8392B",color:"white",textAlign:"center",padding:"clamp(60px,8vw,100px) clamp(20px,6vw,80px)"}}>
     <p className="pf rv" style={{fontStyle:"italic",fontSize:"clamp(1.6rem,2.8vw,2.8rem)",lineHeight:1.35,maxWidth:860,margin:"0 auto 36px"}}>"Con Sazon pasamos de 80 a 340 pedidos diarios en solo tres meses. Su equipo conoce cada detalle de las plataformas y sabe exactamente que palancas mover para crecer."</p>
     <p className="rv" style={{fontSize:".8rem",opacity:.65,textTransform:"uppercase",letterSpacing:2}}>Mauricio Aguila — Fundador · Mr Smash</p>
   </section>
 
   {/* ═══ PRICING ═══ */}
-  <section id="pricing" className="sec" style={{padding:"110px 80px",background:"#EDE4CE"}}>
+  <section id="pricing" className="sec" style={{padding:"clamp(60px,9vw,110px) clamp(20px,6vw,80px)",background:"#EDE4CE"}}>
     <p className="rv" style={{fontSize:".7rem",fontWeight:500,textTransform:"uppercase",letterSpacing:3,color:"#C8392B",marginBottom:18}}>Planes y precios</p>
     <h2 className="pf rv" style={{fontSize:"clamp(2.2rem,3.5vw,3.4rem)",lineHeight:1.1}}>Inversion clara,<br/>resultados medibles.</h2>
     <p className="rv" style={{marginTop:18,maxWidth:500,fontSize:"1rem",lineHeight:1.7,color:"#5A4E3E"}}>Sin costos ocultos. Sin contratos de largo plazo. Pago mensual seguro.</p>
@@ -841,7 +890,7 @@ export default function App() {
   </section>
 
   {/* ═══ PRODUCTOS AUTOMATIZADOS ═══ */}
-  <section id="productos" style={{padding:"110px 80px",background:"#1A1A1A"}}>
+  <section id="productos" style={{padding:"clamp(60px,9vw,110px) clamp(20px,6vw,80px)",background:"#1A1A1A"}}>
     <p className="rv" style={{fontSize:".7rem",fontWeight:500,textTransform:"uppercase",letterSpacing:3,color:"#D4A547",marginBottom:18}}>Sistema operativo de delivery</p>
     <h2 className="pf rv" style={{fontSize:"clamp(2.2rem,3.5vw,3.4rem)",lineHeight:1.1,color:"white",marginBottom:12}}>Automatización que<br/>trabaja las 24 horas.</h2>
     <p className="rv" style={{fontSize:"1rem",lineHeight:1.7,color:"rgba(255,255,255,.45)",maxWidth:560,marginBottom:64}}>Cada servicio que ofrecemos corre sobre un sistema que elimina el trabajo manual. Tú creces, nosotros escalamos sin agregar costo.</p>
@@ -910,45 +959,17 @@ export default function App() {
       ))}
     </div>
 
-    {/* Arquitectura de automatización */}
-    <div className="rv" style={{marginTop:2,background:"rgba(200,57,43,.08)",border:"1px solid rgba(200,57,43,.2)",padding:"36px 40px",display:"flex",gap:48,alignItems:"center",flexWrap:"wrap"}}>
-      <div style={{flex:1,minWidth:240}}>
-        <p style={{fontSize:".7rem",fontWeight:500,textTransform:"uppercase",letterSpacing:3,color:"#C8392B",marginBottom:12}}>Nivel de automatización actual</p>
-        <div className="pf" style={{fontSize:"4rem",fontWeight:900,color:"white",lineHeight:1}}>87<span style={{color:"#C8392B"}}>%</span></div>
-        <p style={{fontSize:".82rem",color:"rgba(255,255,255,.4)",marginTop:8}}>de operaciones sin intervención humana</p>
-      </div>
-      <div style={{flex:2,minWidth:280}}>
-        {[
-          {l:"Captación y cierre de ventas",    v:100, c:"#C8392B"},
-          {l:"Reportes y dashboards",            v:100, c:"#C8392B"},
-          {l:"Gestión de reseñas",               v:85,  c:"#D4A547"},
-          {l:"Campañas y optimización",           v:80,  c:"#D4A547"},
-          {l:"Optimización de menú",              v:75,  c:"#D4A547"},
-          {l:"Setup de marcas nuevas en plataformas", v:72, c:"var(--gold)"},
-        ].map((bar,i)=>(
-          <div key={i} style={{marginBottom:12}}>
-            <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
-              <span style={{fontSize:".78rem",color:"rgba(255,255,255,.55)"}}>{bar.l}</span>
-              <span style={{fontSize:".78rem",fontWeight:700,color:bar.c}}>{bar.v}%</span>
-            </div>
-            <div style={{height:4,background:"rgba(255,255,255,.08)",borderRadius:100,overflow:"hidden"}}>
-              <div style={{height:"100%",width:bar.v+"%",background:bar.c,borderRadius:100,transition:"width 1s ease"}}/>
-            </div>
-          </div>
-        ))}
-      </div>
-    </div>
   </section>
 
   {/* ═══ WHY ═══ */}
   <section id="why" className="g2" style={{background:"#1A1A1A",display:"grid",gridTemplateColumns:"1fr 1fr"}}>
-    <div className="sec rv" style={{padding:"110px 80px",borderRight:"1px solid rgba(255,255,255,.07)"}}>
+    <div className="sec rv" style={{padding:"clamp(60px,9vw,110px) clamp(20px,6vw,80px)",borderRight:"1px solid rgba(255,255,255,.07)"}}>
       <p style={{fontSize:".7rem",fontWeight:500,textTransform:"uppercase",letterSpacing:3,color:"#D4A547",marginBottom:18}}>Resultados reales</p>
       <div className="pf" style={{fontSize:"clamp(5rem,10vw,9rem)",fontWeight:900,lineHeight:1,color:"white",marginBottom:20}}>+40<span style={{color:"#C8392B"}}>%</span></div>
       <p style={{fontSize:"1rem",lineHeight:1.7,color:"rgba(255,255,255,.45)",maxWidth:360}}>Incremento promedio en ventas en los primeros 90 dias de trabajo conjunto.</p>
       <div style={{marginTop:20,color:"rgba(255,255,255,.3)",fontSize:".78rem",textTransform:"uppercase",letterSpacing:"1.5px"}}>Basado en 16+ restaurantes activos</div>
     </div>
-    <div className="sec rv" style={{padding:"110px 80px"}}>
+    <div className="sec rv" style={{padding:"clamp(60px,9vw,110px) clamp(20px,6vw,80px)"}}>
       <p style={{fontSize:".7rem",fontWeight:500,textTransform:"uppercase",letterSpacing:3,color:"#D4A547",marginBottom:18}}>Por que Sazon</p>
       <h2 className="pf" style={{fontSize:"clamp(2rem,3vw,3rem)",lineHeight:1.1,color:"white",marginBottom:48}}>Los ingredientes<br/>de nuestro exito.</h2>
       <div style={{display:"flex",flexDirection:"column",gap:2}}>
@@ -963,7 +984,7 @@ export default function App() {
   </section>
 
   {/* ═══ CLIENTS ═══ */}
-  <section id="clients" className="sec" style={{padding:"110px 80px",background:"#F5EFE0"}}>
+  <section id="clients" className="sec" style={{padding:"clamp(60px,9vw,110px) clamp(20px,6vw,80px)",background:"#F5EFE0"}}>
     <p className="rv" style={{fontSize:".7rem",fontWeight:500,textTransform:"uppercase",letterSpacing:3,color:"#C8392B",marginBottom:18}}>Clientes</p>
     <h2 className="pf rv" style={{fontSize:"clamp(2.2rem,3.5vw,3.4rem)",lineHeight:1.1}}>Restaurantes que ya le<br/>pusieron sazon a su delivery.</h2>
     <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:2,marginTop:64}} className="g5">
@@ -981,7 +1002,7 @@ export default function App() {
   </section>
 
   {/* ═══ CONTACT ═══ */}
-  <section id="contact" className="sec" style={{padding:"110px 80px",background:"#F5EFE0"}}>
+  <section id="contact" className="sec" style={{padding:"clamp(60px,9vw,110px) clamp(20px,6vw,80px)",background:"#F5EFE0"}}>
     <div className="g2" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:80}}>
       <div>
         <p className="rv" style={{fontSize:".7rem",fontWeight:500,textTransform:"uppercase",letterSpacing:3,color:"#C8392B",marginBottom:18}}>Contacto</p>
@@ -1104,7 +1125,7 @@ export default function App() {
   </section>
 
   {/* ═══ FOOTER ═══ */}
-  <footer style={{background:"#2D2D2D",color:"rgba(255,255,255,.4)",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"28px 80px",fontSize:".78rem",flexWrap:"wrap",gap:12}}>
+  <footer style={{background:"#2D2D2D",color:"rgba(255,255,255,.4)",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"24px clamp(16px,5vw,80px)",fontSize:".78rem",flexWrap:"wrap",gap:12,boxSizing:"border-box"}}>
     <div className="pf" style={{fontWeight:900,fontSize:"1.1rem",color:"white"}}>Saz<span style={{fontFamily:"DM Sans,sans-serif"}}>ó</span>n<span style={{color:"#C8392B"}}>.</span> Growth Partner</div>
     <div>2025 Sazon Growth Partner. Todos los derechos reservados.</div>
     <div style={{display:"flex",gap:24,alignItems:"center"}}>
@@ -1130,16 +1151,16 @@ export default function App() {
     target="_blank" rel="noopener noreferrer"
     title="Escríbenos por WhatsApp"
     style={{
-      position:"fixed", bottom:108, right:28, zIndex:998,
-      width:50, height:50, borderRadius:"50%",
+      position:"fixed", bottom:24, left:24, zIndex:998,
+      width:52, height:52, borderRadius:"50%",
       background:"#25D366", color:"white",
       display:"flex", alignItems:"center", justifyContent:"center",
       boxShadow:"0 4px 18px rgba(37,211,102,.45)",
       transition:"transform .2s, box-shadow .2s",
       textDecoration:"none",
     }}
-    onMouseEnter={e=>{ e.currentTarget.style.transform="scale(1.1)"; e.currentTarget.style.boxShadow="0 6px 24px rgba(37,211,102,.55)"; }}
-    onMouseLeave={e=>{ e.currentTarget.style.transform="none"; e.currentTarget.style.boxShadow="0 4px 18px rgba(37,211,102,.45)"; }}
+    onMouseEnter={e=>{ e.currentTarget.style.transform="scale(1.1)"; }}
+    onMouseLeave={e=>{ e.currentTarget.style.transform="none"; }}
   >
     <svg viewBox="0 0 32 32" width="26" height="26" fill="white" aria-label="WhatsApp">
       <path d="M19.11 17.41c-.27-.14-1.6-.79-1.85-.88-.25-.09-.43-.14-.62.14-.18.27-.71.88-.87 1.06-.16.18-.32.2-.59.07-.27-.14-1.14-.42-2.18-1.33-.81-.72-1.36-1.61-1.52-1.88-.16-.27-.02-.42.12-.56.13-.13.27-.32.41-.48.14-.16.18-.27.27-.45.09-.18.05-.34-.02-.48-.07-.14-.62-1.5-.85-2.05-.22-.53-.45-.46-.62-.47-.16-.01-.34-.01-.52-.01-.18 0-.48.07-.73.34-.25.27-.96.94-.96 2.3 0 1.36.99 2.68 1.13 2.86.14.18 1.95 2.98 4.73 4.17.66.28 1.17.45 1.57.57.66.21 1.26.18 1.73.11.53-.08 1.6-.65 1.83-1.29.23-.64.23-1.18.16-1.29-.07-.11-.25-.18-.52-.32z"/>
