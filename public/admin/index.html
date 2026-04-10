@@ -5,6 +5,20 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sazón · Admin</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<script>
+// ── EMAILJS CONFIG ────────────────────────────────────────────
+// emailjs.com → Account → Public Key
+// Reemplaza los 3 valores con los tuyos de emailjs.com
+const EMAILJS_PUBLIC_KEY  = "TU_PUBLIC_KEY_AQUI";  // Account → API Keys
+const EMAILJS_SERVICE_ID  = "service_sazon";        // Email Services → Service ID
+const EMAILJS_TEMPLATE_ID = "template_sazon_otp";   // Email Templates → Template ID
+(function(){
+  if(typeof emailjs !== "undefined" && EMAILJS_PUBLIC_KEY !== "TU_PUBLIC_KEY_AQUI"){
+    emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+  }
+})();
+</script>
 <style>
 :root{--red:#C8392B;--rd:#9B2335;--gold:#D4A547;--green:#22c55e;--blue:#3b82f6;
   --bg:#0a0a0a;--bg2:#111;--bg3:#1a1a1a;--bg4:#222;--bg5:#2a2a2a;
@@ -199,6 +213,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
       <button class="sb-btn" onclick="window.open('/outbound','_blank')"><span class="sb-ico">📤</span>Carlos Outbound ↗</button>
 
       <div class="sb-sec">Sistema</div>
+      <button class="sb-btn" onclick="go('marcas')"><span class="sb-ico">🏪</span>Marcas y Usuarios</button>
       <button class="sb-btn" onclick="go('config')"><span class="sb-ico">⚙️</span>Configuracion</button>
     </nav>
     <div class="sb-foot">
@@ -653,6 +668,79 @@ Selecciona un cliente para generar el mensaje.</div>
         </div>
       </div>
 
+      <!-- MARCAS Y USUARIOS -->
+      <div id="p-marcas" class="panel fadein">
+
+        <div class="alert ai" style="margin-bottom:16px">ℹ️ <div>Los accesos se guardan en el navegador y en el archivo <code>public/cliente/index.html</code>. Al agregar una marca, el sistema genera el bloque de código listo para copiar y reemplazar en GitHub.</div></div>
+
+        <!-- STATS -->
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">
+          <div class="card"><div style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;color:var(--gold)" id="mu-stat-marcas">0</div><div style="font-size:.68rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted)">Marcas activas</div></div>
+          <div class="card"><div style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:700" id="mu-stat-users">0</div><div style="font-size:.68rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted)">Usuarios con acceso</div></div>
+          <div class="card"><div style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;color:var(--green)" id="mu-stat-planes">0</div><div style="font-size:.68rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted)">Plans activos</div></div>
+          <div class="card"><div style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;color:var(--blue)">2</div><div style="font-size:.68rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted)">Máx usuarios/marca</div></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:1fr 1.4fr;gap:16px">
+
+          <!-- FORMULARIO NUEVA MARCA -->
+          <div>
+            <div class="card">
+              <div class="ct" id="mu-form-title">Nueva marca</div>
+              <div style="display:flex;flex-direction:column;gap:11px">
+                <div><label class="fl">Nombre de la marca</label><input class="fi" id="mu-nombre" placeholder="Mr Smash"></div>
+                <div><label class="fl">Emoji / ícono</label><input class="fi" id="mu-emoji" placeholder="🍔" maxlength="2"></div>
+                <div><label class="fl">Plan</label>
+                  <select class="fi" id="mu-plan">
+                    <option value="Starter">Starter — S/890/mes</option>
+                    <option value="Growth">Growth — S/1,790/mes</option>
+                    <option value="Pro">Pro — A medida</option>
+                  </select>
+                </div>
+                <div><label class="fl">Mes con Sazón</label><input class="fi" type="number" id="mu-mes" placeholder="1" min="1" max="36" value="1"></div>
+                <div>
+                  <label class="fl">Emails con acceso (máx 2 — uno por línea)</label>
+                  <textarea class="fi" id="mu-emails" rows="2" placeholder="dueño@restaurante.com&#10;admin@restaurante.com"></textarea>
+                  <div style="font-size:.68rem;color:var(--muted);margin-top:4px">El email es el usuario para el portal /cliente</div>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+                  <div><label class="fl">Pedidos/mes (aprox)</label><input class="fi" type="number" id="mu-pedidos" placeholder="200"></div>
+                  <div><label class="fl">Ticket promedio S/</label><input class="fi" type="number" id="mu-ticket" placeholder="45"></div>
+                </div>
+                <div><label class="fl">Crecimiento % vs mes anterior</label><input class="fi" id="mu-growth" placeholder="+38%" ></div>
+                <div style="display:flex;gap:8px">
+                  <button class="btn btn-r" style="flex:1" onclick="muGuardar()">Guardar marca</button>
+                  <button class="btn btn-o" onclick="muNuevo()">+ Nueva</button>
+                </div>
+                <div id="mu-msg" style="font-size:.78rem;text-align:center;min-height:16px"></div>
+              </div>
+            </div>
+          </div>
+
+          <!-- LISTA DE MARCAS -->
+          <div>
+            <div class="card">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px">
+                <div class="ct" style="margin-bottom:0">Marcas registradas</div>
+                <button class="btn btn-r btn-sm" onclick="muGenerarCodigo()">📋 Generar código → GitHub</button>
+              </div>
+              <div id="mu-lista"></div>
+            </div>
+
+            <!-- CÓDIGO GENERADO -->
+            <div class="card" id="mu-code-card" style="margin-top:12px;display:none">
+              <div class="ct">Código generado — copia esto a GitHub</div>
+              <div style="font-size:.7rem;color:var(--muted);margin-bottom:10px">Reemplaza el objeto <code>AUTH</code> en <code>public/cliente/index.html</code> con esto:</div>
+              <textarea class="fi mono" id="mu-code-output" rows="8" readonly style="font-size:.72rem;line-height:1.6;background:rgba(0,0,0,.2)"></textarea>
+              <button class="btn btn-o" style="width:100%;margin-top:8px;font-size:.78rem" onclick="muCopiarCodigo()">📋 Copiar al clipboard</button>
+              <div style="margin-top:10px;padding:10px;background:rgba(200,57,43,.06);border:1px solid rgba(200,57,43,.15);border-radius:8px;font-size:.78rem;color:var(--muted)">
+                ⚠️ <strong style="color:white">Paso siguiente:</strong> Copia este bloque, ve a GitHub → <code>public/cliente/index.html</code> → busca la línea que empieza con <code>const AUTH = {</code> y reemplaza todo el bloque AUTH con el código de arriba. Después haz commit.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <!-- CONFIG -->
       <div id="p-config" class="panel fadein">
         <div class="alert ai">ℹ️ <div>Las variables de entorno deben configurarse en Netlify (no en GitHub). Ve a Site settings → Build & deploy → Environment variables.</div></div>
@@ -1090,21 +1178,217 @@ document.addEventListener('DOMContentLoaded', () => {
   negRenderStats();
 });
 
+
+
+// ════════════════════════════════════════════════════════════════
+//  MARCAS Y USUARIOS — gestión sin editar GitHub
+// ════════════════════════════════════════════════════════════════
+let muMarcas = JSON.parse(localStorage.getItem('sazon_marcas') || '[]');
+let muEditIdx = null; // null = nueva, número = editar
+
+// Datos de las marcas demo (que ya existen en el cliente dashboard)
+const MU_DEMO = [
+  {id:'mrsmash',    nombre:'Mr Smash',           emoji:'🍔', plan:'Growth', mes:4, emails:['mrsmash@sazonpartner.com'], pedidos:382, ticket:48, growth:'+45%'},
+  {id:'greenbowl',  nombre:'Green Bowl',          emoji:'🥗', plan:'Growth', mes:6, emails:['greenbowl@sazonpartner.com'], pedidos:310, ticket:50, growth:'-9%'},
+  {id:'wokroll',    nombre:'Wok & Roll',           emoji:'🍜', plan:'Growth', mes:5, emails:['wokroll@sazonpartner.com'], pedidos:890, ticket:43, growth:'+24%'},
+  {id:'fornoromano',nombre:'Forno Romano',         emoji:'🍕', plan:'Starter', mes:1, emails:[], pedidos:87, ticket:39, growth:'nuevo'},
+];
+
+function muInit(){
+  // Merge demo if first run
+  if(muMarcas.length === 0) {
+    muMarcas = JSON.parse(JSON.stringify(MU_DEMO));
+    muSave();
+  }
+  muRender();
+  muStats();
+}
+
+function muSave(){
+  localStorage.setItem('sazon_marcas', JSON.stringify(muMarcas));
+}
+
+function muStats(){
+  const totalMarcas = muMarcas.length;
+  const totalUsers  = muMarcas.reduce((s,m) => s + m.emails.filter(e=>e.trim()).length, 0);
+  const totalActivos= muMarcas.filter(m => m.plan !== 'Inactivo').length;
+  document.getElementById('mu-stat-marcas').textContent  = totalMarcas;
+  document.getElementById('mu-stat-users').textContent   = totalUsers;
+  document.getElementById('mu-stat-planes').textContent  = totalActivos;
+}
+
+function muRender(){
+  const lista = document.getElementById('mu-lista');
+  if(!muMarcas.length){
+    lista.innerHTML = '<div style="font-size:12px;color:var(--muted);padding:12px 0">Sin marcas registradas.</div>';
+    return;
+  }
+  lista.innerHTML = muMarcas.map((m,i) => {
+    const emails   = (m.emails||[]).filter(e=>e.trim());
+    const planCls  = m.plan==='Growth'?'bg-b':m.plan==='Pro'?'bg-m':'bg-g';
+    const growthOk = (m.growth||'').startsWith('+');
+    return `<div style="display:flex;align-items:center;gap:10px;padding:10px;background:var(--bg4);border-radius:9px;margin-bottom:8px;transition:background .18s" onmouseenter="this.style.background='rgba(200,57,43,.08)'" onmouseleave="this.style.background='var(--bg4)'">
+      <div style="width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--red),var(--gold));display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0">${m.emoji||'🍽️'}</div>
+      <div style="flex:1;min-width:0">
+        <div style="font-weight:600;font-size:13px;margin-bottom:2px">${m.nombre}</div>
+        <div style="font-size:10.5px;color:var(--muted)">${emails.length?emails.join(', '):'Sin emails asignados'}</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px">${m.pedidos||'?'} ped/mes · S/${m.ticket||'?'} ticket · Mes ${m.mes||1} con Sazón</div>
+      </div>
+      <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+        <span class="bg ${planCls}" style="font-size:.65rem">${m.plan}</span>
+        <span style="font-size:10px;font-weight:700;color:${growthOk?'var(--green)':'var(--red)'}">${m.growth||'—'}</span>
+      </div>
+      <div style="display:flex;gap:4px">
+        <button class="btn btn-o" style="padding:4px 10px;font-size:.72rem" onclick="muEditar(${i})">✏️</button>
+        <button class="btn btn-o" style="padding:4px 10px;font-size:.72rem;color:var(--red)" onclick="muEliminar(${i})">🗑</button>
+      </div>
+    </div>`;
+  }).join('');
+}
+
+function muGuardar(){
+  const nombre  = document.getElementById('mu-nombre').value.trim();
+  const emoji   = document.getElementById('mu-emoji').value.trim() || '🍽️';
+  const plan    = document.getElementById('mu-plan').value;
+  const mes     = parseInt(document.getElementById('mu-mes').value)||1;
+  const emailsRaw = document.getElementById('mu-emails').value.trim();
+  const emails  = emailsRaw.split('
+').map(e=>e.trim()).filter(Boolean).slice(0,2);
+  const pedidos = parseInt(document.getElementById('mu-pedidos').value)||0;
+  const ticket  = parseInt(document.getElementById('mu-ticket').value)||0;
+  const growth  = document.getElementById('mu-growth').value.trim()||'—';
+  const msgEl   = document.getElementById('mu-msg');
+
+  if(!nombre){ msgEl.textContent='Nombre obligatorio.'; msgEl.style.color='var(--red)'; return; }
+  if(emails.length === 0){ msgEl.textContent='Agrega al menos un email.'; msgEl.style.color='var(--red)'; return; }
+  if(emails.length > 2){ msgEl.textContent='Máximo 2 emails por marca.'; msgEl.style.color='var(--red)'; return; }
+
+  // Check email conflicts with other brands
+  const otherEmails = muMarcas.flatMap((m,i) => muEditIdx === i ? [] : (m.emails||[]));
+  const conflict = emails.find(e => otherEmails.includes(e));
+  if(conflict){ msgEl.textContent=`"${conflict}" ya está asignado a otra marca.`; msgEl.style.color='var(--red)'; return; }
+
+  const id = nombre.toLowerCase().replace(/[^a-z0-9]/g,'');
+  const marca = {id, nombre, emoji, plan, mes, emails, pedidos, ticket, growth};
+
+  if(muEditIdx !== null){
+    muMarcas[muEditIdx] = marca;
+    msgEl.textContent = '✅ Marca actualizada.';
+  } else {
+    muMarcas.push(marca);
+    msgEl.textContent = '✅ Marca agregada. Genera el código y actualiza GitHub.';
+  }
+  msgEl.style.color = 'var(--green)';
+  muSave(); muRender(); muStats(); muEditIdx = null;
+  document.getElementById('mu-form-title').textContent = 'Nueva marca';
+  setTimeout(()=>{ if(msgEl) msgEl.textContent=''; }, 4000);
+}
+
+function muEditar(idx){
+  const m = muMarcas[idx];
+  muEditIdx = idx;
+  document.getElementById('mu-nombre').value  = m.nombre;
+  document.getElementById('mu-emoji').value   = m.emoji||'🍽️';
+  document.getElementById('mu-plan').value    = m.plan;
+  document.getElementById('mu-mes').value     = m.mes||1;
+  document.getElementById('mu-emails').value  = (m.emails||[]).join('
+');
+  document.getElementById('mu-pedidos').value = m.pedidos||'';
+  document.getElementById('mu-ticket').value  = m.ticket||'';
+  document.getElementById('mu-growth').value  = m.growth||'';
+  document.getElementById('mu-form-title').textContent = 'Editar: ' + m.nombre;
+  document.getElementById('mu-msg').textContent = '';
+}
+
+function muEliminar(idx){
+  const m = muMarcas[idx];
+  if(!confirm('Eliminar la marca "'+m.nombre+'" y sus accesos?')) return;
+  muMarcas.splice(idx,1);
+  muSave(); muRender(); muStats();
+  if(muEditIdx === idx){ muNuevo(); }
+}
+
+function muNuevo(){
+  muEditIdx = null;
+  ['mu-nombre','mu-emoji','mu-emails','mu-pedidos','mu-ticket','mu-growth'].forEach(id=>{
+    const el=document.getElementById(id); if(el) el.value='';
+  });
+  document.getElementById('mu-plan').value = 'Growth';
+  document.getElementById('mu-mes').value  = '1';
+  document.getElementById('mu-form-title').textContent = 'Nueva marca';
+  document.getElementById('mu-msg').textContent = '';
+}
+
+function muGenerarCodigo(){
+  // Generate the AUTH object code to paste into cliente/index.html
+  const lines = ['const AUTH = {'];
+  muMarcas.forEach(m => {
+    const emails = (m.emails||[]).filter(e=>e.trim());
+    // The brand index corresponds to position in the BRANDS array (by name match)
+    // We use the brand ID as comment
+    emails.forEach(email => {
+      lines.push('  "'+email+'": ["'+m.id+'"],  // '+m.nombre);
+    });
+  });
+  lines.push('  "demo@sazonpartner.com": ["'+muMarcas.map(m=>m.id).join('","')+'"],  // demo operador (acceso a todas)');
+  lines.push('};');
+
+  // Also generate BRANDS-like info comment
+  lines.push('');
+  lines.push('// Marcas y sus índices:');
+  muMarcas.forEach((m,i) => {
+    lines.push('// '+i+': "'+m.nombre+'" ('+m.plan+') — Emails: '+(m.emails||[]).join(', ')||'sin asignar');
+  });
+
+  const code = lines.join('
+');
+  document.getElementById('mu-code-output').value = code;
+  document.getElementById('mu-code-card').style.display = 'block';
+  document.getElementById('mu-code-card').scrollIntoView({behavior:'smooth'});
+}
+
+function muCopiarCodigo(){
+  const ta = document.getElementById('mu-code-output');
+  navigator.clipboard.writeText(ta.value).then(()=>{
+    const btn = event.currentTarget;
+    const orig = btn.textContent;
+    btn.textContent = '✅ Copiado!';
+    setTimeout(()=>btn.textContent = orig, 2000);
+  });
+}
+
+// Init when panel opens
+const _origGo = go;
+function go(id){
+  _origGo(id);
+  if(id === 'marcas') muInit();
+}
+
+// Also init stats on dashboard load
+document.addEventListener('DOMContentLoaded', ()=>{
+  // Stats visible from dashboard
+  muMarcas = JSON.parse(localStorage.getItem('sazon_marcas') || '[]');
+  if(muMarcas.length === 0 && typeof MU_DEMO !== 'undefined'){
+    muMarcas = JSON.parse(JSON.stringify(MU_DEMO));
+    localStorage.setItem('sazon_marcas', JSON.stringify(muMarcas));
+  }
+});
+
 </script><script>
 // ── AUTH ──────────────────────────────────────────────────────────────────────
 const ADMIN_EMAIL = "gc.asin.zapata@gmail.com";
 let code = "";
 
 function sendCode() {
-  const emEl = document.getElementById("lemail");
-  const em   = emEl ? emEl.value.trim().toLowerCase() : "";
-  const msg1El = document.getElementById("lmsg1");
-  if (!em || !em.includes("@")) {
-    if(msg1El){ msg1El.textContent = "Ingresa tu email."; msg1El.style.color="#f87171"; }
+  const emEl  = document.getElementById("lemail");
+  const em    = emEl ? emEl.value.trim().toLowerCase() : "";
+  const msgEl = document.getElementById("lmsg1");
+  if (!em) {
+    if(msgEl){ msgEl.textContent = "Ingresa tu email."; msgEl.style.color="#f87171"; }
     return;
   }
   if (em !== ADMIN_EMAIL) {
-    if(msg1El){ msg1El.textContent = "Email no autorizado."; msg1El.style.color="#f87171"; }
+    if(msgEl){ msgEl.textContent = "Email no autorizado."; msgEl.style.color="#f87171"; }
     return;
   }
   code = String(Math.floor(100000 + Math.random() * 900000));
@@ -1113,21 +1397,10 @@ function sendCode() {
   const cv = document.getElementById("cval");
   if(s1) s1.style.display = "none";
   if(s2) s2.style.display = "block";
-  if(cv) { cv.textContent = code; cv.style.filter = ""; }
-  if(msg1El) msg1El.textContent = "";
+  if(cv) cv.textContent = code;
+  if(msgEl) msgEl.textContent = "";
   // Auto-expire code in 5 minutes
-  setTimeout(() => { code = ""; if(cv) cv.textContent = "EXPIRADO"; }, 5 * 60 * 1000);
-  // Try EmailJS if configured
-  if (typeof emailjs !== "undefined" && typeof EMAILJS_SERVICE !== "undefined" && EMAILJS_SERVICE !== "service_sazon") {
-    emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, {
-      to_email: ADMIN_EMAIL, code: code, admin_name: "Admin"
-    }).then(() => {
-      if(cv){ cv.textContent = "••••••"; cv.style.filter = "blur(6px)"; }
-      if(s2){ const note = s2.querySelector(".code-note"); if(note) note.textContent = "Codigo enviado a " + ADMIN_EMAIL; }
-    }).catch(() => {
-      // EmailJS failed - code stays visible on screen
-    });
-  }
+  setTimeout(function(){ code = ""; if(cv) cv.textContent = "EXPIRADO"; }, 5 * 60 * 1000);
 }
 
 function verify() {
@@ -1173,6 +1446,7 @@ const panelMeta = {
   campanas:   ["Campanas","Gestion de campanas en apps"],
   roi:        ["Calc. ROI","Calculadora para prospectos"],
   negociacion:["Negociacion de Comisiones","Templates y seguimiento con plataformas"],
+  marcas:     ["Marcas y Usuarios","Gestiona el acceso al portal de cliente"],
   config:     ["Configuracion","APIs y variables de entorno"],
 };
 
