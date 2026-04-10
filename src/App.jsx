@@ -171,45 +171,31 @@ function parseConvState(history) {
   const last  = uMsgs[uMsgs.length - 1] || "";
   const prev  = uMsgs[uMsgs.length - 2] || "";
 
-  // What did Carlos ask last? Used for context-aware number parsing
-  const aMsgs = history.filter(m => m.role === "assistant");
-  const lastCarlos = (aMsgs[aMsgs.length - 1]?.content || "").toLowerCase();
-  const carlosAskingPedidos = /pedidos|cuántos|cuantos|ordenes/.test(lastCarlos) && !/ticket|promedio|gasta/.test(lastCarlos);
-  const carlosAskingTicket  = /ticket|promedio|gasta|cada cliente/.test(lastCarlos);
+  // Pedidos: acepta "200 pedidos", "hacemos 200 al mes", "unas 200 ordenes"
+  const pedRx = /(?:hacemos|tenemos|recibimos|unas?|como|entre|aproximadamente)?\s*(\d{2,4})\s*(?:pedidos?|ordenes?|ventas?|al\s*mes|por\s*mes|mensuales?)/;
+  const pedM  = (full.match(pedRx) || full.match(/(\d{3,4})\s*(?:mes|orden|pedid)/));
+  const pedidos = pedM ? parseInt(pedM[1]) : null;
 
-  // Pedidos: acepta "200 pedidos", "hacemos 200 al mes", "unas 200", "aprox 100", plain "100"
-  const pedRx = /(?:hacemos|tenemos|recibimos|unas?|como|entre|aproximadamente|aprox\.?)?\s*(\d{2,4})\s*(?:pedidos?|ordenes?|ventas?|al\s*mes|por\s*mes|mensuales?)?/;
-  // Context-aware: if Carlos asked about pedidos and user answered a number alone
-  const standaloneNum = last.match(/^(?:aprox\.?\s*)?(\d{2,4})(?:\s*(?:pedidos?|ordenes?|mas\s*o\s*menos|aprox|al\s*mes)?)?$/);
-  const pedRxM = full.match(/(?:hacemos|tenemos|recibimos|unas?|como|entre|aproximadamente|aprox)\s*(\d{2,4})\s*(?:pedidos?|ordenes?|ventas?|al\s*mes|por\s*mes|mensuales?)?/)
-    || full.match(/(\d{2,4})\s*(?:pedidos?|ordenes?|al\s*mes|por\s*mes|mensuales)/);
-  let pedidos = pedRxM ? parseInt(pedRxM[1]) : null;
-  // Context fallback: user sent only a number and Carlos was asking about pedidos
-  if (!pedidos && standaloneNum && carlosAskingPedidos) {
-    pedidos = parseInt(standaloneNum[1]);
-  }
-
-  // Ticket: acepta "ticket de 45", "gasta 45 soles", "s/45", "45 soles", plain "45" if Carlos asked
+  // Ticket: acepta "ticket de 45", "gasta 45 soles", "promedio 45", "cobra 45"
   const tickRx = /(?:ticket\s*(?:de|es|promedio)?|gasta\s*(?:unos?)?|promedio\s*(?:de)?|cobra\s*(?:unos?)?|s\/\s*)(\d{2,3})(?:\s*soles?)?/;
-  const tickM  = full.match(tickRx)
-    || full.match(/(\d{2,3})\s*(?:soles?|sol|pens?)/);
-  let ticket = tickM ? parseInt(tickM[1]) : null;
-  // Context fallback: user sent only a number and Carlos was asking about ticket
-  if (!ticket && standaloneNum && carlosAskingTicket) {
-    ticket = parseInt(standaloneNum[1]);
-  }
-  // Sanity: ticket should be 15-300, pedidos 10-9999
-  if (ticket && (ticket < 10 || ticket > 500)) ticket = null;
-  if (pedidos && pedidos > 9999) pedidos = null;
+  const tickM  = full.match(tickRx);
+  const ticket = tickM ? parseInt(tickM[1]) : null;
 
-  // Plataformas
+  // Plataformas — scan all USER messages, but remove platforms that user explicitly denied
   const plats = [];
-  if (/rappi/.test(full))              plats.push("Rappi");
-  if (/pedidos\s*ya|pedidosya/.test(full)) plats.push("PedidosYa");
-  if (/didi/.test(full))               plats.push("Didi Food");
-  if (/glovo/.test(full))              plats.push("Glovo");
+  // Detect negations across all user messages
+  const deniedRappi  = uMsgs.some(m => /no\s*(estoy|estamos|tengo|tenemos|uso|usamos)?\s*(en\s*)?rappi|sin\s*rappi/.test(m));
+  const deniedPeya   = uMsgs.some(m => /no\s*(estoy|estamos|tengo|tenemos|uso|usamos)?\s*(en\s*)?(?:pedidos\s*ya|pedidosya)|sin\s*(?:pedidos\s*ya|pedidosya)/.test(m));
+  const deniedDidi   = uMsgs.some(m => /no\s*(estoy|estamos|tengo|tenemos|uso|usamos)?\s*(en\s*)?didi|sin\s*didi/.test(m));
+  const deniedGlovo  = uMsgs.some(m => /no\s*(estoy|estamos|tengo|tenemos)?\s*(en\s*)?glovo/.test(m));
+  if (!deniedRappi  && /rappi/.test(full))              plats.push("Rappi");
+  if (!deniedPeya   && /pedidos\s*ya|pedidosya/.test(full)) plats.push("PedidosYa");
+  if (!deniedDidi   && /didi/.test(full))               plats.push("Didi Food");
+  if (!deniedGlovo  && /glovo/.test(full))              plats.push("Glovo");
   if (/uber/.test(full))               plats.push("Uber Eats");
   if (/ifood/.test(full))              plats.push("iFood");
+  // Starter plan = 1 plataforma — if user has 2+, auto-recommend Growth
+  const nPlats = plats.length;
 
   // ¿Ya respondimos sobre ROI? evita repetir el cálculo
   const roiDicho   = history.some(m => m.role === "assistant" && /proyectamos|roi|retorno|ingresos adicionales/.test(m.content.toLowerCase()));
@@ -235,8 +221,10 @@ function calcROI({ pedidos, ticket, plats = [] }) {
   // Factor total de mejora
   const totalFactor = crescBase + campBonus + comisBonus;
   const mensual     = Math.round(pedidos * ticket * totalFactor);
-  const plan        = pedidos < 300 ? "Starter" : "Growth";
-  const costo       = pedidos < 300 ? 890 : 1790;
+  // Plan logic: Growth if 2+ platforms OR >300 orders. Starter if 1 platform AND <300.
+  const isGrowth = pedidos >= 300 || plats.length >= 2;
+  const plan     = isGrowth ? "Growth" : "Starter";
+  const costo    = isGrowth ? 1790 : 890;
   const roi_pct     = Math.round((mensual / costo) * 100);
   const payback_dias= Math.round((costo / mensual) * 30);
   return { mensual, anual: mensual * 12, plan, costo, roi_pct, payback_dias, factor: Math.round(totalFactor * 100) };
@@ -254,8 +242,9 @@ function carlosFallback(history) {
   // Cierre / pago
   if (/quiero\s*(iniciar|empezar|contratar|pagar)|listo\s*para|me\s*animo|arrancamos|activ[ae]|cuanto\s*cuesta\s*para\s*empe/.test(last)) {
     if (roi) {
+      const reason = plats.length >= 2 ? `${plats.length} plataformas activas` : `${pedidos} pedidos/mes`;
       const tok = roi.plan === "Starter" ? "[PAGO_STARTER]" : "[PAGO_GROWTH]";
-      return `Genial! Para tu operación recomendamos el plan ${roi.plan} a S/${roi.costo.toLocaleString()}/mes. Proyectamos S/${roi.mensual.toLocaleString()} extra por mes — recuperas la inversión en ${roi.payback_dias} días. Acá el link de pago: ${tok}`;
+      return `Perfecto! Para tu operación (${reason}, S/${ticket} ticket) recomendamos el plan ${roi.plan} a S/${roi.costo.toLocaleString()}/mes — incluye hasta ${roi.plan==="Growth"?"3 plataformas":"1 plataforma"}. Proyectamos S/${roi.mensual.toLocaleString()} adicionales por mes. Acá el link de pago: ${tok}`;
     }
     return "Para recomendarte el plan exacto necesito dos datos rápidos: ¿cuántos pedidos recibes por mes y cuál es el ticket promedio? Con eso armamos todo.";
   }
@@ -314,7 +303,8 @@ function carlosFallback(history) {
   // Tenemos ROI → empujar al cierre (solo si no lo dijimos ya)
   if (pedidos && ticket && roi && !pagoDicho) {
     if (!roiDicho) {
-      return `Perfecto! Con ${pedidos} pedidos a S/${ticket} de ticket, nuestro equipo proyecta S/${roi.mensual.toLocaleString()} adicionales por mes para tu restaurante. El plan ${roi.plan} (S/${roi.costo.toLocaleString()}/mes) te da un retorno del ${roi.roi_pct}% mensual. ¿Lo activamos esta semana?`;
+      const planDesc = roi.plan === "Growth" ? "hasta 3 plataformas" : "1 plataforma";
+      return `Perfecto! Con ${pedidos} pedidos a S/${ticket} de ticket, proyectamos S/${roi.mensual.toLocaleString()} adicionales por mes. Te recomiendo el plan ${roi.plan} (${planDesc}, S/${roi.costo.toLocaleString()}/mes) — retorno del ${roi.roi_pct}% mensual. ¿Lo activamos esta semana?`;
     }
     if (roiDicho && !planDicho) {
       const tok = roi.plan === "Starter" ? "[PAGO_STARTER]" : "[PAGO_GROWTH]";
@@ -337,20 +327,11 @@ function carlosFallback(history) {
 
   // Tenemos plataformas, falta pedidos
   if (plats.length > 0 && !pedidos) {
-    // Si Carlos ya hizo esta pregunta antes, pedir de otra forma
-    const yaPregunte = history.filter(m => m.role === "assistant").some(m => /pedidos.*mes|cuántos.*pedidos/i.test(m.content));
-    if (yaPregunte) {
-      return `Para calcular tu ROI solo me falta saber el volumen: ¿manejas más de 100 pedidos al mes, entre 100 y 300, o más de 300?`;
-    }
     return `Bien, ${plats.join(" y ")}! Para calcularte el ROI exacto: ¿cuántos pedidos reciben por mes aproximadamente en total?`;
   }
 
   // Tenemos ticket, falta pedidos
   if (ticket && !pedidos) {
-    const yaPregunte = history.filter(m => m.role === "assistant").some(m => /pedidos.*mes|cuántos.*pedidos/i.test(m.content));
-    if (yaPregunte) {
-      return `Solo me falta el volumen de pedidos. ¿Reciben más de 200 pedidos al mes?`;
-    }
     return `S/${ticket} de ticket promedio, bien. ¿Y cuántos pedidos reciben por mes aproximadamente?`;
   }
 
@@ -654,19 +635,19 @@ export default function App() {
   const plans = [
     {
       name:"Starter", tag:"1 plataforma · hasta 300 pedidos/mes",
-      price:"S/ 890", period:"/mes", fee:"+3% del crecimiento generado",
+      price:"S/ 890", period:"/mes", fee:null,
       badge:null, dark:false, mpLink: MP_STARTER,
       fts:[{t:"Diagnostico inicial",ok:true},{t:"1 plataforma de delivery",ok:true},{t:"Optimizacion basica de menu",ok:true},{t:"Reporte mensual",ok:true},{t:"1 campaña mensual",ok:true},{t:"Growth Manager dedicado",ok:false},{t:"Setup en plataformas (marcas nuevas)",ok:false}],
     },
     {
       name:"Growth", tag:"Hasta 3 plataformas · escala rapida",
-      price:"S/ 1,790", period:"/mes", fee:"+2.5% del crecimiento generado",
+      price:"S/ 1,790", period:"/mes", fee:null,
       badge:"Mas popular", dark:true, mpLink: MP_GROWTH,
       fts:[{t:"Diagnostico completo",ok:true},{t:"Hasta 3 plataformas",ok:true},{t:"Optimizacion menu foto+copy+precio",ok:true},{t:"Growth Manager dedicado",ok:true},{t:"Setup en plataformas + entrada negociada",ok:true},{t:"Plan comercial mensual",ok:true},{t:"Hasta 3 campañas mensuales",ok:true}],
     },
     {
       name:"Pro", tag:"Cadenas · multi-local · dark kitchens",
-      price:"A medida", period:"cotizacion", fee:"Negociable segun operacion",
+      price:"A medida", period:"cotizacion", fee:null,
       badge:null, dark:false, mpLink: null,
       fts:[{t:"Todo Growth incluido",ok:true},{t:"Plataformas ilimitadas",ok:true},{t:"Dark kitchens y marcas virtuales",ok:true},{t:"Equipo dedicado exclusivo",ok:true},{t:"Campañas ilimitadas",ok:true},{t:"Integracion con POS y tech stack",ok:true},{t:"Reunion semanal de seguimiento",ok:true}],
     },
@@ -745,7 +726,6 @@ export default function App() {
       footer{padding:22px 20px!important;flex-direction:column!important;gap:12px!important;text-align:center!important;}
       .cwin{width:calc(100vw - 28px);max-height:80vh;}
       .cw{bottom:14px;right:14px;}
-      .wa-float-btn{bottom:14px;left:14px;width:48px;height:48px;}
     }
     @media(max-width:600px){
       .g4{grid-template-columns:1fr!important;}
@@ -865,7 +845,7 @@ export default function App() {
           <div style={{fontSize:".82rem",color:p.dark?"rgba(255,255,255,.5)":"#5A4E3E",marginBottom:32}}>{p.tag}</div>
           <div className="pf" style={{fontSize:"2.8rem",fontWeight:900,lineHeight:1,color:p.dark?"white":"#1A1A1A",marginBottom:4}}>{p.price}</div>
           <div style={{fontSize:".78rem",color:p.dark?"rgba(255,255,255,.4)":"#5A4E3E",marginBottom:4}}>{p.period}</div>
-          <div style={{fontSize:".75rem",color:p.dark?"rgba(255,255,255,.35)":"#5A4E3E",marginBottom:28,fontStyle:"italic"}}>{p.fee}</div>
+     
           <ul style={{listStyle:"none",marginBottom:28}}>
             {p.fts.map((f,j)=>(
               <li key={j} style={{fontSize:".88rem",padding:"10px 0",borderBottom:"1px solid "+(p.dark?"rgba(255,255,255,.08)":"rgba(0,0,0,.07)"),display:"flex",gap:12,alignItems:"flex-start",color:p.dark?"rgba(255,255,255,.75)":"#1A1A1A"}}>
@@ -959,6 +939,33 @@ export default function App() {
       ))}
     </div>
 
+<div className="rv" style={{marginTop:2,background:"rgba(200,57,43,.08)",border:"1px solid rgba(200,57,43,.2)",padding:"36px 40px",display:"flex",gap:48,alignItems:"center",flexWrap:"wrap"}}>
+      <div style={{flex:1,minWidth:240}}>
+        <p style={{fontSize:".7rem",fontWeight:500,textTransform:"uppercase",letterSpacing:3,color:"#C8392B",marginBottom:12}}>Nivel de automatización actual</p>
+        <div className="pf" style={{fontSize:"4rem",fontWeight:900,color:"white",lineHeight:1}}>87<span style={{color:"#C8392B"}}>%</span></div>
+        <p style={{fontSize:".82rem",color:"rgba(255,255,255,.4)",marginTop:8}}>de operaciones sin intervención humana</p>
+      </div>
+      <div style={{flex:2,minWidth:280}}>
+        {[
+          {l:"Captación y cierre de ventas",    v:100, c:"#C8392B"},
+          {l:"Reportes y dashboards",            v:100, c:"#C8392B"},
+          {l:"Gestión de reseñas",               v:85,  c:"#D4A547"},
+          {l:"Campañas y optimización",           v:80,  c:"#D4A547"},
+          {l:"Optimización de menú",              v:75,  c:"#D4A547"},
+          {l:"Setup de marcas nuevas en plataformas", v:72, c:"var(--gold)"},
+        ].map((bar,i)=>(
+          <div key={i} style={{marginBottom:12}}>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+              <span style={{fontSize:".78rem",color:"rgba(255,255,255,.55)"}}>{bar.l}</span>
+              <span style={{fontSize:".78rem",fontWeight:700,color:bar.c}}>{bar.v}%</span>
+            </div>
+            <div style={{height:4,background:"rgba(255,255,255,.08)",borderRadius:100,overflow:"hidden"}}>
+              <div style={{height:"100%",width:bar.v+"%",background:bar.c,borderRadius:100,transition:"width 1s ease"}}/>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   </section>
 
   {/* ═══ WHY ═══ */}
@@ -1010,47 +1017,7 @@ export default function App() {
         <div className="rv" style={{width:56,height:3,background:"#C8392B",margin:"28px 0"}}/>
         <p className="rv" style={{fontSize:"1rem",lineHeight:1.7,color:"#5A4E3E",maxWidth:380,marginBottom:32}}>Completa el formulario y nuestro equipo te contacta en menos de 24 horas para una sesion de diagnostico gratuita.</p>
 
-        {/* ROI CALCULATOR */}
-        <div className="rv" style={{background:"#EDE4CE",border:"1px solid rgba(0,0,0,.1)",padding:"24px 28px",marginBottom:32}}>
-          <p style={{fontSize:".7rem",fontWeight:700,textTransform:"uppercase",letterSpacing:"2px",color:"#C8392B",marginBottom:12}}>Calculadora de ROI</p>
-          <p style={{fontSize:".8rem",color:"#5A4E3E",marginBottom:14,lineHeight:1.5}}><strong>Formula:</strong> pedidos x ticket x 28% = ingreso extra mensual</p>
-          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
-            <div>
-              <label style={lbl}>Pedidos/mes</label>
-              <select name="pedidos" value={form.pedidos} onChange={hi} style={inp} onFocus={e=>e.target.style.borderColor="#C8392B"} onBlur={e=>e.target.style.borderColor="rgba(0,0,0,.12)"}>
-                <option value="50-100">50 a 100</option><option value="100-300">100 a 300</option>
-                <option value="300-1000">300 a 1000</option><option value="1000+">Mas de 1000</option>
-              </select>
-            </div>
-            <div>
-              <label style={lbl}>Ticket promedio S/</label>
-              <input type="number" name="ticket" value={form.ticket} onChange={hi} placeholder="Ej: 42" style={inp} onFocus={e=>e.target.style.borderColor="#C8392B"} onBlur={e=>e.target.style.borderColor="rgba(0,0,0,.12)"}/>
-            </div>
-          </div>
-          <div style={{background:"#C8392B",color:"white",padding:"16px 20px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
-            <span style={{fontSize:".78rem",textTransform:"uppercase",letterSpacing:"1px"}}>Crecimiento proyectado</span>
-            <span className="pf" style={{fontSize:"1.6rem",fontWeight:700}}>S/ {roiM.toLocaleString()}/mes</span>
-          </div>
-          {roiDesglose && (
-            <div style={{marginTop:10,display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
-              {[
-                {l:"Ahorro comisiones",v:roiDesglose.ahorroComis,ic:"🤝"},
-                {l:"Uplift de menú",    v:roiDesglose.menuUplift, ic:"🍽️"},
-                {l:"Campañas",          v:roiDesglose.campIncome, ic:"📣"},
-              ].map((d,i)=>(
-                <div key={i} style={{background:"#EDE4CE",padding:"10px 8px",borderRadius:2,textAlign:"center"}}>
-                  <div style={{fontSize:".72rem",marginBottom:3}}>{d.ic}</div>
-                  <div style={{fontSize:".78rem",fontWeight:700,color:"#C8392B"}}>+S/{d.v.toLocaleString()}</div>
-                  <div style={{fontSize:".62rem",color:"#5A4E3E",marginTop:2}}>{d.l}</div>
-                </div>
-              ))}
-            </div>
-          )}
-          <div style={{display:"flex",justifyContent:"space-between",marginTop:8}}>
-            <p style={{fontSize:".72rem",color:"#5A4E3E"}}>S/ {roiA.toLocaleString()} al año · ROI {roiPct}%</p>
-            <p style={{fontSize:".72rem",color:"#5A4E3E"}}>Recuperas inversión en ~{roiPayback} días</p>
-          </div>
-        </div>
+        
 
         {/* CONTACT ACTIONS — sin numero visible */}
         <div style={{display:"flex",flexDirection:"column",gap:10}}>
@@ -1125,7 +1092,7 @@ export default function App() {
   </section>
 
   {/* ═══ FOOTER ═══ */}
-  <footer style={{background:"#2D2D2D",color:"rgba(255,255,255,.4)",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"24px clamp(16px,5vw,80px)",fontSize:".78rem",flexWrap:"wrap",gap:12,boxSizing:"border-box"}}>
+  <footer style={{background:"#2D2D2D",color:"rgba(255,255,255,.4)",display:"flex",alignItems:"center",justifyContent:"space-between",padding:"28px 80px",fontSize:".78rem",flexWrap:"wrap",gap:12}}>
     <div className="pf" style={{fontWeight:900,fontSize:"1.1rem",color:"white"}}>Saz<span style={{fontFamily:"DM Sans,sans-serif"}}>ó</span>n<span style={{color:"#C8392B"}}>.</span> Growth Partner</div>
     <div>2025 Sazon Growth Partner. Todos los derechos reservados.</div>
     <div style={{display:"flex",gap:24,alignItems:"center"}}>
@@ -1152,15 +1119,15 @@ export default function App() {
     title="Escríbenos por WhatsApp"
     style={{
       position:"fixed", bottom:24, left:24, zIndex:998,
-      width:52, height:52, borderRadius:"50%",
+      width:50, height:50, borderRadius:"50%",
       background:"#25D366", color:"white",
       display:"flex", alignItems:"center", justifyContent:"center",
       boxShadow:"0 4px 18px rgba(37,211,102,.45)",
       transition:"transform .2s, box-shadow .2s",
       textDecoration:"none",
     }}
-    onMouseEnter={e=>{ e.currentTarget.style.transform="scale(1.1)"; }}
-    onMouseLeave={e=>{ e.currentTarget.style.transform="none"; }}
+    onMouseEnter={e=>e.currentTarget.style.transform="scale(1.1)"}
+    onMouseLeave={e=>e.currentTarget.style.transform="none"}
   >
     <svg viewBox="0 0 32 32" width="26" height="26" fill="white" aria-label="WhatsApp">
       <path d="M19.11 17.41c-.27-.14-1.6-.79-1.85-.88-.25-.09-.43-.14-.62.14-.18.27-.71.88-.87 1.06-.16.18-.32.2-.59.07-.27-.14-1.14-.42-2.18-1.33-.81-.72-1.36-1.61-1.52-1.88-.16-.27-.02-.42.12-.56.13-.13.27-.32.41-.48.14-.16.18-.27.27-.45.09-.18.05-.34-.02-.48-.07-.14-.62-1.5-.85-2.05-.22-.53-.45-.46-.62-.47-.16-.01-.34-.01-.52-.01-.18 0-.48.07-.73.34-.25.27-.96.94-.96 2.3 0 1.36.99 2.68 1.13 2.86.14.18 1.95 2.98 4.73 4.17.66.28 1.17.45 1.57.57.66.21 1.26.18 1.73.11.53-.08 1.6-.65 1.83-1.29.23-.64.23-1.18.16-1.29-.07-.11-.25-.18-.52-.32z"/>
