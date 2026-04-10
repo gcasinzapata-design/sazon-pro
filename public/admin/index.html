@@ -745,7 +745,6 @@ Selecciona un cliente para generar el mensaje.</div>
 .cav-sm{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--red),var(--gold));display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0;}
 </style>
 
-<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js">
 
 // ─── NEGOCIACION DE COMISIONES ─────────────────────────────────────────────
 const NEG_CONTACTS = {
@@ -1097,23 +1096,37 @@ const ADMIN_EMAIL = "gc.asin.zapata@gmail.com";
 let code = "";
 
 function sendCode() {
-  const em = document.getElementById("lemail").value.trim().toLowerCase();
+  const emEl = document.getElementById("lemail");
+  const em   = emEl ? emEl.value.trim().toLowerCase() : "";
   const msg1El = document.getElementById("lmsg1");
+  if (!em || !em.includes("@")) {
+    if(msg1El){ msg1El.textContent = "Ingresa tu email."; msg1El.style.color="#f87171"; }
+    return;
+  }
   if (em !== ADMIN_EMAIL) {
-    msg1El.textContent = "Email no autorizado. Usa: " + ADMIN_EMAIL;
-    msg1El.style.color = "#f87171";
+    if(msg1El){ msg1El.textContent = "Email no autorizado."; msg1El.style.color="#f87171"; }
     return;
   }
   code = String(Math.floor(100000 + Math.random() * 900000));
-  // Mostrar step2 y ocultar step1
-  document.getElementById("step1").style.display = "none";
-  document.getElementById("step2").style.display = "block";
-  document.getElementById("cval").textContent = code;
-  // Intentar EmailJS si está configurado
-  if (typeof emailjs !== "undefined" && window.EMAILJS_SERVICE) {
-    emailjs.send(window.EMAILJS_SERVICE, window.EMAILJS_TEMPLATE, {
-      to_email: ADMIN_EMAIL, code: code
-    }).catch(() => {});
+  const s1 = document.getElementById("step1");
+  const s2 = document.getElementById("step2");
+  const cv = document.getElementById("cval");
+  if(s1) s1.style.display = "none";
+  if(s2) s2.style.display = "block";
+  if(cv) { cv.textContent = code; cv.style.filter = ""; }
+  if(msg1El) msg1El.textContent = "";
+  // Auto-expire code in 5 minutes
+  setTimeout(() => { code = ""; if(cv) cv.textContent = "EXPIRADO"; }, 5 * 60 * 1000);
+  // Try EmailJS if configured
+  if (typeof emailjs !== "undefined" && typeof EMAILJS_SERVICE !== "undefined" && EMAILJS_SERVICE !== "service_sazon") {
+    emailjs.send(EMAILJS_SERVICE, EMAILJS_TEMPLATE, {
+      to_email: ADMIN_EMAIL, code: code, admin_name: "Admin"
+    }).then(() => {
+      if(cv){ cv.textContent = "••••••"; cv.style.filter = "blur(6px)"; }
+      if(s2){ const note = s2.querySelector(".code-note"); if(note) note.textContent = "Codigo enviado a " + ADMIN_EMAIL; }
+    }).catch(() => {
+      // EmailJS failed - code stays visible on screen
+    });
   }
 }
 
