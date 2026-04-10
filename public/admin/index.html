@@ -151,17 +151,17 @@ tr:hover td{background:rgba(255,255,255,.02);}
     <div id="step1">
       <div class="lf">
         <label>Email del administrador</label>
-        <input type="email" id="em" placeholder="gc.asin.zapata@gmail.com" value="gc.asin.zapata@gmail.com"/>
+        <input type="email" id="lemail" placeholder="gc.asin.zapata@gmail.com" value="gc.asin.zapata@gmail.com"/>
       </div>
       <button class="lbtn" onclick="sendCode()">Enviar codigo de acceso</button>
-      <div id="msg1" class="lmsg"></div>
+      <div id="lmsg1" class="lmsg" style="margin-top:8px;font-size:.78rem;text-align:center;"></div>
     </div>
 
     <div id="step2" style="display:none;">
       <div class="code-box" id="cbox">
-        <p>Codigo enviado a gc.asin.zapata@gmail.com</p>
-        <div class="code-val" id="cval">------</div>
-        <div class="code-note">En produccion llega al email via EmailJS. Por ahora visible aqui.</div>
+        <p style="font-size:.75rem;color:rgba(238,234,224,.5);margin-bottom:10px">Tu código de acceso es:</p>
+        <div class="code-val" id="cval" style="font-size:2.4rem;letter-spacing:.5em;color:#c8a045;font-weight:900">------</div>
+        <div class="code-note" style="margin-top:8px;font-size:.72rem;color:rgba(238,234,224,.4)">Ingresa este código abajo para acceder</div>
       </div>
       <div class="lf">
         <label>Codigo de 6 digitos</label>
@@ -195,6 +195,8 @@ tr:hover td{background:rgba(255,255,255,.02);}
       <button class="sb-btn" onclick="go('pagos')"><span class="sb-ico">💳</span>Pagos</button>
       <button class="sb-btn" onclick="go('campanas')"><span class="sb-ico">📣</span>Campañas</button>
       <button class="sb-btn" onclick="go('roi')"><span class="sb-ico">🧮</span>Calc. ROI</button>
+      <button class="sb-btn" onclick="go('negociacion')"><span class="sb-ico">🤝</span>Negociaciones</button>
+      <button class="sb-btn" onclick="window.open('/outbound','_blank')"><span class="sb-ico">📤</span>Carlos Outbound ↗</button>
 
       <div class="sb-sec">Sistema</div>
       <button class="sb-btn" onclick="go('config')"><span class="sb-ico">⚙️</span>Configuracion</button>
@@ -264,7 +266,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
           <div class="ct">Actividad reciente</div>
           <table>
             <tr><th>Hora</th><th>Evento</th><th>Cliente/Origen</th><th>Estado</th></tr>
-            <tr><td class="mono" style="font-size:.76rem;">Hoy</td><td>Admin accedio al sistema</td><td>gc.asin.zapata@gmail.com</td><td><span class="bg bg-g">OK</span></td></tr>
+            <tr><td class="mono" style="font-size:.76rem;">Hoy</td><td>Admin accedio al sistema</td><td><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="c8afabe6a9bba1a6e6b2a9b8a9bca988afa5a9a1a4e6aba7a5">[email&#160;protected]</a></td><td><span class="bg bg-g">OK</span></td></tr>
             <tr><td class="mono" style="font-size:.76rem;">Hoy</td><td>App.jsx actualizado</td><td>sazonpartner.com</td><td><span class="bg bg-g">Activo</span></td></tr>
             <tr><td class="mono" style="font-size:.76rem;">Pendiente</td><td>Links MP por configurar</td><td>Netlify env vars</td><td><span class="bg bg-r">Urgente</span></td></tr>
           </table>
@@ -528,6 +530,129 @@ score  < 0.50 → <span style="color:#f87171;">ROJO (intervencion)</span></pre>
         </div>
       </div>
 
+      <!-- NEGOCIACION DE COMISIONES -->
+      <div id="p-negociacion" class="panel fadein">
+        <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;">
+          <div class="card"><div style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;color:var(--green);" id="neg-s-ahorro">S/ 0</div><div style="font-size:.68rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Ahorro mensual generado</div></div>
+          <div class="card"><div style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;" id="neg-s-activas">0</div><div style="font-size:.68rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Negociaciones en curso</div></div>
+          <div class="card"><div style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;color:var(--gold);" id="neg-s-ganadas">0</div><div style="font-size:.68rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Ganadas (comision baja)</div></div>
+          <div class="card"><div style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;color:var(--red);">3.2%</div><div style="font-size:.68rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Reduccion promedio lograda</div></div>
+        </div>
+
+        <div style="display:grid;grid-template-columns:320px 1fr;gap:16px;">
+
+          <!-- CONFIGURADOR -->
+          <div>
+            <div class="card" style="margin-bottom:12px;">
+              <div class="ct">Configurar propuesta</div>
+              <div style="display:flex;flex-direction:column;gap:11px;">
+                <div>
+                  <label class="fl">Cliente</label>
+                  <select class="fi" id="neg-cliente" onchange="negGen()">
+                    <option value="">Seleccionar cliente</option>
+                    <option value="Mr Smash" data-pedidos="380" data-ticket="48" data-gmv="18240">Mr Smash</option>
+                    <option value="D'Tinto y Bife" data-pedidos="260" data-ticket="52" data-gmv="13520">D'Tinto y Bife</option>
+                    <option value="Amaia Bakery" data-pedidos="140" data-ticket="38" data-gmv="5320">Amaia Bakery</option>
+                    <option value="Terminal Pesquero" data-pedidos="420" data-ticket="55" data-gmv="23100">Terminal Pesquero</option>
+                    <option value="Tokuyo" data-pedidos="185" data-ticket="44" data-gmv="8140">Tokuyo</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="fl">Plataforma objetivo</label>
+                  <select class="fi" id="neg-plat" onchange="negGen()">
+                    <option value="rappi">Rappi</option>
+                    <option value="pedidosya">PedidosYa</option>
+                    <option value="didi">Didi Food</option>
+                  </select>
+                </div>
+                <div>
+                  <label class="fl">Tipo de negociacion</label>
+                  <select class="fi" id="neg-tipo" onchange="negGen()">
+                    <option value="inicial">Solicitud inicial</option>
+                    <option value="milestone">Hito de crecimiento</option>
+                    <option value="paridad">Paridad competitiva</option>
+                    <option value="retencion">Retencion (presion)</option>
+                    <option value="escalacion">Escalacion — sin respuesta</option>
+                    <option value="agradecimiento">Agradecimiento — confirmar acuerdo</option>
+                  </select>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">
+                  <div>
+                    <label class="fl">Comision actual %</label>
+                    <input type="number" class="fi" id="neg-ca" value="28" step="0.5" oninput="negGen()">
+                  </div>
+                  <div>
+                    <label class="fl">Objetivo %</label>
+                    <input type="number" class="fi" id="neg-ct" value="24" step="0.5" oninput="negGen()">
+                  </div>
+                </div>
+                <div>
+                  <label class="fl">GMV mensual S/ (ventas en plataforma)</label>
+                  <input type="number" class="fi" id="neg-gmv" value="18000" oninput="negGen()">
+                </div>
+                <button class="btn btn-r" onclick="negGen()" style="width:100%;">Generar propuesta</button>
+              </div>
+            </div>
+
+            <!-- CALCULADORA DE AHORRO -->
+            <div class="card" id="neg-calc-wrap">
+              <div class="ct">Impacto del acuerdo</div>
+              <div style="text-align:center;padding:8px 0 12px;">
+                <div style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;color:var(--green);" id="neg-ahorro-val">S/ 0</div>
+                <div style="font-size:.74rem;color:var(--muted);">ahorro mensual para el cliente</div>
+              </div>
+              <div id="neg-calc-rows" style="display:flex;flex-direction:column;gap:8px;font-size:.8rem;"></div>
+            </div>
+          </div>
+
+          <!-- PREVIEW + CONTACTOS -->
+          <div style="display:flex;flex-direction:column;gap:12px;">
+            <div class="card" style="flex:1;">
+              <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+                <div class="ct" style="margin-bottom:0;">Mensaje generado</div>
+                <div style="display:flex;gap:8px;" id="neg-btns">
+                  <button class="btn btn-r btn-sm" onclick="negWA()">📱 WhatsApp</button>
+                  <button class="btn btn-o btn-sm" onclick="negCopy()">📋 Copiar</button>
+                  <button class="btn btn-o btn-sm" onclick="negSave()">💾 Guardar</button>
+                </div>
+              </div>
+              <div id="neg-msg-preview" style="white-space:pre-wrap;font-size:.83rem;line-height:1.75;color:var(--fg);background:rgba(0,0,0,.02);border:1px solid var(--bd);border-radius:8px;padding:16px;min-height:200px;font-family:'DM Mono',monospace;">
+Selecciona un cliente para generar el mensaje.</div>
+            </div>
+
+            <!-- CONTACTOS PLATAFORMA -->
+            <div class="card">
+              <div class="ct">Contacto de la plataforma</div>
+              <div id="neg-contact-info" style="font-size:.83rem;"></div>
+            </div>
+          </div>
+        </div>
+
+        <!-- HISTORIAL -->
+        <div class="card" style="margin-top:16px;">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
+            <div class="ct" style="margin-bottom:0;">Historial de negociaciones</div>
+            <button class="btn btn-o btn-sm" onclick="negExport()">📤 Exportar CSV</button>
+          </div>
+          <div id="neg-hist-wrap">
+            <table style="width:100%;border-collapse:collapse;font-size:.82rem;">
+              <tr>
+                <th style="text-align:left;padding:8px 10px;border-bottom:1px solid var(--bd);font-size:.63rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Cliente</th>
+                <th style="text-align:left;padding:8px 10px;border-bottom:1px solid var(--bd);font-size:.63rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Plataforma</th>
+                <th style="text-align:left;padding:8px 10px;border-bottom:1px solid var(--bd);font-size:.63rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Tipo</th>
+                <th style="text-align:left;padding:8px 10px;border-bottom:1px solid var(--bd);font-size:.63rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Comision</th>
+                <th style="text-align:left;padding:8px 10px;border-bottom:1px solid var(--bd);font-size:.63rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Ahorro/mes</th>
+                <th style="text-align:left;padding:8px 10px;border-bottom:1px solid var(--bd);font-size:.63rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Estado</th>
+                <th style="text-align:left;padding:8px 10px;border-bottom:1px solid var(--bd);font-size:.63rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Fecha</th>
+                <th style="padding:8px 10px;border-bottom:1px solid var(--bd);"></th>
+              </tr>
+              <tbody id="neg-hist-body"></tbody>
+            </table>
+            <div id="neg-hist-empty" style="text-align:center;padding:24px;font-size:.84rem;color:var(--muted);">Sin negociaciones registradas.</div>
+          </div>
+        </div>
+      </div>
+
       <!-- CONFIG -->
       <div id="p-config" class="panel fadein">
         <div class="alert ai">ℹ️ <div>Las variables de entorno deben configurarse en Netlify (no en GitHub). Ve a Site settings → Build & deploy → Environment variables.</div></div>
@@ -620,23 +745,376 @@ score  < 0.50 → <span style="color:#f87171;">ROJO (intervencion)</span></pre>
 .cav-sm{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--red),var(--gold));display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0;}
 </style>
 
-<script>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js">
+
+// ─── NEGOCIACION DE COMISIONES ─────────────────────────────────────────────
+const NEG_CONTACTS = {
+  rappi: {
+    nombre: "Account Manager Rappi Partners",
+    canal:  "partnerships.pe@rappi.com",
+    wa:     "https://wa.me/51952363643",
+    notas:  "Rappi aplica descuentos de comision a partir de S/15,000 GMV mensual. El ciclo de aprobacion es 7-14 dias. Solicitar siempre por escrito y confirmar por email.",
+    tiers:  [{gmv:5000,comis:30},{gmv:10000,comis:28},{gmv:15000,comis:26},{gmv:25000,comis:24},{gmv:40000,comis:22}]
+  },
+  pedidosya: {
+    nombre: "Gerente de Cuentas PedidosYa Peru",
+    canal:  "restaurantes.pe@pedidosya.com",
+    wa:     "https://wa.me/51952363643",
+    notas:  "PedidosYa negocia comisiones trimestralmente. Benchmark de mercado: restaurantes con >200 pedidos/mes pueden solicitar hasta 4% de reduccion. Adjuntar reporte de volumen.",
+    tiers:  [{gmv:3000,comis:30},{gmv:8000,comis:28},{gmv:15000,comis:26},{gmv:25000,comis:24}]
+  },
+  didi: {
+    nombre: "Business Development Didi Food",
+    canal:  "merchant.pe@didiglobal.com",
+    wa:     "https://wa.me/51952363643",
+    notas:  "Didi Food tiene un programa de socios premium. GMV > S/10,000/mes habilita condiciones especiales. Mencionar siempre el crecimiento % para fortalecer la posicion.",
+    tiers:  [{gmv:5000,comis:30},{gmv:12000,comis:27},{gmv:20000,comis:25},{gmv:35000,comis:23}]
+  }
+};
+
+const NEG_TEMPLATES = {
+  inicial: (d) => `Estimado equipo de ${d.platNombre},
+
+Mi nombre es [Tu nombre], Growth Manager de Sazón Growth Partner. Representamos a ${d.cliente}, restaurante activo en su plataforma con los siguientes resultados:
+
+📊 MÉTRICAS ACTUALES — ${d.mes}:
+• GMV mensual: S/ ${d.gmv.toLocaleString()}
+• Pedidos/mes: ${d.pedidos}
+• Ticket promedio: S/ ${d.ticket}
+• Crecimiento últimos 3 meses: +${d.growth}%
+• Rating promedio: ${d.rating} ⭐
+
+En base al volumen y la tendencia de crecimiento, solicitamos revisar las condiciones comerciales actuales. La comisión vigente de ${d.ca}% representa una barrera para continuar invirtiendo en campañas dentro de la plataforma.
+
+Nuestra propuesta:
+✅ Comisión objetivo: ${d.ct}%
+✅ Compromiso de nuestro lado: mantener mínimo S/ ${Math.round(d.gmv * 1.15).toLocaleString()} GMV mensual
+✅ Inversión activa en campañas pagadas dentro de ${d.platNombre}
+
+El ajuste de ${d.ca}% → ${d.ct}% nos permitiría redirigir S/ ${d.ahorro.toLocaleString()}/mes en campañas adicionales, lo que históricamente incrementa el GMV un 18-25% adicional.
+
+¿Podríamos coordinar una llamada esta semana para revisar la propuesta?
+
+Quedo atento. Saludos,
+[Tu nombre] — Sazón Growth Partner`,
+
+  milestone: (d) => `Estimado equipo de ${d.platNombre},
+
+Escribo para compartir una excelente noticia y, en consecuencia, revisar las condiciones comerciales de ${d.cliente}.
+
+📈 HITO ALCANZADO — ${d.mes}:
+• Nuevo GMV mensual: S/ ${d.gmv.toLocaleString()} (+${d.growth}% vs hace 3 meses)
+• Hemos cruzado el umbral de S/ ${d.umbral.toLocaleString()} mensuales
+• Pedidos: ${d.pedidos}/mes (crecimiento sostenido)
+
+Este crecimiento nos posiciona en el siguiente tier de su estructura comercial. Solicitamos la actualización de comisión de ${d.ca}% a ${d.ct}% en línea con los acuerdos vigentes para volúmenes de este nivel.
+
+El ajuste es automático según los criterios de su plataforma — adjuntamos reporte de los últimos 3 meses para su validación.
+
+¿Cuál es el proceso para formalizar este ajuste?
+
+Gracias y saludos,
+[Tu nombre] — Sazón Growth Partner`,
+
+  paridad: (d) => `Estimado equipo de ${d.platNombre},
+
+Apreciamos la relación comercial con ${d.cliente} en su plataforma, y precisamente por eso queremos ser directos en esta comunicación.
+
+SITUACIÓN ACTUAL:
+• Comisión en ${d.platNombre}: ${d.ca}%
+• Comisión en plataforma alternativa (${d.platAlternativa}): ~${Math.max(d.ct - 1, 20)}%
+• Diferencia mensual para ${d.cliente}: S/ ${Math.round(d.gmv * (d.ca - d.ct) / 100).toLocaleString()}
+
+${d.cliente} genera S/ ${d.gmv.toLocaleString()}/mes en ${d.platNombre} y tiene un fuerte compromiso con la plataforma. Sin embargo, mantener esta brecha de comisión hace cada vez más difícil justificar la inversión en campañas internas.
+
+Nuestra propuesta concreta:
+• Comisión: ${d.ct}% (paridad competitiva de mercado)
+• A cambio: incremento de inversión en campañas de ${d.platNombre} de mínimo 30%
+
+Esta propuesta beneficia a ambas partes. ¿Tienen apertura para revisarla antes del ${d.fechaLimite}?
+
+Saludos,
+[Tu nombre] — Sazón Growth Partner`,
+
+  retencion: (d) => `Estimado equipo de ${d.platNombre},
+
+Escribo con urgencia sobre la situación comercial de ${d.cliente} en su plataforma.
+
+Hemos estado evaluando la estructura de costos de operación y, lamentablemente, la comisión actual de ${d.ca}% hace que la operación en ${d.platNombre} no sea sostenible a mediano plazo para el restaurante.
+
+IMPACTO ACTUAL:
+• Costo mensual en comisiones: S/ ${Math.round(d.gmv * d.ca / 100).toLocaleString()}
+• GMV mensual: S/ ${d.gmv.toLocaleString()}
+• Margen operativo actual: presionado
+
+Si no logramos ajustar las condiciones antes del ${d.fechaLimite}, nos veríamos obligados a reducir significativamente la presencia y la inversión en campañas en ${d.platNombre}, redirigiendo presupuesto a otras plataformas.
+
+Valoramos la plataforma y queremos continuar creciendo juntos. Una comisión de ${d.ct}% cambia completamente el panorama y nos compromete a duplicar la inversión en campañas.
+
+¿Podemos hablar hoy o mañana?
+
+[Tu nombre] — Sazón Growth Partner`,
+
+  escalacion: (d) => `Estimado equipo de ${d.platNombre},
+
+En seguimiento a nuestra comunicación anterior del ${d.fechaAnterior} (adjunto), aún no hemos recibido respuesta sobre la solicitud de revisión de comisión para ${d.cliente}.
+
+Entendemos que tienen muchos restaurantes bajo gestión. Sin embargo, la situación requiere una resolución esta semana:
+
+• GMV mensual: S/ ${d.gmv.toLocaleString()} — contribución importante para la plataforma
+• Solicitud vigente: ajuste de ${d.ca}% a ${d.ct}%
+• Ahorro proyectado cliente: S/ ${d.ahorro.toLocaleString()}/mes
+
+De no recibir respuesta antes del ${d.fechaLimite}, procederemos a reasignar el presupuesto de campañas a otras plataformas. No es la decisión que queremos tomar.
+
+¿A quién debería dirigir esta solicitud para agilizar la respuesta?
+
+Gracias,
+[Tu nombre] — Sazón Growth Partner`,
+
+  agradecimiento: (d) => `Estimado equipo de ${d.platNombre},
+
+Quería escribirles para agradecer la revisión y el acuerdo alcanzado respecto a las condiciones comerciales de ${d.cliente}.
+
+RESUMEN DEL ACUERDO ALCANZADO:
+• Comisión anterior: ${d.ca}%
+• Comisión acordada: ${d.ct}%
+• Fecha de aplicación: ${d.fechaAcuerdo || "según lo coordinado"}
+• Ahorro mensual para el restaurante: S/ ${d.ahorro.toLocaleString()}
+
+Este ajuste nos permite comprometer mayor inversión en campañas dentro de ${d.platNombre}. Nuestro plan para el próximo trimestre incluye al menos 3 campañas activas con objetivo de incrementar el GMV un 20%.
+
+Quedamos en confirmar cuando se refleje el ajuste en el portal para tener constancia del cierre.
+
+Muchas gracias por la gestión,
+[Tu nombre] — Sazón Growth Partner`,
+};
+
+// Datos por cliente (en produccion viene del backend)
+const NEG_CLIENT_DATA = {
+  "Mr Smash":          {pedidos:380, ticket:48, gmv:18240, growth:45, rating:4.8},
+  "D'Tinto y Bife":    {pedidos:260, ticket:52, gmv:13520, growth:38, rating:4.7},
+  "Amaia Bakery":      {pedidos:140, ticket:38, gmv:5320,  growth:22, rating:4.9},
+  "Terminal Pesquero": {pedidos:420, ticket:55, gmv:23100, growth:52, rating:4.8},
+  "Tokuyo":            {pedidos:185, ticket:44, gmv:8140,  growth:28, rating:4.7},
+};
+
+let negHistory = JSON.parse(localStorage.getItem('neg_history') || '[]');
+let negCurrentMsg = '';
+let negCurrentData = null;
+
+function negGen() {
+  const clienteEl = document.getElementById('neg-cliente');
+  const cliente = clienteEl.value;
+  if (!cliente) return;
+
+  const plat     = document.getElementById('neg-plat').value;
+  const tipo     = document.getElementById('neg-tipo').value;
+  const ca       = parseFloat(document.getElementById('neg-ca').value) || 28;
+  const ct       = parseFloat(document.getElementById('neg-ct').value) || 24;
+  const gmvInput = parseFloat(document.getElementById('neg-gmv').value) || 0;
+
+  const cd = NEG_CLIENT_DATA[cliente] || {pedidos:200, ticket:40, gmv:8000, growth:30, rating:4.5};
+  const gmv = gmvInput || cd.gmv;
+  const pc  = NEG_CONTACTS[plat];
+  const platNombres = {rappi:"Rappi", pedidosya:"PedidosYa", didi:"Didi Food"};
+  const platAlts    = {rappi:"PedidosYa", pedidosya:"Rappi", didi:"Rappi"};
+
+  const ahorro = Math.round(gmv * (ca - ct) / 100);
+  const umbral  = pc.tiers.find(t => gmv >= t.gmv)?.gmv || pc.tiers[0].gmv;
+  const hoy     = new Date();
+  const mes     = hoy.toLocaleDateString('es-PE', {month:'long', year:'numeric'});
+  const fechaLimite = new Date(hoy.getTime() + 5*24*3600000).toLocaleDateString('es-PE', {day:'numeric', month:'long'});
+  const fechaAnterior = new Date(hoy.getTime() - 7*24*3600000).toLocaleDateString('es-PE', {day:'numeric', month:'long'});
+
+  negCurrentData = {
+    cliente, plat, platNombre: platNombres[plat], platAlternativa: platAlts[plat],
+    ca, ct, gmv, ahorro, umbral, mes, fechaLimite, fechaAnterior,
+    pedidos: cd.pedidos, ticket: cd.ticket, growth: cd.growth, rating: cd.rating,
+    tipo, fechaAcuerdo: mes,
+  };
+
+  const fn = NEG_TEMPLATES[tipo];
+  negCurrentMsg = fn ? fn(negCurrentData) : 'Template no disponible.';
+
+  document.getElementById('neg-msg-preview').textContent = negCurrentMsg;
+
+  // Mostrar calculadora
+  document.getElementById('neg-ahorro-val').textContent = 'S/ ' + ahorro.toLocaleString();
+  const costoActual = Math.round(gmv * ca / 100);
+  const costoNuevo  = Math.round(gmv * ct / 100);
+  document.getElementById('neg-calc-rows').innerHTML = [
+    {l:'Costo comisión actual', v:'S/ '+costoActual.toLocaleString(), color:'#f87171'},
+    {l:'Costo con nueva comisión', v:'S/ '+costoNuevo.toLocaleString(), color:'var(--green)'},
+    {l:'Ahorro mensual cliente', v:'S/ '+ahorro.toLocaleString(), color:'var(--green)'},
+    {l:'Ahorro anual proyectado', v:'S/ '+(ahorro*12).toLocaleString(), color:'var(--gold)'},
+    {l:'GMV mensual en plataforma', v:'S/ '+gmv.toLocaleString(), color:'var(--fg)'},
+  ].map(r => `<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--bd);">
+    <span style="color:var(--muted)">${r.l}</span>
+    <strong style="color:${r.color}">${r.v}</strong>
+  </div>`).join('');
+
+  // Contacto plataforma
+  document.getElementById('neg-contact-info').innerHTML = `
+    <div style="font-weight:600;margin-bottom:6px;">${pc.nombre}</div>
+    <div style="color:var(--muted);font-size:.8rem;margin-bottom:4px;">📧 ${pc.canal}</div>
+    <div style="font-size:.8rem;background:rgba(0,0,0,.04);padding:10px;border-radius:6px;margin-top:8px;line-height:1.6;color:var(--muted);">${pc.notas}</div>
+    <div style="margin-top:12px;">
+      <div style="font-size:.72rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:8px;">Tiers de comision (referencia)</div>
+      ${pc.tiers.map(t => `<div style="display:flex;justify-content:space-between;font-size:.78rem;padding:4px 0;border-bottom:1px solid var(--bd);${gmv >= t.gmv?'color:var(--green);font-weight:600;':'color:var(--muted);'}">
+        <span>GMV >= S/${t.gmv.toLocaleString()}</span><span>Comision: ${t.comis}%</span>
+      </div>`).join('')}
+    </div>`;
+
+  // Actualizar stats
+  negRenderStats();
+}
+
+function negWA() {
+  if (!negCurrentMsg || !negCurrentData) return;
+  const pc  = NEG_CONTACTS[negCurrentData.plat];
+  const txt = encodeURIComponent(negCurrentMsg);
+  const a   = document.createElement('a');
+  a.href = pc.wa + '?text=' + txt;
+  a.target = '_blank'; a.rel = 'noopener noreferrer';
+  document.body.appendChild(a); a.click();
+  setTimeout(() => document.body.removeChild(a), 200);
+}
+
+function negCopy() {
+  if (!negCurrentMsg) return;
+  navigator.clipboard.writeText(negCurrentMsg).then(() => {
+    const btn = event.currentTarget;
+    const orig = btn.textContent;
+    btn.textContent = '✅ Copiado!';
+    setTimeout(() => btn.textContent = orig, 1500);
+  });
+}
+
+function negSave() {
+  if (!negCurrentData) return;
+  const ca = negCurrentData.ca, ct = negCurrentData.ct, gmv = negCurrentData.gmv;
+  const entry = {
+    id:        Date.now(),
+    cliente:   negCurrentData.cliente,
+    plat:      {rappi:"Rappi",pedidosya:"PedidosYa",didi:"Didi Food"}[negCurrentData.plat],
+    tipo:      negCurrentData.tipo,
+    ca, ct,
+    ahorro:    Math.round(gmv * (ca - ct) / 100),
+    estado:    'enviada',
+    fecha:     new Date().toLocaleDateString('es-PE'),
+    msg:       negCurrentMsg,
+  };
+  negHistory.unshift(entry);
+  localStorage.setItem('neg_history', JSON.stringify(negHistory));
+  negRenderHistorial();
+  negRenderStats();
+  const btn = event.currentTarget;
+  const orig = btn.textContent;
+  btn.textContent = '✅ Guardado';
+  setTimeout(() => btn.textContent = orig, 1500);
+}
+
+function negSetEstado(id, estado) {
+  const e = negHistory.find(x => x.id === id);
+  if (e) {
+    e.estado = estado;
+    localStorage.setItem('neg_history', JSON.stringify(negHistory));
+    negRenderHistorial();
+    negRenderStats();
+  }
+}
+
+function negRenderStats() {
+  const total = negHistory.reduce((s, e) => s + (e.estado === 'aceptada' ? e.ahorro : 0), 0);
+  const activas = negHistory.filter(e => e.estado === 'enviada' || e.estado === 'en_proceso').length;
+  const ganadas = negHistory.filter(e => e.estado === 'aceptada').length;
+  document.getElementById('neg-s-ahorro').textContent = 'S/ ' + total.toLocaleString();
+  document.getElementById('neg-s-activas').textContent = activas;
+  document.getElementById('neg-s-ganadas').textContent = ganadas;
+}
+
+function negRenderHistorial() {
+  const tbody = document.getElementById('neg-hist-body');
+  const empty = document.getElementById('neg-hist-empty');
+  if (negHistory.length === 0) {
+    tbody.innerHTML = '';
+    empty.style.display = 'block';
+    return;
+  }
+  empty.style.display = 'none';
+  const estadoBadge = {
+    enviada:    '<span class="bg bg-b">Enviada</span>',
+    en_proceso: '<span class="bg bg-y">En proceso</span>',
+    aceptada:   '<span class="bg bg-g">Aceptada ✓</span>',
+    rechazada:  '<span class="bg bg-r">Rechazada</span>',
+    sin_resp:   '<span class="bg" style="background:rgba(255,255,255,.07);color:var(--muted);">Sin resp.</span>',
+  };
+  tbody.innerHTML = negHistory.map(e => `
+    <tr>
+      <td style="padding:10px;border-bottom:1px solid var(--bd);font-weight:500;">${e.cliente}</td>
+      <td style="padding:10px;border-bottom:1px solid var(--bd);color:var(--muted);">${e.plat}</td>
+      <td style="padding:10px;border-bottom:1px solid var(--bd);color:var(--muted);font-size:.78rem;">${e.tipo}</td>
+      <td style="padding:10px;border-bottom:1px solid var(--bd);">${e.ca}% → ${e.ct}%</td>
+      <td style="padding:10px;border-bottom:1px solid var(--bd);color:var(--green);font-weight:600;">S/ ${e.ahorro.toLocaleString()}</td>
+      <td style="padding:10px;border-bottom:1px solid var(--bd);">${estadoBadge[e.estado] || e.estado}</td>
+      <td style="padding:10px;border-bottom:1px solid var(--bd);color:var(--muted);font-size:.78rem;">${e.fecha}</td>
+      <td style="padding:10px;border-bottom:1px solid var(--bd);">
+        <select style="font-size:.72rem;background:rgba(0,0,0,.12);border:none;color:var(--fg);padding:3px 6px;border-radius:4px;cursor:pointer;"
+          onchange="negSetEstado(${e.id}, this.value)">
+          <option value="enviada" ${e.estado==='enviada'?'selected':''}>Enviada</option>
+          <option value="en_proceso" ${e.estado==='en_proceso'?'selected':''}>En proceso</option>
+          <option value="aceptada" ${e.estado==='aceptada'?'selected':''}>Aceptada</option>
+          <option value="rechazada" ${e.estado==='rechazada'?'selected':''}>Rechazada</option>
+          <option value="sin_resp" ${e.estado==='sin_resp'?'selected':''}>Sin respuesta</option>
+        </select>
+      </td>
+    </tr>`).join('');
+}
+
+function negExport() {
+  const rows = [['Cliente','Plataforma','Tipo','Comision Ant.','Comision Nueva','Ahorro/mes','Estado','Fecha']];
+  negHistory.forEach(e => rows.push([e.cliente, e.plat, e.tipo, e.ca+'%', e.ct+'%', 'S/'+e.ahorro, e.estado, e.fecha]));
+  const csv = rows.map(r => r.join(',')).join('
+');
+  const blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url; a.download = 'negociaciones_sazon.csv';
+  document.body.appendChild(a); a.click();
+  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 200);
+}
+
+// Inicializar historial al cargar
+document.addEventListener('DOMContentLoaded', () => {
+  negRenderHistorial();
+  negRenderStats();
+});
+
+</script><script>
 // ── AUTH ──────────────────────────────────────────────────────────────────────
 const ADMIN_EMAIL = "gc.asin.zapata@gmail.com";
 let code = "";
 
 function sendCode() {
-  const em = document.getElementById("em").value.trim();
-  if (em !== ADMIN_EMAIL) { msg1("Email no autorizado.", "err"); return; }
+  const em = document.getElementById("lemail").value.trim().toLowerCase();
+  const msg1El = document.getElementById("lmsg1");
+  if (em !== ADMIN_EMAIL) {
+    msg1El.textContent = "Email no autorizado. Usa: " + ADMIN_EMAIL;
+    msg1El.style.color = "#f87171";
+    return;
+  }
   code = String(Math.floor(100000 + Math.random() * 900000));
-  msg1("Enviando...", "ok");
-  setTimeout(() => {
-    document.getElementById("step1").style.display = "none";
-    document.getElementById("step2").style.display  = "block";
-    document.getElementById("cval").textContent = code;
-    msg2("Codigo generado. En produccion llegaria al email via EmailJS.", "ok");
-    // Para envio real: emailjs.send('SERVICE','TEMPLATE',{to:ADMIN_EMAIL, code})
-  }, 600);
+  // Mostrar step2 y ocultar step1
+  document.getElementById("step1").style.display = "none";
+  document.getElementById("step2").style.display = "block";
+  document.getElementById("cval").textContent = code;
+  // Intentar EmailJS si está configurado
+  if (typeof emailjs !== "undefined" && window.EMAILJS_SERVICE) {
+    emailjs.send(window.EMAILJS_SERVICE, window.EMAILJS_TEMPLATE, {
+      to_email: ADMIN_EMAIL, code: code
+    }).catch(() => {});
+  }
 }
 
 function verify() {
@@ -681,6 +1159,7 @@ const panelMeta = {
   pagos:      ["Pagos","Mercado Pago y cobros"],
   campanas:   ["Campanas","Gestion de campanas en apps"],
   roi:        ["Calc. ROI","Calculadora para prospectos"],
+  negociacion:["Negociacion de Comisiones","Templates y seguimiento con plataformas"],
   config:     ["Configuracion","APIs y variables de entorno"],
 };
 
@@ -867,16 +1346,4 @@ function logout() {
   code = "";
 }
 
-// ── INIT ──────────────────────────────────────────────────────────────────────
-function initApp() {
-  renderClients();
-  renderLeads();
-  renderAuto();
-  const today = new Date().toISOString().split("T")[0];
-  const from  = new Date(Date.now()-30*24*60*60*1000).toISOString().split("T")[0];
-  document.getElementById("r-to").value = today;
-  document.getElementById("r-from").value = from;
-}
-</script>
-</body>
-</html>
+// ── INIT ──────────────────────────────────────────────────────────────�

@@ -1,0 +1,662 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Sazón · Carlos Outbound</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:wght@700;900&family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono&display=swap" rel="stylesheet">
+<style>
+:root{--bg:#090907;--s1:#111110;--s2:#171715;--s3:#1e1e1b;--bd:rgba(255,255,255,.07);--bd2:rgba(255,255,255,.13);--txt:#eeeae0;--muted:rgba(238,234,224,.42);--acc:#e8501f;--gold:#c8a045;--green:#4ade80;--blue:#60a5fa;--red:#f87171;--yellow:#facc15;--purple:#a78bfa;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:14px}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh}
+input,select,textarea,button{font-family:'DM Sans',sans-serif}
+::-webkit-scrollbar{width:4px} ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:4px}
+
+/* NAV */
+.nav{height:52px;background:var(--s1);border-bottom:1px solid var(--bd);display:flex;align-items:center;padding:0 24px;gap:16px;position:sticky;top:0;z-index:50}
+.nav-logo{font-family:'Fraunces',serif;font-size:15px;font-weight:900}
+.nav-logo span{color:var(--acc)}
+.sep{width:1px;height:18px;background:var(--bd);flex-shrink:0}
+.nav-title{font-size:12.5px;font-weight:600;color:var(--muted)}
+.nav-acts{margin-left:auto;display:flex;gap:8px}
+.nb{padding:5px 13px;border-radius:8px;border:1px solid var(--bd2);background:transparent;color:var(--muted);font-size:11px;font-weight:600;cursor:pointer;transition:all .18s}
+.nb:hover{background:rgba(255,255,255,.06);color:var(--txt)}
+.nb.p{background:var(--acc);color:white;border-color:transparent}.nb.p:hover{background:#ff6a3a}
+
+/* LAYOUT */
+.layout{display:grid;grid-template-columns:360px 1fr;height:calc(100vh - 52px)}
+.left{border-right:1px solid var(--bd);overflow-y:auto;display:flex;flex-direction:column}
+.right{overflow-y:auto;padding:20px;background:var(--bg)}
+
+/* SECTION HEADERS */
+.sh{padding:14px 16px;border-bottom:1px solid var(--bd);display:flex;align-items:center;justify-content:space-between}
+.sh-t{font-family:'Fraunces',serif;font-size:14px;font-weight:800}
+.sh-s{font-size:10px;color:var(--muted)}
+
+/* PROSPECT LIST */
+.prospect-item{display:flex;align-items:center;gap:10px;padding:11px 16px;border-bottom:1px solid var(--bd);cursor:pointer;transition:background .15s}
+.prospect-item:hover,.prospect-item.sel{background:rgba(232,80,31,.08)}
+.pi-av{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--acc),var(--gold));display:flex;align-items:center;justify-content:center;font-size:.85rem;font-weight:700;flex-shrink:0}
+.pi-name{font-size:12.5px;font-weight:600;margin-bottom:1px}
+.pi-sub{font-size:10.5px;color:var(--muted)}
+.pi-badge{font-size:10px;padding:2px 7px;border-radius:100px;font-weight:700;white-space:nowrap;flex-shrink:0}
+.st-new{background:rgba(96,165,250,.12);color:var(--blue)}
+.st-sent{background:rgba(250,204,21,.1);color:var(--yellow)}
+.st-resp{background:rgba(167,139,250,.12);color:var(--purple)}
+.st-prop{background:rgba(232,80,31,.12);color:var(--acc)}
+.st-closed{background:rgba(74,222,128,.1);color:var(--green)}
+.st-lost{background:rgba(248,113,113,.08);color:var(--red)}
+
+/* CARDS */
+.card{background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:18px;margin-bottom:14px}
+.ct{font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:12px}
+
+/* FORM */
+.fi{background:rgba(255,255,255,.05);border:1.5px solid var(--bd2);border-radius:9px;padding:9px 12px;color:var(--txt);font-size:.85rem;outline:none;transition:border-color .2s;width:100%}
+.fi:focus{border-color:rgba(232,80,31,.4)}
+.fl{display:block;font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:4px}
+.frow{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:10px}
+.frow1{margin-bottom:10px}
+
+/* TEMPLATE PREVIEW */
+.template-preview{background:rgba(255,255,255,.03);border:1.5px solid var(--bd2);border-radius:10px;padding:14px;font-size:12.5px;line-height:1.75;color:var(--txt);white-space:pre-wrap;font-family:'DM Mono',monospace;min-height:160px;max-height:320px;overflow-y:auto}
+.template-preview .highlight{background:rgba(232,80,31,.2);border-radius:3px;padding:0 3px}
+
+/* STATS TOP */
+.stats-row{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:18px}
+.stat{background:var(--s1);border:1px solid var(--bd);border-radius:12px;padding:14px;text-align:center}
+.stat-v{font-family:'Fraunces',serif;font-size:22px;font-weight:900;line-height:1;margin-bottom:3px}
+.stat-l{font-size:9.5px;color:var(--muted);text-transform:uppercase;letter-spacing:.8px}
+
+/* PIPELINE */
+.pipeline{display:grid;grid-template-columns:repeat(6,1fr);gap:10px;margin-bottom:20px}
+.pipe-col{background:var(--s1);border:1px solid var(--bd);border-radius:12px;padding:12px}
+.pipe-hdr{font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px}
+.pipe-card{background:var(--s2);border:1px solid var(--bd);border-radius:8px;padding:9px;margin-bottom:6px;font-size:11.5px;cursor:pointer;transition:border-color .18s}
+.pipe-card:hover{border-color:var(--bd2)}
+.pipe-n{font-weight:600;margin-bottom:2px}
+.pipe-sub{font-size:10px;color:var(--muted)}
+
+/* UPLOAD ZONE */
+.upload-zone{border:2px dashed var(--bd2);border-radius:12px;padding:28px;text-align:center;cursor:pointer;transition:all .2s;background:rgba(255,255,255,.02)}
+.upload-zone:hover,.upload-zone.drag{border-color:var(--acc);background:rgba(232,80,31,.04)}
+
+/* BUTTONS */
+.btn-r{background:var(--acc);color:white;border:none;padding:9px 18px;border-radius:9px;font-size:.84rem;font-weight:700;cursor:pointer;transition:background .18s}
+.btn-r:hover{background:#ff6a3a}
+.btn-o{background:rgba(255,255,255,.06);color:var(--muted);border:1px solid var(--bd2);padding:8px 15px;border-radius:9px;font-size:.82rem;font-weight:600;cursor:pointer;transition:all .18s}
+.btn-o:hover{background:rgba(255,255,255,.1);color:var(--txt)}
+.btn-wa{background:#25D366;color:white;border:none;padding:9px 18px;border-radius:9px;font-size:.84rem;font-weight:700;cursor:pointer;display:flex;align-items:center;gap:7px;transition:background .18s}
+.btn-wa:hover{background:#1da854}
+.btn-wa svg{flex-shrink:0}
+
+/* MODAL */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);z-index:200;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-bg.open{display:flex}
+.modal{background:var(--s2);border:1px solid var(--bd2);border-radius:16px;padding:24px;width:520px;max-width:95vw;max-height:88vh;overflow-y:auto;position:relative}
+.mc{position:absolute;top:14px;right:14px;background:none;border:none;color:var(--muted);font-size:1.2rem;cursor:pointer;width:24px;height:24px;border-radius:50%}.mc:hover{background:rgba(255,255,255,.08)}
+
+/* BADGE */
+.badge{display:inline-flex;align-items:center;gap:3px;padding:2px 7px;border-radius:100px;font-size:10px;font-weight:700}
+.bg-g{background:rgba(74,222,128,.1);color:var(--green)}
+.bg-b{background:rgba(96,165,250,.1);color:var(--blue)}
+.bg-y{background:rgba(250,204,21,.1);color:var(--yellow)}
+
+@media(max-width:900px){.layout{grid-template-columns:1fr}.left{height:auto;max-height:40vh}.stats-row{grid-template-columns:repeat(3,1fr)}.pipeline{grid-template-columns:repeat(3,1fr)}}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<div class="nav">
+  <div class="nav-logo">Saz<span>ó</span>n.</div>
+  <div class="sep"></div>
+  <div class="nav-title">Carlos Outbound — Sistema de Prospección</div>
+  <div class="nav-acts">
+    <button class="nb" onclick="document.getElementById('m-import').classList.add('open')">📤 Importar CSV</button>
+    <button class="nb" onclick="document.getElementById('m-add').classList.add('open')">+ Prospecto</button>
+    <button class="nb p" onclick="exportarCSV()">📥 Exportar</button>
+  </div>
+</div>
+
+<div class="layout">
+
+  <!-- LEFT: PROSPECT LIST -->
+  <div class="left">
+    <div class="sh">
+      <div>
+        <div class="sh-t">Prospectos</div>
+        <div class="sh-s" id="pCount">0 en pipeline</div>
+      </div>
+      <input type="text" placeholder="Buscar..." id="searchInput" oninput="filterProspects()" style="background:rgba(255,255,255,.05);border:1px solid var(--bd2);border-radius:8px;padding:6px 10px;color:var(--txt);font-size:11.5px;outline:none;width:140px">
+    </div>
+    <div style="display:flex;gap:3px;padding:8px 10px;border-bottom:1px solid var(--bd);flex-wrap:wrap">
+      <button class="nb" style="padding:3px 10px;font-size:10px" onclick="filterStatus('',this)">Todos</button>
+      <button class="nb" style="padding:3px 10px;font-size:10px" onclick="filterStatus('nuevo',this)">Nuevo</button>
+      <button class="nb" style="padding:3px 10px;font-size:10px" onclick="filterStatus('enviado',this)">Enviado</button>
+      <button class="nb" style="padding:3px 10px;font-size:10px" onclick="filterStatus('respondio',this)">Respondió</button>
+      <button class="nb" style="padding:3px 10px;font-size:10px" onclick="filterStatus('propuesta',this)">Propuesta</button>
+    </div>
+    <div id="prospectList" style="flex:1;overflow-y:auto"></div>
+  </div>
+
+  <!-- RIGHT: MAIN -->
+  <div class="right">
+
+    <!-- STATS -->
+    <div class="stats-row" id="statsRow"></div>
+
+    <!-- SELECTED PROSPECT DETAIL -->
+    <div id="selectedView" style="display:none">
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+        <!-- Info + ROI -->
+        <div class="card" id="prospectoInfo"></div>
+        <!-- Template -->
+        <div class="card">
+          <div class="ct">Mensaje generado para este prospecto</div>
+          <div style="margin-bottom:12px">
+            <label class="fl">Secuencia</label>
+            <select class="fi" id="seqSelect" style="margin-bottom:10px" onchange="genTemplate()">
+              <option value="cold">1. Primer contacto (cold)</option>
+              <option value="followup1">2. Follow-up 3 días después</option>
+              <option value="followup2">3. Follow-up 7 días (último)</option>
+              <option value="roi">4. Propuesta con ROI detallado</option>
+              <option value="cierre">5. Cierre — link de pago</option>
+            </select>
+          </div>
+          <div class="template-preview" id="tplPreview">Selecciona un prospecto para generar el mensaje.</div>
+          <div style="display:flex;gap:8px;margin-top:12px;flex-wrap:wrap">
+            <button class="btn-wa" onclick="sendWA()">
+              <svg viewBox="0 0 32 32" width="16" height="16" fill="white"><path d="M19.11 17.41c-.27-.14-1.6-.79-1.85-.88-.25-.09-.43-.14-.62.14-.18.27-.71.88-.87 1.06-.16.18-.32.2-.59.07-.27-.14-1.14-.42-2.18-1.33-.81-.72-1.36-1.61-1.52-1.88-.16-.27-.02-.42.12-.56.13-.13.27-.32.41-.48.14-.16.18-.27.27-.45.09-.18.05-.34-.02-.48-.07-.14-.62-1.5-.85-2.05-.22-.53-.45-.46-.62-.47-.16-.01-.34-.01-.52-.01-.18 0-.48.07-.73.34-.25.27-.96.94-.96 2.3 0 1.36.99 2.68 1.13 2.86.14.18 1.95 2.98 4.73 4.17.66.28 1.17.45 1.57.57.66.21 1.26.18 1.73.11.53-.08 1.6-.65 1.83-1.29.23-.64.23-1.18.16-1.29-.07-.11-.25-.18-.52-.32z"/><path d="M26.6 5.4C23.9 2.7 20.2 1.2 16.3 1.2 8.7 1.2 2.4 7.5 2.4 15.1c0 2.2.6 4.4 1.7 6.3L2 30.8l9.6-2.5c1.8 1 3.9 1.6 6 1.6 7.6 0 13.9-6.3 13.9-13.9 0-3.7-1.5-7.3-4.4-10zM16.3 27c-1.9 0-3.8-.5-5.4-1.5l-.4-.2-5.7 1.5 1.5-5.5-.3-.4c-1.1-1.8-1.7-3.9-1.7-6 0-6.4 5.2-11.6 11.6-11.6 3.1 0 6 1.2 8.2 3.4 2.2 2.2 3.4 5.1 3.4 8.2 0 6.4-5.2 11.6-11.6 11.6z"/></svg>
+              Enviar por WhatsApp
+            </button>
+            <button class="btn-o" onclick="copyTpl()">📋 Copiar</button>
+            <select class="fi" id="stChange" style="width:auto;padding:6px 10px;font-size:.78rem" onchange="changeStatus(this.value)">
+              <option value="">Cambiar estado...</option>
+              <option value="nuevo">Nuevo</option>
+              <option value="enviado">Enviado</option>
+              <option value="respondio">Respondió</option>
+              <option value="propuesta">Propuesta enviada</option>
+              <option value="cerrado">Cerrado ✓</option>
+              <option value="perdido">Perdido</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <!-- HISTORIAL DE CONTACTO -->
+      <div class="card">
+        <div class="ct">Historial de contacto</div>
+        <div id="contactHistory" style="font-size:12px;color:var(--muted)"></div>
+      </div>
+    </div>
+
+    <!-- EMPTY STATE -->
+    <div id="emptyView">
+      <div class="stats-row" style="display:none" id="emptyStats"></div>
+      <!-- PIPELINE -->
+      <div style="margin-bottom:14px">
+        <div style="font-family:'Fraunces',serif;font-size:16px;font-weight:800;margin-bottom:12px">Pipeline de prospección</div>
+        <div class="pipeline" id="pipelineBoard"></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- MODAL: IMPORT CSV -->
+<div class="modal-bg" id="m-import">
+  <div class="modal">
+    <button class="mc" onclick="document.getElementById('m-import').classList.remove('open')">×</button>
+    <h3 style="font-family:'Fraunces',serif;font-weight:800;margin-bottom:6px">Importar base de datos</h3>
+    <p style="font-size:11.5px;color:var(--muted);margin-bottom:16px">Sube tu CSV con prospectos. Columnas esperadas: <code style="background:rgba(255,255,255,.06);padding:1px 5px;border-radius:4px">nombre, restaurante, celular, email, plataformas, pedidos_mes, ticket</code></p>
+    <div class="upload-zone" id="csvZone" onclick="document.getElementById('csvInput').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleCsvDrop(event)">
+      <input type="file" id="csvInput" accept=".csv,.txt" style="display:none" onchange="parseCsv(this.files[0])">
+      <div style="font-size:2rem;margin-bottom:8px">📊</div>
+      <div style="font-weight:600;margin-bottom:4px">Arrastra tu CSV aquí o haz clic</div>
+      <div style="font-size:11px;color:var(--muted)">Soporta CSV con o sin encabezados · UTF-8</div>
+    </div>
+    <div id="csvPreview" style="margin-top:12px"></div>
+    <div style="margin-top:14px;background:rgba(255,255,255,.03);border:1px solid var(--bd);border-radius:10px;padding:12px;font-size:11px;color:var(--muted)">
+      <strong style="color:var(--txt);display:block;margin-bottom:6px">Ejemplo de formato CSV:</strong>
+      <code style="font-family:'DM Mono',monospace;font-size:10.5px;display:block;line-height:1.8">nombre,restaurante,celular,email,plataformas,pedidos_mes,ticket<br>
+María García,La Trattoria,51987654321,<a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="5a373b28333b1a2e283b2e2e3528333b742a3f">[email&#160;protected]</a>,Rappi,150,42<br>
+Juan Pérez,Chifa Lima,51912345678,,PedidosYa+Rappi,300,38</code>
+    </div>
+  </div>
+</div>
+
+<!-- MODAL: ADD PROSPECT -->
+<div class="modal-bg" id="m-add">
+  <div class="modal">
+    <button class="mc" onclick="document.getElementById('m-add').classList.remove('open')">×</button>
+    <h3 style="font-family:'Fraunces',serif;font-weight:800;margin-bottom:16px">Agregar prospecto</h3>
+    <div class="frow">
+      <div class="frow1"><label class="fl">Nombre contacto</label><input class="fi" id="a-nombre" placeholder="María García"></div>
+      <div class="frow1"><label class="fl">Restaurante</label><input class="fi" id="a-rest" placeholder="La Trattoria"></div>
+    </div>
+    <div class="frow">
+      <div class="frow1"><label class="fl">WhatsApp (con código país)</label><input class="fi" id="a-cel" placeholder="51987654321"></div>
+      <div class="frow1"><label class="fl">Email</label><input class="fi" id="a-email" placeholder="maria@restaurante.pe" type="email"></div>
+    </div>
+    <div class="frow1"><label class="fl">Plataformas activas</label>
+      <select class="fi" id="a-plat">
+        <option>Ninguna — quiere entrar a delivery</option>
+        <option>Solo Rappi</option>
+        <option>Solo PedidosYa</option>
+        <option>Rappi + PedidosYa</option>
+        <option>Rappi + PedidosYa + Didi</option>
+        <option>3+ plataformas</option>
+      </select>
+    </div>
+    <div class="frow">
+      <div class="frow1"><label class="fl">Pedidos/mes (estimado)</label><input class="fi" id="a-pedidos" type="number" placeholder="150"></div>
+      <div class="frow1"><label class="fl">Ticket promedio S/</label><input class="fi" id="a-ticket" type="number" placeholder="40"></div>
+    </div>
+    <div class="frow1"><label class="fl">Notas</label><textarea class="fi" id="a-notas" rows="2" placeholder="Dónde lo encontré, qué dijo, etc."></textarea></div>
+    <div style="display:flex;gap:8px;margin-top:14px">
+      <button class="btn-r" style="flex:1" onclick="addProspect()">Agregar al pipeline</button>
+      <button class="btn-o" onclick="document.getElementById('m-add').classList.remove('open')">Cancelar</button>
+    </div>
+  </div>
+</div>
+
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script>
+// ══════════════════════════════════════════════
+//  CONFIG
+// ══════════════════════════════════════════════
+const WA_SAZON = "51952363643"; // número de Sazón para enviar desde el browser
+
+// ══════════════════════════════════════════════
+//  TEMPLATES DE OUTBOUND (Carlos)
+// ══════════════════════════════════════════════
+const TEMPLATES = {
+  cold: (p) => {
+    const roi = calcROI(p);
+    return `Hola ${p.nombre}! 👋
+
+Vi ${p.restaurante} en ${p.plataformas==='Ninguna — quiere entrar a delivery'?'redes sociales':'las apps de delivery'} y me parece que tienen un gran producto.
+
+Soy Carlos del equipo de Sazón Growth Partner — ayudamos a restaurantes como el tuyo a crecer sus ventas en Rappi, PedidosYa y Didi.
+
+${roi ? `Con ${p.pedidos || 'su'} pedidos al mes, proyectamos que podrían generar S/${roi.mensual.toLocaleString()} adicionales al mes con optimización de sus plataformas. Eso es un retorno de ${roi.roi_pct}% sobre la inversión.` : `Con nuestra metodología, el promedio de restaurantes como ${p.restaurante} crece +38% en pedidos en los primeros 90 días.`}
+
+¿Les interesaría una revisión gratuita de su operación? Sin compromiso, en 15 minutos.
+
+Saludos,
+Carlos — Sazón Growth Partner
+sazonpartner.com`;
+  },
+
+  followup1: (p) => {
+    const roi = calcROI(p);
+    return `Hola ${p.nombre}! 
+
+Solo pasaba a ver si pudiste revisar mi mensaje anterior sobre ${p.restaurante}. 
+
+Entiendo que el tiempo es escaso — precisamente por eso nuestro modelo no requiere tiempo de tu parte: nuestro equipo se encarga de todo mientras tú cocinas.
+
+${roi ? `Rápido: con ${p.pedidos||'sus'} pedidos actuales, proyectamos S/${roi.mensual.toLocaleString()} extras al mes. Son ${roi.payback_dias} días para recuperar la inversión.` : `El promedio de nuestros clientes ve resultados en menos de 30 días.`}
+
+¿Tienes 5 minutos esta semana para que te cuente más?
+
+Carlos — Sazón Growth Partner`;
+  },
+
+  followup2: (p) => `Hola ${p.nombre}, último mensaje de mi parte!
+
+Quería dejarte saber que este mes estamos incorporando 2 nuevos restaurantes en tu zona y me gustaría que ${p.restaurante} sea uno de ellos.
+
+Si esto no es el momento correcto, sin problema — solo guarda este mensaje. Cuando quieran crecer en delivery, aquí estaremos.
+
+Carlos — Sazón · sazonpartner.com`,
+
+  roi: (p) => {
+    const roi = calcROI(p);
+    if(!roi) return TEMPLATES.cold(p);
+    return `Hola ${p.nombre}! 
+
+Como te prometí, aquí va el análisis específico para ${p.restaurante}:
+
+📊 PROYECCIÓN PERSONALIZADA:
+• Pedidos actuales: ${p.pedidos}/mes
+• Ticket promedio: S/${p.ticket}
+• Crecimiento proyectado: +${roi.factor}% (nuestro promedio con restaurantes similares)
+
+💰 IMPACTO MENSUAL ESTIMADO:
+• Ahorro en comisiones: S/${roi.desglose.comis.toLocaleString()}/mes
+• Uplift de menú: S/${roi.desglose.menu.toLocaleString()}/mes  
+• Ingresos por campañas: S/${roi.desglose.camp.toLocaleString()}/mes
+• TOTAL ADICIONAL: S/${roi.mensual.toLocaleString()}/mes
+
+📋 PLAN RECOMENDADO: ${roi.plan}
+• Costo: S/${roi.costo.toLocaleString()}/mes
+• ROI mensual: ${roi.roi_pct}%
+• Recuperas la inversión en: ${roi.payback_dias} días
+
+¿Activamos ${p.restaurante} esta semana?
+
+Carlos — Sazón Growth Partner`;
+  },
+
+  cierre: (p) => {
+    const roi = calcROI(p);
+    const plan = roi?.plan || 'Growth';
+    const costo = roi?.costo || 1790;
+    return `Hola ${p.nombre}! 
+
+Perfecto — para activar ${p.restaurante} con Sazón:
+
+Plan seleccionado: ${plan} — S/${costo.toLocaleString()}/mes
+
+Para completar el registro:
+→ Link de pago: [SE ACTIVA AUTOMÁTICAMENTE]
+→ Acceso a tu dashboard: sazonpartner.com/cliente
+→ Onboarding con tu Growth Manager: en menos de 24h
+
+Al completar el pago, nuestro equipo te contacta el mismo día para el setup inicial de tus plataformas.
+
+¿Alguna pregunta antes de comenzar?
+
+Carlos — Sazón Growth Partner`;
+  },
+};
+
+function calcROI(p){
+  const ped = parseInt(p.pedidos)||0;
+  const tick = parseInt(p.ticket)||0;
+  if(!ped || !tick) return null;
+  const nPlats = (p.plataformas||'').includes('+')?2:(p.plataformas||'').includes('3+')?3:1;
+  const comisRate = nPlats>=2?0.035:0.025;
+  const comis = Math.round(ped*tick*comisRate);
+  const menu  = Math.round(ped*tick*0.06);
+  const camp  = Math.round(ped*tick*(0.22+(nPlats-1)*0.03));
+  const mensual = comis+menu+camp;
+  const plan  = ped<300?'Starter':'Growth';
+  const costo = ped<300?890:1790;
+  return {mensual, plan, costo, roi_pct:Math.round(mensual/costo*100), payback_dias:Math.round(costo/mensual*30), factor:Math.round((comisRate+0.06+0.22)*100), desglose:{comis,menu,camp}};
+}
+
+// ══════════════════════════════════════════════
+//  STATE
+// ══════════════════════════════════════════════
+let prospects = JSON.parse(localStorage.getItem('sazon_prospects')||'[]');
+let selIdx = null;
+let statusFilter = '';
+let searchQ = '';
+
+// Demo data if empty
+if(prospects.length===0){
+  prospects = [
+    {id:1, nombre:'Ana Flores', restaurante:'Chicha Peruana', celular:'51987001001', email:'ana@chicha.pe', plataformas:'Solo Rappi', pedidos:180, ticket:45, status:'enviado', notas:'Contactada via Instagram', hist:[{d:'15 Mar',a:'Primer mensaje enviado'}]},
+    {id:2, nombre:'Diego Ríos', restaurante:'Yakitori Tokyo', celular:'51987002002', email:'', plataformas:'Ninguna — quiere entrar a delivery', pedidos:50, ticket:55, status:'respondio', notas:'Muy interesado en entrar a Rappi', hist:[{d:'14 Mar',a:'Respondió positivo'}]},
+    {id:3, nombre:'Lucía Mendoza', restaurante:'Tacos La Cuadra', celular:'51987003003', email:'lucia@tacos.pe', plataformas:'Rappi + PedidosYa', pedidos:320, ticket:35, status:'propuesta', notas:'Tiene 2 locales', hist:[{d:'13 Mar',a:'Propuesta ROI enviada'}]},
+    {id:4, nombre:'Marco Vega', restaurante:'Burger Bros', celular:'51987004004', email:'', plataformas:'Solo PedidosYa', pedidos:90, ticket:42, status:'nuevo', notas:'Lead de Instagram ad', hist:[]},
+    {id:5, nombre:'Carmen Silva', restaurante:'Pasta Nostra', celular:'51987005005', email:'carmen@pasta.pe', plataformas:'Rappi + PedidosYa + Didi', pedidos:450, ticket:52, status:'cerrado', notas:'Firmó Growth Plan', hist:[{d:'10 Mar',a:'Contrato firmado ✓'}]},
+  ];
+  save();
+}
+
+function save(){
+  localStorage.setItem('sazon_prospects', JSON.stringify(prospects));
+}
+
+// ══════════════════════════════════════════════
+//  RENDER
+// ══════════════════════════════════════════════
+const STATUS_LABELS = {nuevo:'Nuevo',enviado:'Enviado',respondio:'Respondió',propuesta:'Propuesta',cerrado:'Cerrado ✓',perdido:'Perdido'};
+const STATUS_CLS    = {nuevo:'st-new',enviado:'st-sent',respondio:'st-resp',propuesta:'st-prop',cerrado:'st-closed',perdido:'bg-r'};
+
+function renderAll(){
+  renderStats();
+  renderList();
+  renderPipeline();
+}
+
+function renderStats(){
+  const total  = prospects.length;
+  const sent   = prospects.filter(p=>p.status!=='nuevo').length;
+  const resp   = prospects.filter(p=>['respondio','propuesta','cerrado'].includes(p.status)).length;
+  const closed = prospects.filter(p=>p.status==='cerrado').length;
+  const rate   = total>0?Math.round(closed/total*100):0;
+  const mrr    = prospects.filter(p=>p.status==='cerrado').reduce((s,p)=>{const r=calcROI(p);return s+(r?r.costo:0);},0);
+  document.getElementById('statsRow').innerHTML = [
+    {v:total,     l:'Total prospectos', c:'var(--txt)'},
+    {v:sent,      l:'Contactados',      c:'var(--yellow)'},
+    {v:resp,      l:'Respondieron',     c:'var(--purple)'},
+    {v:closed,    l:'Cerrados',         c:'var(--green)'},
+    {v:rate+'%',  l:'Tasa de cierre',   c:rate>15?'var(--green)':'var(--muted)'},
+    {v:'S/'+mrr.toLocaleString(), l:'MRR generado', c:'var(--acc)'},
+  ].map(s=>`<div class="stat"><div class="stat-v" style="color:${s.c}">${s.v}</div><div class="stat-l">${s.l}</div></div>`).join('');
+  document.getElementById('pCount').textContent = total + ' en pipeline';
+}
+
+function renderList(){
+  const filtered = prospects.filter(p=>{
+    const matchSt = !statusFilter || p.status===statusFilter;
+    const matchQ  = !searchQ || p.nombre.toLowerCase().includes(searchQ)||p.restaurante.toLowerCase().includes(searchQ);
+    return matchSt && matchQ;
+  });
+  document.getElementById('prospectList').innerHTML = filtered.map((p,i)=>{
+    const orig = prospects.indexOf(p);
+    const av = p.nombre.split(' ').map(w=>w[0]).join('').substring(0,2).toUpperCase();
+    return `<div class="prospect-item${selIdx===orig?' sel':''}" onclick="selectProspect(${orig})">
+      <div class="pi-av">${av}</div>
+      <div style="flex:1;min-width:0">
+        <div class="pi-name">${p.nombre}</div>
+        <div class="pi-sub">${p.restaurante} · ${p.plataformas?.split(' ')[0]||'—'}</div>
+      </div>
+      <span class="pi-badge ${STATUS_CLS[p.status]||'st-new'}">${STATUS_LABELS[p.status]||p.status}</span>
+    </div>`;
+  }).join('') || '<div style="padding:20px;text-align:center;font-size:12px;color:var(--muted)">Sin prospectos con este filtro.</div>';
+}
+
+function renderPipeline(){
+  const stages = ['nuevo','enviado','respondio','propuesta','cerrado','perdido'];
+  const labels  = {nuevo:'🆕 Nuevo',enviado:'📤 Enviado',respondio:'💬 Respondió',propuesta:'📋 Propuesta',cerrado:'✅ Cerrado',perdido:'❌ Perdido'};
+  document.getElementById('pipelineBoard').innerHTML = stages.map(st=>{
+    const items = prospects.filter(p=>p.status===st);
+    return `<div class="pipe-col">
+      <div class="pipe-hdr" style="color:${st==='cerrado'?'var(--green)':st==='perdido'?'var(--red)':'var(--muted)'}">${labels[st]} <span style="font-size:9px">(${items.length})</span></div>
+      ${items.map(p=>`<div class="pipe-card" onclick="selectProspect(${prospects.indexOf(p)})">
+        <div class="pipe-n">${p.restaurante}</div>
+        <div class="pipe-sub">${p.nombre}${calcROI(p)?` · S/${calcROI(p).mensual.toLocaleString()}/m`:''}</div>
+      </div>`).join('')}
+    </div>`;
+  }).join('');
+}
+
+function selectProspect(idx){
+  selIdx=idx;
+  const p=prospects[idx];
+  document.getElementById('selectedView').style.display='block';
+  document.getElementById('emptyView').style.display='none';
+
+  // Info card
+  const roi=calcROI(p);
+  document.getElementById('prospectoInfo').innerHTML=`
+    <div class="ct">Datos del prospecto</div>
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:14px">
+      <div style="width:44px;height:44px;border-radius:50%;background:linear-gradient(135deg,var(--acc),var(--gold));display:flex;align-items:center;justify-content:center;font-weight:800;font-size:.9rem">${p.nombre.split(' ').map(w=>w[0]).join('').substring(0,2)}</div>
+      <div><div style="font-weight:700;font-size:14px">${p.nombre}</div><div style="font-size:11px;color:var(--muted)">${p.restaurante}</div></div>
+      <span class="badge ${STATUS_CLS[p.status]}" style="margin-left:auto">${STATUS_LABELS[p.status]||p.status}</span>
+    </div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-size:12px;margin-bottom:14px">
+      <div><div style="color:var(--muted);font-size:10px">WhatsApp</div><div style="font-weight:600">${p.celular||'—'}</div></div>
+      <div><div style="color:var(--muted);font-size:10px">Email</div><div style="font-weight:600">${p.email||'—'}</div></div>
+      <div><div style="color:var(--muted);font-size:10px">Plataformas</div><div style="font-weight:600;font-size:11px">${p.plataformas||'—'}</div></div>
+      <div><div style="color:var(--muted);font-size:10px">Pedidos/mes</div><div style="font-weight:600">${p.pedidos||'?'}</div></div>
+      <div><div style="color:var(--muted);font-size:10px">Ticket</div><div style="font-weight:600">S/${p.ticket||'?'}</div></div>
+    </div>
+    ${roi?`<div style="background:rgba(232,80,31,.08);border:1px solid rgba(232,80,31,.2);border-radius:10px;padding:12px">
+      <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--acc);margin-bottom:6px">ROI proyectado</div>
+      <div style="font-family:'Fraunces',serif;font-size:22px;font-weight:900;color:var(--acc);margin-bottom:3px">S/${roi.mensual.toLocaleString()}/mes</div>
+      <div style="font-size:10.5px;color:var(--muted)">Plan ${roi.plan} · ${roi.roi_pct}% ROI · Payback ${roi.payback_dias}d</div>
+    </div>`:''}
+    ${p.notas?`<div style="margin-top:10px;font-size:11px;color:var(--muted);font-style:italic">${p.notas}</div>`:''}`;
+
+  genTemplate();
+  renderHistory();
+  renderList();
+}
+
+function genTemplate(){
+  const p=prospects[selIdx];
+  if(!p) return;
+  const seq=document.getElementById('seqSelect').value;
+  const fn=TEMPLATES[seq];
+  const text=fn?fn(p):'Template no disponible.';
+  document.getElementById('tplPreview').textContent=text;
+}
+
+function renderHistory(){
+  const p=prospects[selIdx];
+  const hist=p.hist||[];
+  document.getElementById('contactHistory').innerHTML=hist.length
+    ?hist.map(h=>`<div style="display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--bd)"><div style="font-size:10px;color:var(--muted);white-space:nowrap">${h.d}</div><div>${h.a}</div></div>`).join('')
+    :'<div style="color:var(--dim);padding:6px 0">Sin contactos registrados aún.</div>';
+}
+
+// ══════════════════════════════════════════════
+//  ACTIONS
+// ══════════════════════════════════════════════
+function sendWA(){
+  const p=prospects[selIdx];
+  if(!p?.celular) { alert('Este prospecto no tiene número de WhatsApp.'); return; }
+  const txt=document.getElementById('tplPreview').textContent;
+  const url=`https://wa.me/${p.celular.replace(/\D/g,'')}?text=${encodeURIComponent(txt)}`;
+  const a=document.createElement('a'); a.href=url; a.target='_blank'; a.rel='noopener noreferrer';
+  document.body.appendChild(a); a.click(); setTimeout(()=>document.body.removeChild(a),200);
+  // Log
+  const seq=document.getElementById('seqSelect').options[document.getElementById('seqSelect').selectedIndex].text;
+  if(!prospects[selIdx].hist) prospects[selIdx].hist=[];
+  prospects[selIdx].hist.push({d:new Date().toLocaleDateString('es-PE'),a:`Mensaje enviado: ${seq}`});
+  if(prospects[selIdx].status==='nuevo') prospects[selIdx].status='enviado';
+  save(); renderAll(); renderHistory();
+}
+
+function copyTpl(){
+  const txt=document.getElementById('tplPreview').textContent;
+  navigator.clipboard.writeText(txt).then(()=>{
+    const btn=event.currentTarget; const o=btn.textContent;
+    btn.textContent='✅ Copiado!'; setTimeout(()=>btn.textContent=o,1500);
+  });
+}
+
+function changeStatus(st){
+  if(!st||selIdx===null) return;
+  prospects[selIdx].status=st;
+  prospects[selIdx].hist=prospects[selIdx].hist||[];
+  prospects[selIdx].hist.push({d:new Date().toLocaleDateString('es-PE'),a:`Estado cambiado a: ${STATUS_LABELS[st]}`});
+  save(); renderAll(); selectProspect(selIdx);
+  document.getElementById('stChange').value='';
+}
+
+function filterStatus(st,btn){
+  statusFilter=st;
+  document.querySelectorAll('.left .nb').forEach(b=>b.style.background='');
+  if(btn) btn.style.background='rgba(232,80,31,.15)';
+  renderList();
+}
+
+function filterProspects(){
+  searchQ=document.getElementById('searchInput').value.toLowerCase();
+  renderList();
+}
+
+// ══════════════════════════════════════════════
+//  ADD PROSPECT
+// ══════════════════════════════════════════════
+function addProspect(){
+  const nombre=document.getElementById('a-nombre').value.trim();
+  const rest=document.getElementById('a-rest').value.trim();
+  if(!nombre||!rest){ alert('Nombre y restaurante son obligatorios.'); return; }
+  const p={
+    id:Date.now(), nombre, restaurante:rest,
+    celular:document.getElementById('a-cel').value.trim(),
+    email:document.getElementById('a-email').value.trim(),
+    plataformas:document.getElementById('a-plat').value,
+    pedidos:parseInt(document.getElementById('a-pedidos').value)||0,
+    ticket:parseInt(document.getElementById('a-ticket').value)||0,
+    notas:document.getElementById('a-notas').value.trim(),
+    status:'nuevo', hist:[{d:new Date().toLocaleDateString('es-PE'),a:'Prospecto agregado manualmente'}]
+  };
+  prospects.unshift(p);
+  save(); renderAll();
+  document.getElementById('m-add').classList.remove('open');
+  // Reset fields
+  ['a-nombre','a-rest','a-cel','a-email','a-pedidos','a-ticket','a-notas'].forEach(id=>document.getElementById(id).value='');
+}
+
+// ══════════════════════════════════════════════
+//  CSV IMPORT
+// ══════════════════════════════════════════════
+function handleCsvDrop(e){
+  e.preventDefault();
+  document.getElementById('csvZone').classList.remove('drag');
+  const file=e.dataTransfer.files[0];
+  if(file) parseCsv(file);
+}
+
+function parseCsv(file){
+  const reader=new FileReader();
+  reader.onload=e=>{
+    const lines=e.target.result.split('\n').filter(l=>l.trim());
+    const firstLine=lines[0].toLowerCase();
+    const hasHeader=firstLine.includes('nombre')||firstLine.includes('name')||firstLine.includes('restaurante');
+    const dataLines=hasHeader?lines.slice(1):lines;
+    const newProspects=[];
+    dataLines.forEach(line=>{
+      const cols=line.split(',').map(c=>c.trim().replace(/^"|"$/g,''));
+      if(cols.length<2) return;
+      newProspects.push({
+        id:Date.now()+Math.random(),
+        nombre:cols[0]||'Sin nombre', restaurante:cols[1]||'Sin restaurante',
+        celular:cols[2]||'', email:cols[3]||'',
+        plataformas:cols[4]||'',
+        pedidos:parseInt(cols[5])||0, ticket:parseInt(cols[6])||0,
+        notas:'Importado desde CSV', status:'nuevo',
+        hist:[{d:new Date().toLocaleDateString('es-PE'),a:'Importado desde CSV'}]
+      });
+    });
+    document.getElementById('csvPreview').innerHTML=`
+      <div style="padding:12px;background:rgba(74,222,128,.06);border:1px solid rgba(74,222,128,.2);border-radius:9px;font-size:12px">
+        ✅ ${newProspects.length} prospectos detectados.
+        <button class="btn-r" style="margin-top:10px;width:100%" onclick="importProspects(${JSON.stringify(newProspects).replace(/"/g,'&quot;')})">
+          Importar ${newProspects.length} prospectos →
+        </button>
+      </div>`;
+  };
+  reader.readAsText(file);
+}
+
+function importProspects(data){
+  const newOnes = typeof data === 'string' ? JSON.parse(data.replace(/&quot;/g,'"')) : data;
+  prospects = [...newOnes, ...prospects];
+  save(); renderAll();
+  document.getElementById('m-import').classList.remove('open');
+  document.getElementById('csvPreview').innerHTML='';
+}
+
+// ══════════════════════════════════════════════
+//  EXPORT CSV
+// ══════════════════════════════════════════════
+function exportarCSV(){
+  const rows=[['nombre','restaurante','celular','email','plataformas','pedidos','ticket','status','roi_proyectado']];
+  prospects.forEach(p=>{
+    const roi=calcROI(p);
+    rows.push([p.nombre,p.restaurante,p.celular,p.email,p.plataformas,p.pedidos,p.ticket,p.status,roi?'S/'+roi.mensual:'']);
+  });
+  const csv=rows.map(r=>r.join(',')).join('\n');
+  const blob=new Blob(['\uFEFF'+csv],{type:'text/csv;charset=utf-8'});
+  const url=URL.createObjectURL(blob);
+  const a=document.createElement('a'); a.href=url; a.download='prospectos_sazon.csv';
+  document.body.appendChild(a); a.click();
+  setTimeout(()=>{ document.body.removeChild(a); URL.revokeObjectURL(url); },200);
+}
+
+// ══════════════════════════════════════════════
+//  MODAL CLOSE
+// ══════════════════════════════════════════════
+document.querySelectorAll('.modal-bg').forEach(m=>m.addEventListener('click',e=>{if(e.target===m)

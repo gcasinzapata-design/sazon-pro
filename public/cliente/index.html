@@ -2,1510 +2,1776 @@
 <html lang="es">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
-<title>Sazón · Mi Dashboard</title>
-<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono&display=swap" rel="stylesheet">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sazón — Portal de Cliente</title>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,wght@0,600;0,800;0,900;1,600&family=DM+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <style>
 :root{
-  --red:#C8392B;--rd:#9B2335;--cream:#F5EFE0;--cream2:#EDE4CE;
-  --ch:#1A1A1A;--gold:#D4A547;--soft:#5A4E3E;
-  --green:#16a34a;--green2:#dcfce7;--blue:#1d4ed8;--blue2:#dbeafe;
-  --orange:#c2410c;--orange2:#ffedd5;--purple:#7e22ce;--purple2:#f3e8ff;
-  --bg:#faf8f4;--border:rgba(0,0,0,.08);--border2:rgba(0,0,0,.14);
+  --bg:#090907;--s1:#111110;--s2:#171715;--s3:#1e1e1b;--s4:#252522;
+  --bd:rgba(255,255,255,.07);--bd2:rgba(255,255,255,.13);--bd3:rgba(255,255,255,.2);
+  --txt:#eeeae0;--muted:rgba(238,234,224,.42);--dim:rgba(238,234,224,.2);
+  --acc:#e8501f;--gold:#c8a045;
+  --green:#4ade80;--blue:#60a5fa;--purple:#a78bfa;--red:#f87171;--yellow:#facc15;
+  --rappi:#ff441f;--peya:#ffd000;--didi:#f65164;--glovo:#00a082;
 }
-*,*::before,*::after{box-sizing:border-box;margin:0;padding:0;}
-html,body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--ch);overflow-x:hidden;}
-.mono{font-family:'DM Mono',monospace;}
-.pf{font-family:'Playfair Display',serif;}
-input,select,button,textarea{font-family:'DM Sans',sans-serif;}
-::-webkit-scrollbar{width:5px;height:5px;}
-::-webkit-scrollbar-thumb{background:rgba(0,0,0,.12);border-radius:10px;}
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+html{font-size:14px}
+body{font-family:'DM Sans',sans-serif;background:var(--bg);color:var(--txt);min-height:100vh}
+input,select,textarea,button{font-family:'DM Sans',sans-serif}
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:4px}
 
-/* LOGIN */
-#login{position:fixed;inset:0;background:var(--ch);z-index:999;display:flex;align-items:center;justify-content:center;}
-.lcard{width:420px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.12);border-radius:20px;padding:44px;box-shadow:0 40px 80px rgba(0,0,0,.6);}
-.lav{width:60px;height:60px;border-radius:50%;background:linear-gradient(135deg,var(--red),var(--gold));display:flex;align-items:center;justify-content:center;font-size:1.7rem;margin:0 auto 14px;}
-.lh{text-align:center;font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:700;color:white;margin-bottom:4px;}
-.lsub{text-align:center;font-size:.82rem;color:rgba(255,255,255,.45);margin-bottom:28px;}
-.lf label{display:block;font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:rgba(255,255,255,.4);margin-bottom:6px;margin-top:13px;}
-.lf input{width:100%;background:rgba(255,255,255,.06);border:1.5px solid rgba(255,255,255,.1);padding:12px 15px;border-radius:10px;color:white;font-size:.9rem;outline:none;transition:border-color .2s;}
-.lf input:focus{border-color:rgba(200,57,43,.5);}
-.lbtn{width:100%;margin-top:16px;padding:14px;background:var(--red);color:white;border:none;border-radius:10px;font-size:.9rem;font-weight:600;cursor:pointer;transition:background .2s;}
-.lbtn:hover{background:var(--rd);}
-.lmsg{font-size:.8rem;text-align:center;margin-top:10px;min-height:18px;}
-.lok{color:#4ade80;}.lerr{color:#f87171;}
-.demo-cred{margin-top:16px;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.08);border-radius:10px;padding:14px;font-size:.78rem;color:rgba(255,255,255,.4);line-height:1.7;}
-.demo-cred strong{color:rgba(255,255,255,.65);display:block;margin-bottom:4px;}
+/* ── LOGIN ───────────────────────────────── */
+#loginScreen{position:fixed;inset:0;background:linear-gradient(135deg,#0d0d0b 0%,#1a1208 100%);z-index:999;display:flex;align-items:center;justify-content:center}
+.lc{width:400px;background:rgba(255,255,255,.04);border:1px solid var(--bd2);border-radius:20px;padding:40px;box-shadow:0 40px 80px rgba(0,0,0,.7)}
+.lmark{width:56px;height:56px;background:var(--acc);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin:0 auto 12px}
+.ltitle{font-family:'Fraunces',serif;font-size:1.5rem;font-weight:900;text-align:center;margin-bottom:4px}
+.lsub{font-size:.78rem;color:var(--muted);text-align:center;margin-bottom:28px}
+.lf{display:flex;flex-direction:column;gap:6px;margin-bottom:14px}
+.lf label{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted)}
+.lf input{background:rgba(255,255,255,.06);border:1.5px solid var(--bd2);border-radius:10px;padding:11px 14px;color:var(--txt);font-size:.88rem;outline:none;transition:border-color .2s}
+.lf input:focus{border-color:rgba(232,80,31,.5)}
+.lbtn{width:100%;padding:13px;background:var(--acc);color:white;border:none;border-radius:10px;font-size:.9rem;font-weight:700;cursor:pointer;transition:background .2s}
+.lbtn:hover{background:#ff6a3a}
+.lmsg{font-size:.78rem;text-align:center;margin-top:8px;min-height:16px}
+.lmsg.ok{color:var(--green)}.lmsg.err{color:var(--red)}
+.ldemo{margin-top:16px;background:rgba(255,255,255,.03);border:1px solid var(--bd);border-radius:10px;padding:12px;font-size:.74rem;color:var(--muted);line-height:1.7}
+.ldemo strong{color:rgba(238,234,224,.6);display:block;margin-bottom:4px}
 
-/* APP */
-#app{display:none;min-height:100vh;}
-#app.on{display:block;}
+/* ── TOP NAV ─────────────────────────────── */
+.topnav{height:52px;background:var(--s1);border-bottom:1px solid var(--bd);display:flex;align-items:center;padding:0 20px;gap:14px;flex-shrink:0;position:sticky;top:0;z-index:100}
+.nav-logo{display:flex;align-items:center;gap:8px}
+.nav-mark{width:26px;height:26px;background:var(--acc);border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+.nav-brand{font-family:'Fraunces',serif;font-size:14px;font-weight:900}
+.sep{width:1px;height:18px;background:var(--bd);flex-shrink:0}
 
-/* TOPBAR */
-.topbar{background:var(--cream);border-bottom:2px solid var(--cream2);padding:0 36px;display:flex;align-items:center;justify-content:space-between;height:62px;position:sticky;top:0;z-index:50;}
-.logo{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:900;color:var(--ch);}
-.logo span{color:var(--red);}
-.topbar-right{display:flex;align-items:center;gap:12px;}
-.rest-badge{background:var(--ch);color:white;padding:6px 14px;border-radius:100px;font-size:.76rem;font-weight:600;}
-.notif-btn{width:34px;height:34px;border-radius:50%;background:var(--cream2);border:none;cursor:pointer;font-size:1rem;display:flex;align-items:center;justify-content:center;position:relative;}
-.notif-dot{position:absolute;top:4px;right:4px;width:8px;height:8px;background:var(--red);border-radius:50%;border:2px solid var(--cream);}
+/* Brand selector */
+.bs{display:flex;align-items:center;gap:8px;cursor:pointer;padding:5px 10px;border-radius:8px;transition:background .2s;position:relative}
+.bs:hover{background:rgba(255,255,255,.05)}
+.bsav{width:26px;height:26px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;flex-shrink:0}
+.bsname{font-size:12.5px;font-weight:600}
+.bsplan{font-size:9.5px;color:var(--muted)}
+.bsarr{font-size:10px;color:var(--muted)}
 
-/* TABS */
-.tabs{background:white;border-bottom:1px solid var(--border);padding:0 36px;display:flex;gap:0;overflow-x:auto;}
-.tab{padding:14px 20px;font-size:.82rem;font-weight:500;color:var(--soft);cursor:pointer;background:none;border:none;border-bottom:2px solid transparent;transition:all .18s;white-space:nowrap;}
-.tab:hover{color:var(--ch);}
-.tab.on{color:var(--red);border-bottom-color:var(--red);font-weight:600;}
+/* Brand dropdown */
+.bdd{position:absolute;top:46px;left:0;background:var(--s2);border:1px solid var(--bd2);border-radius:12px;padding:6px;min-width:220px;z-index:200;display:none;box-shadow:0 12px 40px rgba(0,0,0,.6)}
+.bdd.open{display:block}
+.bdi{display:flex;align-items:center;gap:10px;padding:9px 12px;border-radius:9px;cursor:pointer;transition:background .15s}
+.bdi:hover{background:rgba(255,255,255,.06)}
+.bdi.sel{background:rgba(232,80,31,.1)}
+.bdi-name{font-size:12.5px;font-weight:600}
+.bdi-sub{font-size:9.5px;color:var(--muted)}
 
-/* MAIN */
-.main{padding:28px 36px;max-width:1200px;}
-.panel{display:none;}.panel.on{display:block;}
-@keyframes fadein{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
-.fadein{animation:fadein .3s ease;}
+/* Nav period + actions */
+.nav-period{margin-left:auto;display:flex;gap:3px;background:rgba(255,255,255,.05);border-radius:8px;padding:3px}
+.pb{padding:4px 11px;border-radius:6px;border:none;background:transparent;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .18s}
+.pb.on{background:var(--s3);color:var(--txt)}
+.nav-acts{display:flex;gap:8px;margin-left:12px;align-items:center}
+.nb{padding:5px 13px;border-radius:8px;border:1px solid var(--bd2);background:transparent;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .18s;white-space:nowrap}
+.nb:hover{background:rgba(255,255,255,.06);color:var(--txt)}
+.nb.p{background:var(--acc);color:white;border-color:transparent}
+.nb.p:hover{background:#ff6a3a}
+.nb.sofia{background:rgba(167,139,250,.15);color:var(--purple);border-color:rgba(167,139,250,.3)}
+.nb.sofia:hover{background:rgba(167,139,250,.25)}
+.notif-btn{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.05);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;cursor:pointer;position:relative;font-size:12px}
+.notif-dot{position:absolute;top:3px;right:3px;width:7px;height:7px;background:var(--acc);border-radius:50%;border:2px solid var(--s1)}
+.logout-btn{width:30px;height:30px;border-radius:50%;background:rgba(255,255,255,.05);border:1px solid var(--bd);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:12px;color:var(--muted)}
 
-/* STATS */
-.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px;}
-.scard{background:white;border:1px solid var(--border);border-radius:14px;padding:20px 22px;}
-.scard-n{font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;line-height:1;margin-bottom:4px;}
-.scard-l{font-size:.7rem;text-transform:uppercase;letter-spacing:1px;color:var(--soft);}
-.scard-d{font-size:.73rem;font-weight:600;margin-top:6px;}
-.up{color:var(--green);}.dn{color:var(--red);}.neu{color:var(--soft);}
+/* ── TABS ─────────────────────────────────── */
+.tabs-bar{background:var(--s1);border-bottom:1px solid var(--bd);display:flex;padding:0 20px;overflow-x:auto}
+.tab{padding:12px 16px;border:none;background:none;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:12px;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;transition:all .18s}
+.tab:hover{color:var(--txt)}
+.tab.on{color:var(--acc);border-bottom-color:var(--acc)}
 
-/* CHARTS */
-.chart-wrap{background:white;border:1px solid var(--border);border-radius:14px;padding:22px 24px;margin-bottom:22px;}
-.chart-head{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;}
-.chart-title{font-size:.9rem;font-weight:600;}
-.chart-sub{font-size:.75rem;color:var(--soft);margin-top:2px;}
-.chart-legend{display:flex;gap:16px;}
-.leg-item{display:flex;align-items:center;gap:6px;font-size:.74rem;color:var(--soft);}
-.leg-dot{width:10px;height:10px;border-radius:50%;}
-.bar-chart{display:flex;align-items:flex-end;gap:10px;height:160px;padding:0 4px;}
-.bar-group{display:flex;flex-direction:column;align-items:center;gap:5px;flex:1;}
-.bar-wrap{display:flex;gap:3px;align-items:flex-end;height:120px;}
-.bar{border-radius:4px 4px 0 0;cursor:pointer;transition:opacity .2s;}
-.bar:hover{opacity:.75;}
-.bar-label{font-size:.7rem;color:var(--soft);}
+/* ── LAYOUT ──────────────────────────────── */
+.app{display:none}
+.app.on{display:flex;flex-direction:column;height:100vh}
+.dash{display:flex;flex:1;overflow:hidden}
+.dash-main{flex:1;overflow-y:auto;padding:20px;display:flex;flex-direction:column;gap:16px}
+.dash-side{width:290px;flex-shrink:0;border-left:1px solid var(--bd);overflow-y:auto;background:var(--s1);display:flex;flex-direction:column}
 
-/* CARDS */
-.card{background:white;border:1px solid var(--border);border-radius:14px;padding:20px 22px;}
-.ct{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:rgba(0,0,0,.35);margin-bottom:14px;}
-.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
-.g3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:14px;}
+/* Tab panels */
+.tab-panel{display:none}
+.tab-panel.on{display:block}
 
-/* BADGES */
-.bg{display:inline-flex;align-items:center;gap:4px;padding:3px 10px;border-radius:100px;font-size:.7rem;font-weight:600;}
-.bg-g{background:var(--green2);color:var(--green);}
-.bg-r{background:#fee2e2;color:#dc2626;}
-.bg-o{background:var(--orange2);color:var(--orange);}
-.bg-b{background:var(--blue2);color:var(--blue);}
-.bg-p{background:var(--purple2);color:var(--purple);}
-.bg-k{background:#f3f4f6;color:#374151;}
+/* ── KPIs ──────────────────────────────────── */
+.kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.kpi{background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:16px;transition:border-color .2s;cursor:default}
+.kpi:hover{border-color:var(--bd2)}
+.kpi-lbl{font-size:9.5px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:10px}
+.kpi-val{font-family:'Fraunces',serif;font-size:28px;font-weight:900;line-height:1;margin-bottom:5px}
+.kpi-delta{font-size:11px;display:flex;align-items:center;gap:4px}
+.up{color:var(--green)}.dn{color:var(--red)}.neu{color:var(--muted)}
 
-/* TABLE */
-table{width:100%;border-collapse:collapse;font-size:.83rem;}
-th{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:rgba(0,0,0,.35);padding:9px 12px;border-bottom:1px solid var(--border);text-align:left;}
-td{padding:11px 12px;border-bottom:1px solid rgba(0,0,0,.04);color:var(--soft);vertical-align:middle;}
-tr:last-child td{border-bottom:none;}
-tr:hover td{background:rgba(0,0,0,.01);}
+/* ── SECTIONS ──────────────────────────── */
+.sh{display:flex;align-items:center;gap:10px;margin-bottom:12px;flex-wrap:wrap}
+.sh-t{font-family:'Fraunces',serif;font-size:16px;font-weight:800}
+.sh-s{font-size:11px;color:var(--muted)}
+.sh-r{margin-left:auto;display:flex;gap:6px}
+.pill{padding:4px 10px;border-radius:100px;border:1px solid var(--bd2);background:transparent;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:10.5px;font-weight:600;cursor:pointer;transition:all .18s}
+.pill.on,.pill:hover{background:var(--s3);color:var(--txt)}
 
-/* PROGRESS */
-.pbar{height:6px;background:rgba(0,0,0,.07);border-radius:100px;overflow:hidden;}
-.pbar-f{height:100%;border-radius:100px;}
+/* ── CARDS ──────────────────────────────── */
+.card{background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:18px}
+.cw{background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:18px}
 
-/* BUTTONS */
-.btn{padding:9px 18px;border-radius:8px;font-size:.83rem;font-weight:600;cursor:pointer;border:none;transition:all .18s;}
-.btn-r{background:var(--red);color:white;}.btn-r:hover{background:var(--rd);}
-.btn-o{background:var(--cream2);color:var(--ch);border:1px solid var(--border2);}.btn-o:hover{background:var(--cream);}
-.btn-g{background:var(--green2);color:var(--green);border:1px solid rgba(22,163,74,.2);}.btn-g:hover{background:#bbf7d0;}
-.btn-sm{padding:6px 13px;font-size:.76rem;}
+/* ── CHANNELS ───────────────────────────── */
+.ch-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+.ch-card{background:var(--s2);border:1px solid var(--bd);border-radius:12px;padding:14px;transition:border-color .2s}
+.ch-card:hover{border-color:var(--bd2)}
+.ch-head{display:flex;align-items:center;gap:8px;margin-bottom:10px}
+.ch-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.ch-name{font-size:12.5px;font-weight:700}
+.ch-share{font-size:11px;margin-left:auto;font-weight:700}
+.ch-bar{height:3px;background:rgba(255,255,255,.08);border-radius:100px;overflow:hidden;margin-bottom:12px}
+.ch-fill{height:100%;border-radius:100px}
+.ch-metrics{display:grid;grid-template-columns:1fr 1fr;gap:6px}
+.cm-l{font-size:10px;color:var(--muted)}
+.cm-v{font-size:13px;font-weight:700}
 
-/* REP CARD */
-.rep-card{background:white;border:1px solid var(--border);border-radius:12px;padding:18px 20px;display:flex;align-items:center;gap:16px;cursor:pointer;transition:all .2s;}
-.rep-card:hover{border-color:var(--red);transform:translateY(-1px);box-shadow:0 4px 16px rgba(200,57,43,.1);}
-.rep-ico{width:44px;height:44px;border-radius:10px;background:rgba(200,57,43,.08);display:flex;align-items:center;justify-content:center;font-size:1.2rem;flex-shrink:0;}
+/* ── CHARTS ─────────────────────────────── */
+.charts-row{display:grid;grid-template-columns:2fr 1fr;gap:14px}
+.chart-card{background:var(--s1);border:1px solid var(--bd);border-radius:14px;padding:18px}
+.chart-wrap{height:180px;position:relative}
+.row2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
 
-/* CAMP CARD */
-.camp-card{background:white;border:1px solid var(--border);border-radius:12px;padding:18px 20px;transition:border-color .2s;}
-.camp-card:hover{border-color:var(--border2);}
-.camp-plat{display:inline-flex;align-items:center;gap:5px;padding:4px 10px;background:var(--cream2);border-radius:100px;font-size:.72rem;font-weight:600;margin-bottom:10px;}
+/* ── HEATMAP ─────────────────────────────── */
+.hm-grid{display:grid;grid-template-columns:36px repeat(7,1fr);gap:3px}
+.hm-hdr{font-size:9.5px;font-weight:700;color:var(--muted);text-align:center;padding:4px 0}
+.hm-lbl{font-size:9.5px;color:var(--muted);display:flex;align-items:center;padding-right:6px}
+.hm-cell{aspect-ratio:1;border-radius:4px;cursor:pointer;transition:opacity .2s}
+.hm-cell:hover{opacity:.75}
+.hm-legend{display:flex;align-items:center;gap:6px;margin-top:10px}
 
-/* PLATFORM STATUS */
-.plat-card{background:white;border:1px solid var(--border);border-radius:12px;padding:18px;transition:border-color .2s;}
-.plat-card.connected{border-color:rgba(22,163,74,.3);background:linear-gradient(135deg,white,#f0fdf4);}
-.plat-card.pending{border-color:rgba(251,191,36,.3);background:linear-gradient(135deg,white,#fffbeb);}
-.status-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;}
-.status-dot.green{background:var(--green);box-shadow:0 0 6px rgba(22,163,74,.4);}
-.status-dot.yellow{background:#f59e0b;box-shadow:0 0 6px rgba(245,158,11,.4);}
-.status-dot.gray{background:#9ca3af;}
+/* ── REVIEWS ────────────────────────────── */
+.rv-sum{display:flex;gap:20px;align-items:center;margin-bottom:14px}
+.rv-score{font-family:'Fraunces',serif;font-size:44px;font-weight:900}
+.rv-stars{font-size:18px;color:var(--gold);letter-spacing:2px;margin-bottom:2px}
+.rv-total{font-size:10.5px;color:var(--muted)}
+.rb-row{display:flex;align-items:center;gap:8px;margin-bottom:6px}
+.rb-lbl{font-size:10px;color:var(--muted);width:12px;text-align:right;flex-shrink:0}
+.rb-bar{flex:1;height:6px;background:rgba(255,255,255,.06);border-radius:100px;overflow:hidden}
+.rb-fill{height:100%;background:var(--gold);border-radius:100px;transition:width .8s}
+.rb-n{font-size:10px;color:var(--muted);width:22px;text-align:right;flex-shrink:0}
 
-/* NOTIF PANEL */
-.notif-panel{position:fixed;top:62px;right:0;width:340px;background:white;border-left:1px solid var(--border);border-bottom:1px solid var(--border);box-shadow:-4px 8px 24px rgba(0,0,0,.1);z-index:40;max-height:calc(100vh - 62px);overflow-y:auto;display:none;}
-.notif-panel.on{display:block;}
-.notif-item{padding:14px 18px;border-bottom:1px solid var(--border);font-size:.83rem;cursor:pointer;transition:background .15s;}
-.notif-item:hover{background:#f9f7f3;}
-.notif-item.unread{background:#fff8f7;border-left:3px solid var(--red);}
-.notif-time{font-size:.7rem;color:var(--soft);margin-top:3px;}
+/* ── MENU TABLE ─────────────────────────── */
+.mt{width:100%;border-collapse:collapse}
+.mt thead tr{border-bottom:1px solid var(--bd)}
+.mt th{font-size:9.5px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);padding:8px 12px;text-align:left}
+.mt td{padding:10px 12px;font-size:12.5px;border-bottom:1px solid rgba(255,255,255,.03)}
+.mt tr:last-child td{border-bottom:none}
+.mt tr:hover td{background:rgba(255,255,255,.02)}
+.it-name{font-weight:600}
+.pb-bar{height:6px;background:rgba(255,255,255,.06);border-radius:100px;overflow:hidden;width:80px;display:inline-block;vertical-align:middle;margin-right:5px}
+.pb-fill{height:100%;border-radius:100px}
+.it-tag{font-size:10px;padding:3px 8px;border-radius:100px;font-weight:700;white-space:nowrap}
+.tag-star{background:rgba(200,160,69,.18);color:var(--gold)}
+.tag-ok{background:rgba(74,222,128,.1);color:var(--green)}
+.tag-risk{background:rgba(248,113,113,.1);color:var(--red)}
+.tag-new{background:rgba(96,165,250,.1);color:var(--blue)}
+.tu{color:var(--green)}.td{color:var(--red)}.tn{color:var(--muted)}
 
-/* MODAL */
-.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.55);z-index:100;backdrop-filter:blur(4px);align-items:center;justify-content:center;}
-.modal-bg.open{display:flex;}
-.modal{background:white;border-radius:18px;padding:28px 30px;width:520px;max-width:95vw;max-height:90vh;overflow-y:auto;position:relative;}
-.modal-close{position:absolute;top:16px;right:16px;background:none;border:none;font-size:1.3rem;cursor:pointer;color:var(--soft);line-height:1;width:28px;height:28px;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:background .15s;}
-.modal-close:hover{background:var(--cream2);}
-.modal h3{font-size:1.1rem;font-weight:700;margin-bottom:18px;}
+/* ── SIDEBAR (Sofia) ──────────────────────── */
+.side-hdr{padding:16px;border-bottom:1px solid var(--bd);flex-shrink:0}
+.side-title{font-family:'Fraunces',serif;font-size:14px;font-weight:800;display:flex;align-items:center;gap:8px;margin-bottom:2px}
+.ai-live{display:flex;align-items:center;gap:5px;font-size:10px;font-weight:700;color:var(--green);background:rgba(74,222,128,.1);padding:2px 8px;border-radius:100px}
+.ai-dot{width:6px;height:6px;background:var(--green);border-radius:50%;animation:pulse 2s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+.side-sub{font-size:10px;color:var(--muted)}
+.insights-list{padding:14px;flex:1}
+.ic{background:var(--s2);border:1px solid var(--bd);border-radius:12px;padding:12px;margin-bottom:10px}
+.ic-type{font-size:9.5px;font-weight:800;letter-spacing:1px;text-transform:uppercase;margin-bottom:5px}
+.ic-title{font-size:12px;font-weight:700;margin-bottom:4px}
+.ic-body{font-size:11px;color:var(--muted);line-height:1.5;margin-bottom:6px}
+.ic-action{font-size:10.5px;color:var(--acc);cursor:pointer;font-weight:600}
+.ic-action:hover{text-decoration:underline}
 
-/* CALENDAR */
-.cal-grid{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin:14px 0;}
-.cal-head{display:grid;grid-template-columns:repeat(7,1fr);gap:4px;margin-bottom:6px;}
-.cal-head span{text-align:center;font-size:.68rem;font-weight:700;text-transform:uppercase;letter-spacing:.8px;color:var(--soft);}
-.cal-day{aspect-ratio:1;border-radius:8px;border:none;background:none;cursor:pointer;font-size:.84rem;transition:all .15s;display:flex;align-items:center;justify-content:center;}
-.cal-day:hover:not(.empty):not(.past){background:rgba(200,57,43,.08);color:var(--red);}
-.cal-day.today{background:var(--red);color:white;font-weight:700;}
-.cal-day.selected{background:var(--red);color:white;font-weight:700;}
-.cal-day.has-slot{position:relative;}
-.cal-day.has-slot::after{content:'';position:absolute;bottom:4px;left:50%;transform:translateX(-50%);width:4px;height:4px;background:var(--green);border-radius:50%;}
-.cal-day.past{opacity:.35;cursor:not-allowed;}
-.cal-day.empty{cursor:default;}
-.cal-nav{display:flex;justify-content:space-between;align-items:center;margin-bottom:12px;}
-.cal-nav button{background:var(--cream2);border:none;cursor:pointer;border-radius:8px;padding:6px 12px;font-size:.82rem;transition:background .15s;}
-.cal-nav button:hover{background:var(--cream);}
-.time-slots{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:14px;}
-.time-slot{padding:10px;border:1.5px solid var(--border);border-radius:8px;text-align:center;cursor:pointer;font-size:.82rem;font-weight:500;transition:all .15s;}
-.time-slot:hover{border-color:var(--red);color:var(--red);}
-.time-slot.sel{background:var(--red);color:white;border-color:var(--red);}
-.time-slot.taken{opacity:.4;cursor:not-allowed;text-decoration:line-through;}
-
-/* INPUT */
-.fi{background:var(--cream2);border:1.5px solid var(--border);padding:10px 13px;border-radius:9px;color:var(--ch);font-size:.87rem;outline:none;transition:border-color .2s;width:100%;}
-.fi:focus{border-color:rgba(200,57,43,.4);}
-.fl{display:block;font-size:.66rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--soft);margin-bottom:5px;}
-
-/* PDF LOADER */
-.pdf-loading{display:inline-flex;align-items:center;gap:8px;padding:8px 16px;background:rgba(22,163,74,.1);border:1px solid rgba(22,163,74,.2);border-radius:8px;font-size:.82rem;color:var(--green);}
+/* Ask AI */
+.ask-ai{padding:14px;border-top:1px solid var(--bd);flex-shrink:0}
+.ask-lbl{font-size:9.5px;font-weight:800;letter-spacing:1.5px;text-transform:uppercase;color:var(--muted);margin-bottom:8px}
+.ask-sugs{display:flex;flex-direction:column;gap:5px;margin-bottom:8px}
+.ask-sug{font-size:10.5px;padding:7px 10px;background:rgba(255,255,255,.04);border:1px solid var(--bd);border-radius:8px;cursor:pointer;text-align:left;color:var(--muted);transition:all .18s;font-family:'DM Sans',sans-serif}
+.ask-sug:hover{background:rgba(232,80,31,.08);color:var(--txt);border-color:rgba(232,80,31,.25)}
+.ask-row{display:flex;gap:6px;margin-bottom:6px}
+.ask-inp{flex:1;background:rgba(255,255,255,.05);border:1.5px solid var(--bd2);border-radius:9px;padding:8px 11px;color:var(--txt);font-size:11.5px;outline:none;transition:border-color .2s}
+.ask-inp:focus{border-color:rgba(232,80,31,.4)}
+.ask-send{width:32px;height:32px;border-radius:8px;background:var(--acc);border:none;color:white;font-size:13px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:background .18s;flex-shrink:0;align-self:flex-end}
+.ask-send:hover{background:#ff6a3a}
+.ai-resp{display:none;padding:10px;background:rgba(232,80,31,.06);border:1px solid rgba(232,80,31,.15);border-radius:10px;font-size:11.5px;color:var(--muted);line-height:1.6;margin-top:6px}
+.ai-resp.on{display:block}
+.ai-thinking{display:flex;align-items:center;gap:6px;font-size:10.5px;color:var(--acc);font-weight:700}
 @keyframes spin{to{transform:rotate(360deg)}}
-.spin{animation:spin .8s linear infinite;display:inline-block;}
+.spin{width:10px;height:10px;border:2px solid rgba(232,80,31,.2);border-top-color:var(--acc);border-radius:50%;animation:spin .7s linear infinite}
 
-/* PHOTO UPLOAD */
-.upload-zone{border:2px dashed var(--border2);border-radius:12px;padding:32px;text-align:center;cursor:pointer;transition:all .2s;}
-.upload-zone:hover,.upload-zone.drag{border-color:var(--red);background:rgba(200,57,43,.04);}
-.upload-zone input{display:none;}
+/* ── SOFIA TAB ────────────────────────────── */
+.sofia-grid{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.sofia-action{background:var(--s2);border:1px solid var(--bd);border-radius:12px;padding:16px;cursor:pointer;transition:all .2s}
+.sofia-action:hover{border-color:var(--bd2);background:var(--s3)}
+.sofia-ico{font-size:1.6rem;margin-bottom:10px}
+.sofia-title{font-size:13px;font-weight:700;margin-bottom:4px}
+.sofia-desc{font-size:11px;color:var(--muted);line-height:1.5}
+.wa-tag{display:inline-flex;align-items:center;gap:4px;font-size:10px;color:#25D366;background:rgba(37,211,102,.08);padding:2px 8px;border-radius:100px;margin-top:8px;font-weight:600}
+.report-row{display:flex;align-items:center;gap:14px;padding:12px 14px;background:var(--s2);border:1px solid var(--bd);border-radius:10px;margin-bottom:8px;cursor:pointer;transition:all .2s}
+.report-row:hover{border-color:var(--acc)}
+.rep-ico{width:38px;height:38px;border-radius:9px;background:rgba(232,80,31,.1);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0}
+.rep-info{flex:1}
+.rep-title{font-size:13px;font-weight:700;margin-bottom:2px}
+.rep-meta{font-size:10.5px;color:var(--muted)}
+.badge{display:inline-flex;align-items:center;gap:3px;padding:2px 8px;border-radius:100px;font-size:10px;font-weight:700}
+.bg-g{background:rgba(74,222,128,.1);color:var(--green)}
+.bg-r{background:rgba(248,113,113,.1);color:var(--red)}
+.bg-b{background:rgba(96,165,250,.1);color:var(--blue)}
+.bg-y{background:rgba(250,204,21,.1);color:var(--yellow)}
+.bg-m{background:rgba(167,139,250,.1);color:var(--purple)}
+.bg-k{background:rgba(255,255,255,.06);color:var(--muted)}
 
-/* TOOLTIP */
-.tooltip{position:relative;}
-.tooltip:hover::after{content:attr(data-tip);position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);background:#1A1A1A;color:white;padding:5px 10px;border-radius:6px;font-size:.72rem;white-space:nowrap;z-index:10;pointer-events:none;}
+/* ── MODAL ────────────────────────────────── */
+.modal-bg{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);z-index:500;align-items:center;justify-content:center;backdrop-filter:blur(4px)}
+.modal-bg.open{display:flex}
+.modal{background:var(--s2);border:1px solid var(--bd2);border-radius:16px;padding:24px;width:480px;max-width:95vw;max-height:85vh;overflow-y:auto;position:relative}
+.modal-close{position:absolute;top:14px;right:14px;background:none;border:none;font-size:1.2rem;cursor:pointer;color:var(--muted);width:26px;height:26px;display:flex;align-items:center;justify-content:center;border-radius:50%}
+.modal-close:hover{background:rgba(255,255,255,.08)}
+.modal h3{font-family:'Fraunces',serif;font-size:1.1rem;font-weight:800;margin-bottom:14px}
+.fi{background:rgba(255,255,255,.05);border:1.5px solid var(--bd2);border-radius:9px;padding:10px 13px;color:var(--txt);font-size:.86rem;outline:none;transition:border-color .2s;width:100%}
+.fi:focus{border-color:rgba(232,80,31,.4)}
+.fl{display:block;font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:5px}
+.btn-r{background:var(--acc);color:white;border:none;padding:10px 18px;border-radius:9px;font-size:.85rem;font-weight:700;cursor:pointer;transition:background .18s}
+.btn-r:hover{background:#ff6a3a}
+.btn-o{background:rgba(255,255,255,.06);color:var(--muted);border:1px solid var(--bd2);padding:9px 16px;border-radius:9px;font-size:.83rem;font-weight:600;cursor:pointer;transition:all .18s}
+.btn-o:hover{background:rgba(255,255,255,.1);color:var(--txt)}
 
-@media(max-width:768px){
-  .topbar,.tabs,.main{padding-left:16px;padding-right:16px;}
-  .stats-row{grid-template-columns:1fr 1fr;}
-  .g2{grid-template-columns:1fr;}
-  .g3{grid-template-columns:1fr;}
+/* ── MISC ──────────────────────────────────── */
+.flex-r{display:flex;gap:10px;flex-wrap:wrap}
+.wa-float{position:fixed;bottom:20px;right:20px;z-index:90;width:46px;height:46px;border-radius:50%;background:#25D366;display:flex;align-items:center;justify-content:center;box-shadow:0 4px 16px rgba(37,211,102,.4);cursor:pointer;text-decoration:none;transition:transform .2s}
+.wa-float:hover{transform:scale(1.1)}
+
+@media(max-width:900px){
+  .kpi-row{grid-template-columns:1fr 1fr}
+  .ch-grid{grid-template-columns:1fr 1fr}
+  .charts-row,.row2{grid-template-columns:1fr}
+  .dash-side{display:none}
+  .sofia-grid{grid-template-columns:1fr}
 }
+
+/* ── SOFIA AUTONOMOUS v2 ─────────────────── */
+.sf-plan{background:linear-gradient(135deg,rgba(167,139,250,.12),rgba(232,80,31,.08));border:1px solid rgba(167,139,250,.25);border-radius:16px;padding:20px;margin-bottom:16px}
+.sf-plan-hdr{display:flex;align-items:center;gap:10px;margin-bottom:14px}
+.sf-av{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,#a78bfa,#e8501f);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0}
+.sf-title{font-family:'Fraunces',serif;font-size:15px;font-weight:800}
+.sf-live{font-size:9px;font-weight:800;letter-spacing:.8px;text-transform:uppercase;color:var(--purple);background:rgba(167,139,250,.15);padding:2px 7px;border-radius:100px}
+.sf-actions{display:flex;flex-direction:column;gap:8px}
+.sf-action-row{display:flex;align-items:flex-start;gap:12px;padding:12px;background:rgba(255,255,255,.04);border:1px solid var(--bd);border-radius:10px;cursor:pointer;transition:all .2s}
+.sf-action-row:hover{background:rgba(167,139,250,.08);border-color:rgba(167,139,250,.3)}
+.sf-pri{width:22px;height:22px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:800;flex-shrink:0;margin-top:1px}
+.sf-pri.high{background:rgba(248,113,113,.2);color:var(--red)}
+.sf-pri.med{background:rgba(250,204,21,.15);color:var(--yellow)}
+.sf-pri.low{background:rgba(74,222,128,.12);color:var(--green)}
+.sf-act-title{font-size:12.5px;font-weight:700;margin-bottom:2px}
+.sf-act-sub{font-size:11px;color:var(--muted);line-height:1.4}
+.sf-act-impact{font-size:10px;font-weight:700;margin-top:5px}
+.sf-btn{padding:4px 10px;border-radius:7px;border:none;font-family:'DM Sans',sans-serif;font-size:10.5px;font-weight:700;cursor:pointer;transition:all .18s;white-space:nowrap;flex-shrink:0;align-self:flex-start;margin-top:1px}
+.sf-btn.apply{background:var(--purple);color:white}.sf-btn.apply:hover{background:#8b5cf6}
+.sf-btn.sim{background:rgba(232,80,31,.15);color:var(--acc);border:1px solid rgba(232,80,31,.3)}.sf-btn.sim:hover{background:rgba(232,80,31,.25)}
+/* SIMULATORS */
+.sim-wrap{background:var(--s2);border:1px solid var(--bd2);border-radius:14px;padding:18px;margin-bottom:14px;transition:all .2s}
+.sim-header{display:flex;align-items:center;gap:8px;margin-bottom:14px;cursor:pointer}
+.sim-title{font-family:'Fraunces',serif;font-size:14px;font-weight:800;flex:1}
+.sim-toggle{font-size:11px;color:var(--muted);transition:transform .2s}
+.sim-body{display:none}.sim-body.open{display:block}
+.sim-tabs{display:flex;gap:4px;margin-bottom:14px;flex-wrap:wrap}
+.sim-tab{padding:5px 11px;border-radius:100px;border:1px solid var(--bd2);background:transparent;color:var(--muted);font-family:'DM Sans',sans-serif;font-size:11px;font-weight:600;cursor:pointer;transition:all .18s}
+.sim-tab.on{background:var(--acc);color:white;border-color:transparent}
+.sim-range{-webkit-appearance:none;width:100%;height:4px;border-radius:100px;background:rgba(255,255,255,.1);outline:none;margin:8px 0}
+.sim-range::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--acc);cursor:pointer}
+.sim-result{background:rgba(232,80,31,.08);border:1px solid rgba(232,80,31,.2);border-radius:10px;padding:14px;margin-top:12px}
+.sim-big{font-family:'Fraunces',serif;font-size:28px;font-weight:900;color:var(--acc);line-height:1}
+.sim-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:11.5px}
+.sim-row:last-child{border-bottom:none}
+/* SCORE */
+.score-ring{width:80px;height:80px;border-radius:50%;display:flex;align-items:center;justify-content:center;position:relative;flex-shrink:0}
+.score-ring svg{position:absolute;top:0;left:0;transform:rotate(-90deg)}
+.score-num{font-family:'Fraunces',serif;font-size:22px;font-weight:900;position:relative;z-index:1}
+/* ACHIEVEMENTS */
+.ach-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.ach{background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:10px;text-align:center;transition:all .2s}
+.ach.unlocked{border-color:rgba(200,160,69,.4);background:rgba(200,160,69,.08)}
+.ach.locked{opacity:.4;filter:grayscale(.8)}
+.ach-ico{font-size:1.4rem;margin-bottom:4px}
+.ach-name{font-size:10px;font-weight:700;margin-bottom:2px}
+.ach-desc{font-size:9px;color:var(--muted)}
+/* MENU OPTIMIZER */
+.menu-opt-item{display:flex;align-items:center;gap:10px;padding:9px 12px;background:var(--s2);border:1px solid var(--bd);border-radius:9px;margin-bottom:6px;transition:all .18s;font-size:12.5px}
+.menu-opt-item.highlight{border-color:rgba(74,222,128,.4);background:rgba(74,222,128,.05)}
+.menu-opt-item.demote{border-color:rgba(248,113,113,.3);background:rgba(248,113,113,.04)}
+.move-btn{width:22px;height:22px;border-radius:6px;border:1px solid var(--bd2);background:rgba(255,255,255,.05);cursor:pointer;color:var(--muted);font-size:11px;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .15s}
+.move-btn:hover{background:rgba(255,255,255,.1);color:var(--txt)}
+/* CROSS-SELL */
+.cs-pair{background:var(--s2);border:1px solid var(--bd);border-radius:10px;padding:12px;margin-bottom:8px}
+.cs-arrow{color:var(--acc);font-size:1rem;margin:0 8px}
 </style>
 </head>
 <body>
 
-<!-- LOGIN -->
-<div id="login">
-  <div class="lcard">
-    <div class="lav">🌶️</div>
-    <div class="lh">Saz<span style="font-family:'DM Sans',sans-serif">ó</span>n<span style="color:var(--red)">.</span></div>
-    <div class="lsub">Portal de Cliente · Acceso con email</div>
+<!-- ═══ LOGIN ═══ -->
+<div id="loginScreen">
+  <div class="lc">
+    <div class="lmark">🌶️</div>
+    <div class="ltitle">Portal de Cliente</div>
+    <div class="lsub">Sazón Growth Partner · Acceso exclusivo</div>
     <div class="lf">
-      <label>Tu email de contacto</label>
-      <input type="email" id="cl-email" placeholder="tu@restaurante.com" value="mauricio@mrsmash.pe">
+      <label>Email de contacto</label>
+      <input type="email" id="loginEmail" placeholder="tu@restaurante.com" value="demo@sazonpartner.com">
     </div>
-    <button class="lbtn" onclick="loginCliente()">Acceder a mi dashboard</button>
-    <div id="cl-msg" class="lmsg"></div>
-    <div class="demo-cred">
-      <strong>Demo — credenciales de prueba:</strong>
-      Email: mauricio@mrsmash.pe<br>
-      (En producción llega un link mágico al email)
+    <button class="lbtn" onclick="doLogin()">Acceder a mi dashboard</button>
+    <div class="lmsg" id="loginMsg"></div>
+    <div class="ldemo">
+      <strong>Accesos de demo:</strong>
+      <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="5b3f3e36341b283a2134352b3a292f353e2975383436">[email&#160;protected]</a> — 4 marcas (Operador)<br>
+      <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="1f726d6c727e6c775f6c7e6570716f7e6d6b717a6d317c7072">[email&#160;protected]</a> — Mr Smash (mono-marca)
     </div>
   </div>
 </div>
 
-<!-- APP -->
-<div id="app">
+<!-- ═══ APP ═══ -->
+<div class="app" id="app">
 
-  <!-- TOPBAR -->
-  <div class="topbar">
-    <div class="logo">Saz<span style="font-family:'DM Sans',sans-serif">ó</span>n<span>.</span></div>
-    <div class="topbar-right">
-      <div class="rest-badge" id="rest-name">Mr Smash</div>
-      <button class="notif-btn" onclick="toggleNotif()" style="position:relative;">
-        🔔<div class="notif-dot" id="notif-dot"></div>
-      </button>
-      <button class="btn btn-o btn-sm" onclick="logoutCliente()">Salir</button>
-    </div>
-  </div>
+  <!-- BRAND DROPDOWN -->
+  <div class="bdd" id="bdd"></div>
 
-  <!-- NOTIF PANEL -->
-  <div class="notif-panel" id="notif-panel">
-    <div style="padding:14px 18px;font-weight:600;font-size:.85rem;border-bottom:1px solid var(--border);display:flex;justify-content:space-between;align-items:center;">
-      Notificaciones
-      <button onclick="document.getElementById('notif-panel').classList.remove('on')" style="background:none;border:none;cursor:pointer;color:var(--soft);font-size:.8rem;">Cerrar</button>
+  <!-- TOP NAV -->
+  <div class="topnav">
+    <div class="nav-logo">
+      <div class="nav-mark">🌶️</div>
+      <div class="nav-brand">Sazón</div>
     </div>
-    <div class="notif-item unread">
-      <div>🟢 <strong>Campaña de verano activa</strong> — Tu campaña en Rappi está generando ventas adicionales.</div>
-      <div class="notif-time">Hoy, 09:15</div>
+    <div class="sep"></div>
+    <div class="bs" onclick="toggleDrop()">
+      <div class="bsav" id="navAv">🥩</div>
+      <div>
+        <div class="bsname" id="navName">—</div>
+        <div class="bsplan" id="navPlan">—</div>
+      </div>
+      <div class="bsarr">▾</div>
     </div>
-    <div class="notif-item unread">
-      <div>📊 <strong>Reporte de enero listo</strong> — Tu resumen mensual está disponible para descargar.</div>
-      <div class="notif-time">Hoy, 08:00</div>
+    <div class="nav-period">
+      <button class="pb on" onclick="setPeriod(this)">30D</button>
+      <button class="pb" onclick="setPeriod(this)">90D</button>
+      <button class="pb" onclick="setPeriod(this)">Todo</button>
     </div>
-    <div class="notif-item">
-      <div>⭐ <strong>Nueva reseña respondida</strong> — Tu equipo Sazón respondió 3 reseñas negativas.</div>
-      <div class="notif-time">Ayer, 18:30</div>
-    </div>
-    <div class="notif-item">
-      <div>📈 <strong>Récord de pedidos</strong> — El martes fue tu mejor día con 42 pedidos.</div>
-      <div class="notif-time">Hace 3 días</div>
-    </div>
-    <div style="padding:14px 18px;">
-      <button class="btn btn-o btn-sm" style="width:100%;" onclick="document.getElementById('notif-panel').classList.remove('on')">Ver todas →</button>
+    <div class="nav-acts">
+      <button class="nb sofia" onclick="openTab('sofia')">💜 Sofia KAM</button>
+      <button class="nb p" onclick="exportPDF()">📄 Exportar PDF</button>
+      <div class="notif-btn" onclick="toggleNotif()" style="position:relative">🔔<div class="notif-dot" id="notifDot"></div></div>
+      <div class="logout-btn" onclick="doLogout()" title="Cerrar sesión">↩</div>
     </div>
   </div>
 
   <!-- TABS -->
-  <div class="tabs">
-    <button class="tab on"  onclick="goTab('resumen')">Resumen</button>
-    <button class="tab"     onclick="goTab('ventas')">Ventas y Pedidos</button>
-    <button class="tab"     onclick="goTab('plataformas')">Plataformas</button>
-    <button class="tab"     onclick="goTab('campanas')">Campañas</button>
-    <button class="tab"     onclick="goTab('menu')">Menú Digital</button>
-    <button class="tab"     onclick="goTab('reportes')">Reportes</button>
-    <button class="tab"     onclick="goTab('soporte')">Soporte</button>
+  <div class="tabs-bar">
+    <button class="tab on" onclick="openTab('resumen')">Resumen</button>
+    <button class="tab" onclick="openTab('canales')">Canales</button>
+    <button class="tab" onclick="openTab('menu')">Análisis de menú</button>
+    <button class="tab" onclick="openTab('heatmap')">Horas pico</button>
+    <button class="tab" onclick="openTab('reportes')">Reportes</button>
+    <button class="tab" onclick="openTab('sofia')">Sofia KAM</button>
   </div>
 
-  <div class="main">
+  <!-- MAIN CONTENT + SIDEBAR -->
+  <div class="dash">
+    <div class="dash-main">
 
-    <!-- ═══ RESUMEN ═══ -->
-    <div id="t-resumen" class="panel on fadein">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
-        <div>
-          <h1 class="pf" style="font-size:1.6rem;font-weight:700;line-height:1.15;">Buen día, <span id="greeting-name">Mauricio</span> 👋</h1>
-          <p style="font-size:.88rem;color:var(--soft);margin-top:4px;">Dashboard actualizado · Febrero 2025</p>
+      <!-- ── RESUMEN ── -->
+      <div class="tab-panel on" id="tp-resumen">
+        <div class="kpi-row" id="kpiRow">
+          <div class="kpi"><div class="kpi-lbl">Pedidos totales</div><div class="kpi-val" id="kpi1">—</div><div class="kpi-delta" id="kpi1d">—</div></div>
+          <div class="kpi"><div class="kpi-lbl">Ventas brutas</div><div class="kpi-val" id="kpi2">—</div><div class="kpi-delta" id="kpi2d">—</div></div>
+          <div class="kpi"><div class="kpi-lbl">Ticket promedio</div><div class="kpi-val" id="kpi3">—</div><div class="kpi-delta" id="kpi3d">—</div></div>
+          <div class="kpi"><div class="kpi-lbl">Rating promedio</div><div class="kpi-val" id="kpi4">—</div><div class="kpi-delta" id="kpi4d">—</div></div>
+          <div class="kpi"><div class="kpi-lbl">Tasa conversión</div><div class="kpi-val" id="kpi5">—</div><div class="kpi-delta" id="kpi5d">—</div></div>
         </div>
-        <div style="display:flex;gap:10px;flex-wrap:wrap;">
-          <button class="btn btn-o btn-sm" onclick="goTab('reportes')">📥 Ver reportes</button>
-          <button class="btn btn-r btn-sm" onclick="openCal()">📅 Agendar reunión</button>
-        </div>
-      </div>
-
-      <div class="stats-row">
-        <div class="scard">
-          <div class="scard-n" style="color:var(--red);" id="stat-pedidos">—</div>
-          <div class="scard-l">Pedidos este mes</div>
-          <div class="scard-d up" id="stat-pedidos-d">Cargando...</div>
-        </div>
-        <div class="scard">
-          <div class="scard-n" style="color:var(--green);" id="stat-ventas">—</div>
-          <div class="scard-l">Ventas totales S/</div>
-          <div class="scard-d up" id="stat-ventas-d">Cargando...</div>
-        </div>
-        <div class="scard">
-          <div class="scard-n" id="stat-rating">—</div>
-          <div class="scard-l">Rating promedio</div>
-          <div class="scard-d" id="stat-rating-d">Cargando...</div>
-        </div>
-        <div class="scard">
-          <div class="scard-n" style="color:var(--gold);" id="stat-ticket">—</div>
-          <div class="scard-l">Ticket promedio S/</div>
-          <div class="scard-d" id="stat-ticket-d">Cargando...</div>
-        </div>
-      </div>
-
-      <div class="chart-wrap">
-        <div class="chart-head">
-          <div>
-            <div class="chart-title">Pedidos por semana</div>
-            <div class="chart-sub">Últimas 8 semanas vs periodo anterior</div>
+        <div class="charts-row">
+          <div class="chart-card">
+            <div class="sh"><div class="sh-t">Evolución de pedidos</div><div class="sh-r"><button class="pill on" onclick="setChart('pedidos',this)">Pedidos</button><button class="pill" onclick="setChart('ventas',this)">Ventas</button></div></div>
+            <div class="chart-wrap"><canvas id="trendChart"></canvas></div>
           </div>
-          <div class="chart-legend">
-            <div class="leg-item"><div class="leg-dot" style="background:var(--red)"></div>Este periodo</div>
-            <div class="leg-item"><div class="leg-dot" style="background:var(--cream2);border:1px solid #ccc"></div>Periodo anterior</div>
+          <div class="chart-card">
+            <div class="sh"><div class="sh-t">Mix de canales</div><div class="sh-s">% de pedidos</div></div>
+            <div class="chart-wrap"><canvas id="donutChart"></canvas></div>
           </div>
         </div>
-        <div class="bar-chart" id="bar-chart"></div>
+        <div style="margin-bottom:0">
+          <div class="sh"><div class="sh-t">Rendimiento por canal</div></div>
+          <div class="ch-grid" id="chGrid"></div>
+        </div>
       </div>
 
-      <div class="g2" style="margin-bottom:20px;">
-        <div class="card">
-          <div class="ct">Novedades de tu cuenta</div>
-          <div style="display:flex;flex-direction:column;gap:10px;">
-            <div style="padding:12px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:8px;font-size:.84rem;">
-              <div style="font-weight:600;color:var(--green);margin-bottom:3px;">🟢 Campaña activa en Rappi</div>
-              Tu descuento del 20% está generando +45% en pedidos esta semana.
-              <button onclick="goTab('campanas')" style="display:block;margin-top:6px;padding:5px 12px;background:var(--green);color:white;border:none;border-radius:6px;font-size:.74rem;cursor:pointer;">Ver campaña →</button>
+      <!-- ── CANALES ── -->
+      <div class="tab-panel" id="tp-canales">
+        <div class="sh"><div class="sh-t">Detalle por canal</div><div class="sh-s">todas las plataformas activas</div></div>
+        <div id="canalesDetail"></div>
+      </div>
+
+      <!-- ── MENÚ ── -->
+      <div class="tab-panel" id="tp-menu">
+        <div class="sh">
+          <div class="sh-t">Análisis de menú</div>
+          <div class="sh-s">conversión y tendencia por ítem</div>
+          <div class="sh-r">
+            <button class="pill on" onclick="filterMenu('all',this)">Todos</button>
+            <button class="pill" onclick="filterMenu('star',this)">⭐ Estrellas</button>
+            <button class="pill" onclick="filterMenu('risk',this)">⚠️ En riesgo</button>
+            <button class="pill" onclick="filterMenu('new',this)">✨ Nuevos</button>
+          </div>
+        </div>
+        <div class="cw">
+          <table class="mt">
+            <thead><tr>
+              <th>Ítem</th><th>Pedidos</th><th>Conversión</th><th>Ticket</th><th>Tendencia</th><th>Clasificación</th>
+            </tr></thead>
+            <tbody id="menuBody"></tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- ── HEATMAP ── -->
+      <div class="tab-panel" id="tp-heatmap">
+        <div class="sh"><div class="sh-t">Pedidos por hora y día</div><div class="sh-s">últimas 4 semanas</div></div>
+        <div class="cw">
+          <div class="hm-grid" id="hmGrid"></div>
+          <div class="hm-legend">
+            <span style="font-size:10px;color:var(--muted)">Menos</span>
+            <div style="display:flex;gap:3px">
+              <div style="width:14px;height:14px;border-radius:3px;background:rgba(232,80,31,.08)"></div>
+              <div style="width:14px;height:14px;border-radius:3px;background:rgba(232,80,31,.22)"></div>
+              <div style="width:14px;height:14px;border-radius:3px;background:rgba(232,80,31,.45)"></div>
+              <div style="width:14px;height:14px;border-radius:3px;background:rgba(232,80,31,.72)"></div>
+              <div style="width:14px;height:14px;border-radius:3px;background:rgba(232,80,31,.95)"></div>
             </div>
-            <div style="padding:12px;background:#fff8f7;border:1px solid #fecaca;border-radius:8px;font-size:.84rem;">
-              <div style="font-weight:600;color:var(--red);margin-bottom:3px;">🔴 Acción requerida</div>
-              Sube la foto de tu combo premium para la campaña de la próxima semana.
-              <button onclick="goTab('menu')" style="display:block;margin-top:6px;padding:5px 12px;background:var(--red);color:white;border:none;border-radius:6px;font-size:.74rem;cursor:pointer;">Ir a Menú Digital →</button>
+            <span style="font-size:10px;color:var(--muted)">Más pedidos</span>
+          </div>
+          <div id="hmInsight" style="margin-top:14px;padding:12px;background:rgba(232,80,31,.06);border:1px solid rgba(232,80,31,.15);border-radius:10px;font-size:11.5px;color:var(--muted);line-height:1.6"></div>
+        </div>
+        <div class="row2" style="margin-top:14px">
+          <div class="cw">
+            <div class="sh"><div class="sh-t">Reputación</div><div class="sh-s">rating consolidado</div></div>
+            <div class="rv-sum">
+              <div><div class="rv-score" id="rvScore">4.7</div><div class="rv-stars" id="rvStars">★★★★★</div><div class="rv-total" id="rvTotal">284 reseñas</div></div>
+              <div style="flex:1" id="rvBars"></div>
             </div>
-            <div style="padding:12px;background:#eff6ff;border:1px solid #bfdbfe;border-radius:8px;font-size:.84rem;">
-              <div style="font-weight:600;color:var(--blue);margin-bottom:3px;">🔵 Reporte enero disponible</div>
-              Tu resumen mensual está listo para descargar.
-              <button onclick="goTab('reportes')" style="display:block;margin-top:6px;padding:5px 12px;background:var(--blue);color:white;border:none;border-radius:6px;font-size:.74rem;cursor:pointer;">Descargar PDF →</button>
-            </div>
           </div>
-        </div>
-        <div class="card">
-          <div class="ct">Top platos del mes</div>
-          <div style="display:flex;flex-direction:column;gap:12px;" id="top-items"></div>
-        </div>
-      </div>
-
-      <div class="card">
-        <div class="ct">Rendimiento por plataforma</div>
-        <div class="g3" id="platforms-mini"></div>
-      </div>
-    </div>
-
-    <!-- ═══ VENTAS ═══ -->
-    <div id="t-ventas" class="panel fadein">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
-        <h2 class="pf" style="font-size:1.4rem;">Ventas y Pedidos</h2>
-        <div style="display:flex;gap:8px;">
-          <select class="fi" id="ventas-mes" onchange="renderVentasPanel()" style="width:auto;padding:8px 12px;">
-            <option value="feb">Febrero 2025</option>
-            <option value="ene">Enero 2025</option>
-            <option value="dic">Diciembre 2024</option>
-          </select>
-          <button class="btn btn-o btn-sm" onclick="exportarVentasCSV()">📤 Exportar CSV</button>
-        </div>
-      </div>
-
-      <div class="stats-row" style="grid-template-columns:repeat(3,1fr);">
-        <div class="scard"><div class="scard-n" style="color:var(--green);" id="v-total">S/ 18,420</div><div class="scard-l">Ventas totales</div><div class="scard-d up">↑ +38% vs mes anterior</div></div>
-        <div class="scard"><div class="scard-n" id="v-pedidos">382</div><div class="scard-l">Pedidos</div><div class="scard-d up">↑ +45% vs mes anterior</div></div>
-        <div class="scard"><div class="scard-n" style="color:var(--gold);" id="v-ticket">S/ 48</div><div class="scard-l">Ticket promedio</div><div class="scard-d up">↑ +8% vs mes anterior</div></div>
-      </div>
-
-      <div class="chart-wrap">
-        <div class="chart-head">
-          <div><div class="chart-title">Ventas diarias</div><div class="chart-sub">S/ por día</div></div>
-          <button class="btn btn-o btn-sm" onclick="exportarVentasCSV()">📤 Exportar</button>
-        </div>
-        <div id="ventas-chart" style="display:flex;align-items:flex-end;gap:4px;height:140px;padding:0 4px;"></div>
-        <div id="ventas-labels" style="display:flex;justify-content:space-between;font-size:.68rem;color:var(--soft);margin-top:6px;padding:0 4px;"></div>
-      </div>
-
-      <div class="g2">
-        <div class="card">
-          <div class="ct">Pedidos por hora (promedio)</div>
-          <div id="hour-chart" style="display:flex;align-items:flex-end;gap:5px;height:100px;margin-bottom:6px;"></div>
-          <div style="display:flex;justify-content:space-between;font-size:.68rem;color:var(--soft);padding:0 2px;">
-            <span>11am</span><span>12pm</span><span>1pm</span><span>2pm</span><span>3pm</span><span>5pm</span><span>7pm</span><span>9pm</span>
-          </div>
-        </div>
-        <div class="card">
-          <div class="ct">Pedidos por día de semana</div>
-          <div id="day-chart" style="display:flex;align-items:flex-end;gap:8px;height:100px;margin-bottom:6px;"></div>
-          <div style="display:flex;justify-content:space-between;font-size:.68rem;color:var(--soft);padding:0 4px;">
-            <span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span><span>Dom</span>
+          <div class="cw">
+            <div class="sh"><div class="sh-t">Distribución de pedidos</div></div>
+            <div style="display:flex;gap:8px;flex-wrap:wrap" id="distCards"></div>
           </div>
         </div>
       </div>
 
-      <div class="card" style="margin-top:16px;">
-        <div class="ct">Detalle por día</div>
-        <table>
-          <tr><th>Fecha</th><th>Plataforma</th><th>Pedidos</th><th>Ventas</th><th>Ticket prom.</th><th>Rating</th></tr>
-          <tr><td>24 Feb</td><td><span class="bg bg-r">Rappi</span></td><td><strong>22</strong></td><td>S/ 1,056</td><td>S/ 48</td><td>⭐ 4.9</td></tr>
-          <tr><td>23 Feb</td><td><span class="bg bg-b">PedidosYa</span></td><td><strong>15</strong></td><td>S/ 660</td><td>S/ 44</td><td>⭐ 4.7</td></tr>
-          <tr><td>23 Feb</td><td><span class="bg bg-r">Rappi</span></td><td><strong>28</strong></td><td>S/ 1,428</td><td>S/ 51</td><td>⭐ 4.8</td></tr>
-          <tr><td>22 Feb</td><td><span class="bg bg-r">Rappi</span></td><td><strong>19</strong></td><td>S/ 855</td><td>S/ 45</td><td>⭐ 5.0</td></tr>
-          <tr><td>21 Feb</td><td><span class="bg bg-p">Didi Food</span></td><td><strong>11</strong></td><td>S/ 473</td><td>S/ 43</td><td>⭐ 4.6</td></tr>
-          <tr><td>20 Feb</td><td><span class="bg bg-r">Rappi</span></td><td><strong>25</strong></td><td>S/ 1,175</td><td>S/ 47</td><td>⭐ 4.8</td></tr>
-          <tr><td>19 Feb</td><td><span class="bg bg-b">PedidosYa</span></td><td><strong>18</strong></td><td>S/ 774</td><td>S/ 43</td><td>⭐ 4.9</td></tr>
-        </table>
-      </div>
-    </div>
-
-    <!-- ═══ PLATAFORMAS ═══ -->
-    <div id="t-plataformas" class="panel fadein">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;flex-wrap:wrap;gap:12px;">
-        <h2 class="pf" style="font-size:1.4rem;">Plataformas conectadas</h2>
-        <span class="bg bg-g">3 / 3 activas</span>
-      </div>
-      <p style="font-size:.88rem;color:var(--soft);margin-bottom:20px;">Tu equipo Sazón gestiona estas cuentas directamente. Los datos se sincronizan cada 24 horas.</p>
-
-      <div class="g3" style="margin-bottom:20px;" id="plat-cards"></div>
-
-      <div class="card" style="margin-bottom:20px;">
-        <div class="ct">Comparación de rendimiento</div>
-        <table>
-          <tr><th>Plataforma</th><th>Pedidos/mes</th><th>Ventas</th><th>Ticket prom.</th><th>Rating</th><th>Comisión</th><th>Tendencia</th></tr>
-          <tr>
-            <td><span class="bg bg-r">Rappi</span></td>
-            <td><strong>228</strong></td><td>S/ 10,944</td><td>S/ 48</td>
-            <td>⭐ 4.9</td><td>24.5%</td>
-            <td><span style="color:var(--green);font-weight:600;">↑ +52%</span></td>
-          </tr>
-          <tr>
-            <td><span class="bg bg-b">PedidosYa</span></td>
-            <td><strong>103</strong></td><td>S/ 4,532</td><td>S/ 44</td>
-            <td>⭐ 4.7</td><td>26.0%</td>
-            <td><span style="color:var(--green);font-weight:600;">↑ +38%</span></td>
-          </tr>
-          <tr>
-            <td><span class="bg bg-p">Didi Food</span></td>
-            <td><strong>51</strong></td><td>S/ 2,449</td><td>S/ 48</td>
-            <td>⭐ 4.6</td><td>25.2%</td>
-            <td><span style="color:var(--green);font-weight:600;">↑ +28%</span></td>
-          </tr>
-        </table>
-        <div style="margin-top:14px;padding:12px;background:var(--cream2);border-radius:8px;font-size:.82rem;color:var(--soft);">
-          💡 <strong>Nota:</strong> Tu equipo Sazón negoció la comisión de Rappi de 28% → 24.5%, ahorrándote S/ 788 este mes.
+      <!-- ── REPORTES ── -->
+      <div class="tab-panel" id="tp-reportes">
+        <div class="sh"><div class="sh-t">Reportes mensuales</div><div class="sh-s">generados automáticamente el día 1 de cada mes</div></div>
+        <div style="padding:12px;background:rgba(74,222,128,.06);border:1px solid rgba(74,222,128,.15);border-radius:10px;font-size:12px;color:var(--muted);margin-bottom:14px">
+          📊 <span style="color:var(--green);font-weight:700">Reporte del mes disponible.</span> Tu resumen con análisis de crecimiento, campañas y recomendaciones está listo.
         </div>
+        <div id="reportesList"></div>
       </div>
 
-      <div class="card">
-        <div class="ct">Credenciales de plataformas (solo tu equipo Sazón las gestiona)</div>
-        <div id="creds-list"></div>
-        <div style="margin-top:16px;padding:14px;background:#fffbeb;border:1px solid #fde68a;border-radius:10px;font-size:.82rem;">
-          <strong style="color:#92400e;">🔒 Seguridad:</strong> Tus credenciales se almacenan de forma cifrada y solo son accesibles por tu Growth Manager asignado. Nunca se comparten con terceros.
-        </div>
-      </div>
-    </div>
-
-    <!-- ═══ CAMPAÑAS ═══ -->
-    <div id="t-campanas" class="panel fadein">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
-        <h2 class="pf" style="font-size:1.4rem;">Campañas activas</h2>
-        <button class="btn btn-r btn-sm" onclick="solicitarCampana()">+ Solicitar nueva campaña</button>
-      </div>
-
-      <div class="stats-row" style="grid-template-columns:repeat(3,1fr);margin-bottom:20px;">
-        <div class="scard"><div class="scard-n">3</div><div class="scard-l">Campañas activas</div><div class="scard-d up">Este mes</div></div>
-        <div class="scard"><div class="scard-n" style="color:var(--green);">+45%</div><div class="scard-l">Incremento promedio</div><div class="scard-d up">Con campaña vs sin</div></div>
-        <div class="scard"><div class="scard-n" style="color:var(--gold);">4.2x</div><div class="scard-l">Retorno inversión</div><div class="scard-d up">ROAS actual</div></div>
-      </div>
-
-      <div class="g3" id="campanas-grid" style="margin-bottom:20px;"></div>
-
-      <div class="card">
-        <div class="ct">Histórico de campañas</div>
-        <table>
-          <tr><th>Periodo</th><th>Tipo</th><th>Plataforma</th><th>Inversión</th><th>Ventas extra</th><th>ROAS</th><th>Estado</th></tr>
-          <tr><td>Feb 2025</td><td>Descuento 20%</td><td><span class="bg bg-r">Rappi</span></td><td>S/ 1,200</td><td style="color:var(--green);">S/ 5,040</td><td><strong>4.2x</strong></td><td><span class="bg bg-g">Activa</span></td></tr>
-          <tr><td>Ene 2025</td><td>Envío gratis</td><td><span class="bg bg-b">PedidosYa</span></td><td>S/ 800</td><td style="color:var(--green);">S/ 2,960</td><td><strong>3.7x</strong></td><td><span class="bg bg-k">Finalizada</span></td></tr>
-          <tr><td>Ene 2025</td><td>Destacado</td><td><span class="bg bg-r">Rappi</span></td><td>S/ 600</td><td style="color:var(--green);">S/ 1,980</td><td><strong>3.3x</strong></td><td><span class="bg bg-k">Finalizada</span></td></tr>
-          <tr><td>Dic 2024</td><td>Navidad combo</td><td><span class="bg bg-r">Rappi</span></td><td>S/ 1,500</td><td style="color:var(--green);">S/ 7,500</td><td><strong>5.0x</strong></td><td><span class="bg bg-k">Finalizada</span></td></tr>
-        </table>
-      </div>
-    </div>
-
-    <!-- ═══ MENU ═══ -->
-    <div id="t-menu" class="panel fadein">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:20px;flex-wrap:wrap;gap:12px;">
-        <h2 class="pf" style="font-size:1.4rem;">Menú Digital</h2>
-        <button class="btn btn-r btn-sm" onclick="document.getElementById('m-fotos').classList.add('open')">📤 Subir fotos nuevas</button>
-      </div>
-
-      <div style="padding:14px 18px;background:#fff8f7;border:1px solid #fecaca;border-radius:10px;margin-bottom:20px;font-size:.85rem;display:flex;justify-content:space-between;align-items:center;flex-wrap:wrap;gap:10px;">
-        <span>⚠️ <strong>Acción requerida:</strong> Necesitamos la foto del <strong>Combo Premium Smash</strong> para la campaña de la próxima semana.</span>
-        <button class="btn btn-r btn-sm" onclick="document.getElementById('m-fotos').classList.add('open')">Subir ahora</button>
-      </div>
-
-      <div class="g3" id="menu-grid" style="margin-bottom:20px;"></div>
-
-      <div class="card">
-        <div class="ct">Optimizaciones realizadas por Sazón</div>
-        <table>
-          <tr><th>Fecha</th><th>Ítem</th><th>Cambio realizado</th><th>Impacto medido</th></tr>
-          <tr><td>18 Feb</td><td>Smash Clásico</td><td>Foto + descripción optimizada</td><td style="color:var(--green);">+22% clics</td></tr>
-          <tr><td>15 Feb</td><td>Combo Doble</td><td>Precio ancla ajustado</td><td style="color:var(--green);">+18% conversión</td></tr>
-          <tr><td>10 Feb</td><td>Bebidas</td><td>Orden de presentación</td><td style="color:var(--green);">+12% ticket</td></tr>
-          <tr><td>01 Feb</td><td>Menú completo</td><td>Auditoría inicial y restructura</td><td style="color:var(--green);">Base optimizada</td></tr>
-        </table>
-      </div>
-    </div>
-
-    <!-- ═══ REPORTES ═══ -->
-    <div id="t-reportes" class="panel fadein">
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:6px;">
-        <h2 class="pf" style="font-size:1.4rem;">Reportes mensuales</h2>
-      </div>
-      <p style="font-size:.88rem;color:var(--soft);margin-bottom:20px;">Cada reporte incluye análisis completo de ventas, campañas, métricas de plataforma y recomendaciones.</p>
-      <div style="padding:14px 18px;background:#f0fdf4;border:1px solid #bbf7d0;border-radius:10px;margin-bottom:20px;font-size:.85rem;">
-        📊 <strong>Reporte de Enero 2025 disponible.</strong> Tu resumen completo con análisis de crecimiento está listo para descargar.
-      </div>
-      <div style="display:flex;flex-direction:column;gap:12px;" id="reportes-list"></div>
-    </div>
-
-    <!-- ═══ SOPORTE ═══ -->
-    <div id="t-soporte" class="panel fadein">
-      <h2 class="pf" style="font-size:1.4rem;margin-bottom:6px;">Tu Growth Manager</h2>
-      <p style="font-size:.88rem;color:var(--soft);margin-bottom:20px;">Equipo disponible de lunes a sábado 9am–7pm.</p>
-      <div class="g2" style="margin-bottom:20px;">
-        <div class="card" style="display:flex;gap:16px;align-items:flex-start;">
-          <div style="width:52px;height:52px;border-radius:50%;background:linear-gradient(135deg,var(--red),var(--gold));display:flex;align-items:center;justify-content:center;font-size:1.3rem;flex-shrink:0;">👤</div>
-          <div style="flex:1;">
-            <div style="font-weight:600;margin-bottom:2px;">Growth Manager Sazón</div>
-            <div style="font-size:.8rem;color:var(--soft);margin-bottom:12px;">Equipo Activo · Responde en menos de 2h</div>
-            <div style="display:flex;gap:8px;flex-wrap:wrap;">
-              <span class="bg bg-g">● En línea</span>
-              <span class="bg bg-k">Resp. &lt;2h</span>
-            </div>
-            <button class="btn btn-r btn-sm" style="margin-top:14px;width:100%;" onclick="contactarWA()">💬 Enviar WhatsApp directo</button>
-          </div>
-        </div>
-        <div class="card">
-          <div class="ct">Próxima reunión de seguimiento</div>
-          <div style="font-size:1.1rem;font-weight:600;margin-bottom:4px;">Viernes 28 Feb · 10:00 AM</div>
-          <div style="font-size:.83rem;color:var(--soft);margin-bottom:14px;">Revisión métricas de febrero + plan campañas marzo</div>
-          <div style="display:flex;gap:8px;flex-wrap:wrap;">
-            <button class="btn btn-r btn-sm" onclick="openCal()">📅 Agendar nueva reunión</button>
-            <button class="btn btn-o btn-sm" onclick="agregarCalGoogle()">+ Agregar a Google Calendar</button>
-          </div>
-        </div>
-      </div>
-      <div class="g2">
-        <div class="card">
-          <div class="ct">Enviar mensaje al equipo</div>
-          <div style="display:flex;flex-direction:column;gap:10px;">
+      <!-- ── SOFIA KAM ── -->
+      <div class="tab-panel" id="tp-sofia">
+        <!-- SOFIA HEADER -->
+        <div class="sf-plan">
+          <div class="sf-plan-hdr">
+            <div class="sf-av">🧠</div>
             <div>
-              <label class="fl">Tipo de consulta</label>
-              <select class="fi" id="sop-tipo">
-                <option>Consulta sobre campañas</option>
-                <option>Enviar fotos de menú</option>
-                <option>Solicitar nueva campaña</option>
-                <option>Reporte personalizado</option>
-                <option>Revisión de métricas</option>
-                <option>Otro</option>
-              </select>
+              <div class="sf-title">Sofia — Growth Manager IA</div>
+              <div style="font-size:11px;color:var(--muted);margin-top:2px">Analiza tus datos en tiempo real y diseña estrategias a medida</div>
             </div>
-            <div>
-              <label class="fl">Mensaje</label>
-              <textarea id="sop-msg" class="fi" placeholder="Describe tu consulta o solicitud..." rows="4"></textarea>
-            </div>
-            <button class="btn btn-r" onclick="sendSoporte()">Enviar por WhatsApp →</button>
+            <span class="sf-live">● En línea</span>
           </div>
+          <div style="font-size:12px;color:var(--muted);margin-bottom:12px" id="sf-plan-date">Plan de acción · Semana actual</div>
+          <div class="sf-actions" id="sf-actions-list"></div>
         </div>
-        <div class="card">
-          <div class="ct">Solicitudes recientes</div>
-          <div style="display:flex;flex-direction:column;gap:10px;">
-            <div style="padding:12px;background:var(--cream2);border-radius:8px;font-size:.82rem;">
-              <div style="display:flex;justify-content:space-between;margin-bottom:3px;"><strong>Fotos combo premium</strong><span class="bg bg-o">Pendiente tuyo</span></div>
-              <div style="color:var(--soft);">Tu equipo espera las fotos para activar la campaña</div>
-            </div>
-            <div style="padding:12px;background:var(--cream2);border-radius:8px;font-size:.82rem;">
-              <div style="display:flex;justify-content:space-between;margin-bottom:3px;"><strong>Campaña marzo</strong><span class="bg bg-b">En proceso</span></div>
-              <div style="color:var(--soft);">Propuesta lista el 1 de marzo</div>
-            </div>
-            <div style="padding:12px;background:var(--cream2);border-radius:8px;font-size:.82rem;">
-              <div style="display:flex;justify-content:space-between;margin-bottom:3px;"><strong>Negociación comisión Rappi</strong><span class="bg bg-g">Completado</span></div>
-              <div style="color:var(--soft);">Comisión reducida de 28% → 24.5%</div>
+
+        <!-- SCORE + ACHIEVEMENTS -->
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+          <div class="sim-wrap">
+            <div class="sh"><div class="sh-t">Salud de la marca</div></div>
+            <div style="display:flex;align-items:center;gap:20px">
+              <div class="score-ring" id="scoreRing">
+                <svg width="80" height="80" viewBox="0 0 80 80">
+                  <circle cx="40" cy="40" r="34" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="7"/>
+                  <circle id="scoreArc" cx="40" cy="40" r="34" fill="none" stroke="var(--acc)" stroke-width="7" stroke-linecap="round" stroke-dasharray="213" stroke-dashoffset="213"/>
+                </svg>
+                <div class="score-num" id="scoreNum">—</div>
+              </div>
+              <div style="flex:1">
+                <div id="scoreLabel" style="font-size:12px;font-weight:700;margin-bottom:8px">—</div>
+                <div id="scoreBreakdown" style="font-size:11px;color:var(--muted);line-height:1.7"></div>
+              </div>
             </div>
           </div>
+          <div class="sim-wrap">
+            <div class="sh"><div class="sh-t">Logros desbloqueados</div></div>
+            <div class="ach-grid" id="achGrid"></div>
+          </div>
         </div>
+
+        <!-- SIM: CAMPAÑA -->
+        <div class="sim-wrap" id="sim-campana">
+          <div class="sim-header" onclick="toggleSim('campana')">
+            <span style="font-size:1.3rem">📣</span>
+            <div class="sim-title">Simulador de Campaña</div>
+            <div style="font-size:11px;color:var(--muted);margin-right:8px" id="sim-campana-preview">Proyecta el impacto antes de activar</div>
+            <div class="sim-toggle" id="sim-campana-arrow">▾</div>
+          </div>
+          <div class="sim-body open" id="sim-campana-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+              <div>
+                <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:8px">Plataforma</div>
+                <div class="sim-tabs" id="camp-plat-tabs"></div>
+                <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:8px;margin-top:12px">Tipo de promoción</div>
+                <div class="sim-tabs" id="camp-type-tabs">
+                  <button class="sim-tab on" onclick="setCampType('desc20',this)">Descuento 20%</button>
+                  <button class="sim-tab" onclick="setCampType('desc30',this)">Descuento 30%</button>
+                  <button class="sim-tab" onclick="setCampType('envio',this)">Envío gratis</button>
+                  <button class="sim-tab" onclick="setCampType('2x1',this)">2x1</button>
+                  <button class="sim-tab" onclick="setCampType('dest',this)">Destacado</button>
+                </div>
+                <div style="margin-top:12px">
+                  <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:4px">
+                    <span>Duración</span><span id="camp-dur-label">1 semana</span>
+                  </div>
+                  <input type="range" class="sim-range" min="1" max="4" value="1" id="camp-dur-slider" oninput="updateCampSim()">
+                </div>
+              </div>
+              <div class="sim-result">
+                <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:8px">Proyección</div>
+                <div class="sim-big" id="camp-proj-main">+0 pedidos</div>
+                <div style="font-size:11px;color:var(--muted);margin-bottom:12px" id="camp-proj-sub">—</div>
+                <div id="camp-proj-rows"></div>
+                <button class="btn-r" style="width:100%;margin-top:12px;font-size:.82rem" onclick="aplicarCampana()">✓ Activar esta campaña</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SIM: ORDEN DE MENÚ -->
+        <div class="sim-wrap" id="sim-menu">
+          <div class="sim-header" onclick="toggleSim('menu')">
+            <span style="font-size:1.3rem">🍽️</span>
+            <div class="sim-title">Optimizador de Menú</div>
+            <div style="font-size:11px;color:var(--muted);margin-right:8px">Reordena para maximizar conversión</div>
+            <div class="sim-toggle" id="sim-menu-arrow">▾</div>
+          </div>
+          <div class="sim-body" id="sim-menu-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+              <div>
+                <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:8px">Orden actual → Arrastra o usa ▲▼</div>
+                <div id="menu-order-list"></div>
+                <button class="btn-o" style="width:100%;margin-top:8px;font-size:.78rem" onclick="resetMenuOrder()">↺ Restaurar orden original</button>
+              </div>
+              <div>
+                <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:8px">Impacto estimado del reorden</div>
+                <div id="menu-impact" class="sim-result" style="min-height:100px"></div>
+                <div style="margin-top:10px;padding:10px;background:rgba(167,139,250,.08);border:1px solid rgba(167,139,250,.2);border-radius:9px">
+                  <div style="font-size:10px;font-weight:700;color:var(--purple);margin-bottom:4px">💡 Recomendación de Sofia</div>
+                  <div style="font-size:11px;color:var(--muted);line-height:1.5" id="menu-sofia-rec">Cargando análisis...</div>
+                </div>
+                <button class="btn-r" style="width:100%;margin-top:10px;font-size:.82rem" onclick="aplicarOrdenMenu()">✓ Aplicar orden sugerido</button>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- SIM: PRECIO -->
+        <div class="sim-wrap" id="sim-precio">
+          <div class="sim-header" onclick="toggleSim('precio')">
+            <span style="font-size:1.3rem">💰</span>
+            <div class="sim-title">Optimizador de Precio</div>
+            <div style="font-size:11px;color:var(--muted);margin-right:8px">¿Cuánto deberías cobrar por cada plato?</div>
+            <div class="sim-toggle" id="sim-precio-arrow">▾</div>
+          </div>
+          <div class="sim-body" id="sim-precio-body">
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px">
+              <div>
+                <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:8px">Ítem a optimizar</div>
+                <select class="fi" id="precio-item" onchange="updatePrecioSim()" style="margin-bottom:12px"></select>
+                <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted)"><span>Precio actual</span><strong id="precio-actual">S/ —</strong></div>
+                <div style="display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-top:4px;margin-bottom:4px"><span>Precio propuesto</span><strong style="color:var(--acc)" id="precio-nuevo">S/ —</strong></div>
+                <input type="range" class="sim-range" id="precio-slider" min="0" max="100" value="50" oninput="updatePrecioSim()">
+                <div style="display:flex;justify-content:space-between;font-size:9.5px;color:var(--dim);margin-top:2px"><span id="precio-min">—</span><span id="precio-max">—</span></div>
+              </div>
+              <div class="sim-result">
+                <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:8px">Impacto proyectado</div>
+                <div id="precio-result-rows"></div>
+                <div style="margin-top:10px;padding:8px;background:rgba(255,255,255,.04);border-radius:7px;font-size:11px;color:var(--muted)" id="precio-rec">—</div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- CANASTAS CRUZADAS -->
+        <div class="sim-wrap">
+          <div class="sh"><div class="sh-t">Sugerencias de canasta cruzada</div><div class="sh-s">combos que incrementan el ticket</div></div>
+          <div id="crossSellList"></div>
+        </div>
+
+      </div>
+
+    </div><!-- /dash-main -->    </div><!-- /dash-main -->
+
+    <!-- ── SIDEBAR (Sofia IA) ── -->
+    <div class="dash-side">
+      <div class="side-hdr">
+        <div class="side-title">
+          Insights IA
+          <div class="ai-live"><div class="ai-dot"></div>Live</div>
+        </div>
+        <div class="side-sub">Generados por Sofia · actualizados hoy</div>
+      </div>
+      <div class="insights-list" id="insightsList"></div>
+      <div class="ask-ai">
+        <div class="ask-lbl">Pregúntale a Sofia IA</div>
+        <div class="ask-sugs" id="askSugs">
+          <button class="ask-sug" onclick="ask(this.textContent)">¿Por qué bajaron mis ventas el martes?</button>
+          <button class="ask-sug" onclick="ask(this.textContent)">¿Qué ítem promover este fin de semana?</button>
+          <button class="ask-sug" onclick="ask(this.textContent)">¿Cuál es mi mejor hora para campañas?</button>
+        </div>
+        <div class="ask-row">
+          <input class="ask-inp" id="askInp" placeholder="Analiza mis datos..." onkeydown="if(event.key==='Enter')ask(this.value)">
+          <button class="ask-send" onclick="ask(document.getElementById('askInp').value)">➤</button>
+        </div>
+        <div class="ai-resp" id="aiResp"></div>
       </div>
     </div>
-
-  </div><!-- /main -->
+  </div><!-- /dash -->
 </div><!-- /app -->
 
-<!-- ═══ MODAL: CALENDARIO ═══ -->
-<div class="modal-bg" id="m-cal">
-  <div class="modal" style="width:460px;">
-    <button class="modal-close" onclick="document.getElementById('m-cal').classList.remove('open')">×</button>
-    <h3>📅 Agendar reunión de seguimiento</h3>
-    <p style="font-size:.84rem;color:var(--soft);margin-bottom:16px;">Selecciona un día y horario disponible. Tu Growth Manager confirmará por WhatsApp.</p>
-    <div class="cal-nav">
-      <button onclick="calPrev()">← Anterior</button>
-      <strong id="cal-mes-label" style="font-size:.9rem;"></strong>
-      <button onclick="calNext()">Siguiente →</button>
-    </div>
-    <div class="cal-head">
-      <span>Dom</span><span>Lun</span><span>Mar</span><span>Mié</span><span>Jue</span><span>Vie</span><span>Sáb</span>
-    </div>
-    <div class="cal-grid" id="cal-grid"></div>
-    <div id="cal-slots-wrap" style="display:none;">
-      <div style="font-size:.82rem;font-weight:600;margin-bottom:8px;" id="cal-slots-title">Horarios disponibles</div>
-      <div class="time-slots" id="cal-slots"></div>
-    </div>
-    <div id="cal-confirm" style="display:none;margin-top:16px;">
-      <div style="padding:14px;background:var(--green2);border:1px solid rgba(22,163,74,.2);border-radius:10px;font-size:.84rem;margin-bottom:14px;" id="cal-confirm-text"></div>
-      <div style="display:flex;gap:8px;">
-        <button class="btn btn-r" style="flex:1;" onclick="confirmarReunion()">✓ Confirmar por WhatsApp</button>
-        <button class="btn btn-o" onclick="document.getElementById('cal-confirm').style.display='none';document.getElementById('cal-slots-wrap').style.display='block'">Cambiar</button>
-      </div>
-    </div>
+<!-- ── WA FLOAT ── -->
+<a id="waFloat" class="wa-float" href="#" target="_blank" rel="noopener noreferrer" title="WhatsApp directo">
+  <svg viewBox="0 0 32 32" width="22" height="22" fill="white"><path d="M19.11 17.41c-.27-.14-1.6-.79-1.85-.88-.25-.09-.43-.14-.62.14-.18.27-.71.88-.87 1.06-.16.18-.32.2-.59.07-.27-.14-1.14-.42-2.18-1.33-.81-.72-1.36-1.61-1.52-1.88-.16-.27-.02-.42.12-.56.13-.13.27-.32.41-.48.14-.16.18-.27.27-.45.09-.18.05-.34-.02-.48-.07-.14-.62-1.5-.85-2.05-.22-.53-.45-.46-.62-.47-.16-.01-.34-.01-.52-.01-.18 0-.48.07-.73.34-.25.27-.96.94-.96 2.3 0 1.36.99 2.68 1.13 2.86.14.18 1.95 2.98 4.73 4.17.66.28 1.17.45 1.57.57.66.21 1.26.18 1.73.11.53-.08 1.6-.65 1.83-1.29.23-.64.23-1.18.16-1.29-.07-.11-.25-.18-.52-.32z"/><path d="M26.6 5.4C23.9 2.7 20.2 1.2 16.3 1.2 8.7 1.2 2.4 7.5 2.4 15.1c0 2.2.6 4.4 1.7 6.3L2 30.8l9.6-2.5c1.8 1 3.9 1.6 6 1.6 7.6 0 13.9-6.3 13.9-13.9 0-3.7-1.5-7.3-4.4-10zM16.3 27c-1.9 0-3.8-.5-5.4-1.5l-.4-.2-5.7 1.5 1.5-5.5-.3-.4c-1.1-1.8-1.7-3.9-1.7-6 0-6.4 5.2-11.6 11.6-11.6 3.1 0 6 1.2 8.2 3.4 2.2 2.2 3.4 5.1 3.4 8.2 0 6.4-5.2 11.6-11.6 11.6z"/></svg>
+</a>
+
+<!-- ── MODAL: NOTIFICACIONES ── -->
+<div class="modal-bg" id="m-notif">
+  <div class="modal" style="width:360px">
+    <button class="modal-close" onclick="document.getElementById('m-notif').classList.remove('open')">×</button>
+    <h3>Notificaciones</h3>
+    <div id="notifList"></div>
   </div>
 </div>
 
-<!-- ═══ MODAL: SUBIR FOTOS ═══ -->
-<div class="modal-bg" id="m-fotos">
-  <div class="modal">
-    <button class="modal-close" onclick="document.getElementById('m-fotos').classList.remove('open')">×</button>
-    <h3>📤 Subir fotos de menú</h3>
-    <p style="font-size:.84rem;color:var(--soft);margin-bottom:16px;">Sube las fotos de tus platos. Tu equipo las optimiza y actualiza en las plataformas en 24-48h.</p>
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js">
 
-    <div style="margin-bottom:14px;">
-      <label class="fl">Nombre del plato</label>
-      <input type="text" class="fi" id="foto-plato" placeholder="Ej: Combo Premium Smash">
-    </div>
-    <div style="margin-bottom:14px;">
-      <label class="fl">Descripción breve (opcional)</label>
-      <textarea class="fi" rows="2" id="foto-desc" placeholder="Ej: Incluye papas y bebida, perfecto para compartir"></textarea>
-    </div>
+// ══════════════════════════════════════════════
+//  SOFIA AUTONOMOUS ENGINE
+// ══════════════════════════════════════════════
 
-    <div class="upload-zone" id="upload-zone" onclick="document.getElementById('foto-input').click()" ondragover="event.preventDefault();this.classList.add('drag')" ondragleave="this.classList.remove('drag')" ondrop="handleDrop(event)">
-      <input type="file" id="foto-input" multiple accept="image/*" onchange="handleFiles(this.files)">
-      <div style="font-size:2rem;margin-bottom:8px;">📷</div>
-      <div style="font-weight:600;margin-bottom:4px;">Arrastra fotos aquí o haz clic</div>
-      <div style="font-size:.78rem;color:var(--soft);">JPG, PNG · Mínimo 800x600px · Máx 10MB</div>
-    </div>
-    <div id="fotos-preview" style="display:flex;gap:8px;flex-wrap:wrap;margin-top:12px;"></div>
-
-    <div style="display:flex;gap:10px;margin-top:16px;">
-      <button class="btn btn-r" style="flex:1;" onclick="enviarFotos()">Enviar por WhatsApp →</button>
-      <button class="btn btn-o" onclick="document.getElementById('m-fotos').classList.remove('open')">Cancelar</button>
-    </div>
-    <p style="font-size:.74rem;color:var(--soft);margin-top:8px;text-align:center;">Las fotos se enviarán a tu Growth Manager junto con el nombre del plato.</p>
-  </div>
-</div>
-
-<!-- ═══ MODAL: SOLICITAR CAMPAÑA ═══ -->
-<div class="modal-bg" id="m-campana">
-  <div class="modal">
-    <button class="modal-close" onclick="document.getElementById('m-campana').classList.remove('open')">×</button>
-    <h3>📣 Solicitar nueva campaña</h3>
-    <div style="display:flex;flex-direction:column;gap:12px;">
-      <div>
-        <label class="fl">Plataforma</label>
-        <select class="fi" id="camp-plat">
-          <option>Rappi</option><option>PedidosYa</option><option>Didi Food</option><option>Todas</option>
-        </select>
-      </div>
-      <div>
-        <label class="fl">Tipo de campaña</label>
-        <select class="fi" id="camp-tipo">
-          <option>Descuento en productos</option>
-          <option>Envío gratis</option>
-          <option>2x1 en combo</option>
-          <option>Destacado en app</option>
-          <option>Combo especial</option>
-        </select>
-      </div>
-      <div class="g2">
-        <div>
-          <label class="fl">Inversión mensual S/</label>
-          <input type="number" class="fi" id="camp-inv" placeholder="800">
-        </div>
-        <div>
-          <label class="fl">Duración</label>
-          <select class="fi" id="camp-dur">
-            <option>1 semana</option><option>2 semanas</option><option>1 mes</option>
-          </select>
-        </div>
-      </div>
-      <div>
-        <label class="fl">Detalle adicional (opcional)</label>
-        <textarea class="fi" rows="3" id="camp-nota" placeholder="Ej: Quiero enfocarme en el Smash Clásico durante el fin de semana"></textarea>
-      </div>
-      <button class="btn btn-r" onclick="enviarSolicitudCampana()">Enviar solicitud por WhatsApp →</button>
-    </div>
-  </div>
-</div>
-
-<!-- ═══ MODAL: PDF LOADING ═══ -->
-<div class="modal-bg" id="m-pdf">
-  <div class="modal" style="width:340px;text-align:center;padding:40px 30px;">
-    <div style="font-size:3rem;margin-bottom:16px;">📊</div>
-    <h3 style="margin-bottom:8px;">Generando tu reporte...</h3>
-    <p style="font-size:.84rem;color:var(--soft);margin-bottom:20px;" id="pdf-status">Preparando datos...</p>
-    <div style="display:flex;justify-content:center;">
-      <div class="pdf-loading"><span class="spin">⟳</span> Procesando...</div>
-    </div>
-  </div>
-</div>
-
-<script>
-// ─── DATA ────────────────────────────────────────────────────────────────────
-const WA_NUMBER = "51952363643";
-
-const CLIENTES = {
-  "mauricio@mrsmash.pe": {
-    nombre: "Mauricio",
-    restaurante: "Mr Smash",
-    plan: "Growth",
-    wa: WA_NUMBER,
-    stats: { pedidos:382, ventas:18420, rating:4.8, ticket:48 },
-    pedidos_hist: [180,210,240,265,290,310,345,382],
-    pedidos_prev: [120,145,168,190,212,230,255,270],
-    semanas: ["5 ene","12 ene","19 ene","26 ene","2 feb","9 feb","16 feb","23 feb"],
-    by_hour: [3,5,8,10,16,20,22,18,15,12,9,5],
-    by_day:  [38,52,45,55,68,82,42],
-    ventas_diarias: [820,950,1100,780,880,1250,1480,920,1050,1380,1600,1100,890,1020,1350,1580,1200,950,1100,1420,1650,1300,980,1120],
-    top_items: [
-      {n:"Smash Clásico",    pct:32, ventas:5894},
-      {n:"Combo Doble",      pct:24, ventas:4421},
-      {n:"Smash con Queso",  pct:18, ventas:3316},
-      {n:"Papas Sazonadas",  pct:14, ventas:2579},
-      {n:"Bebida del día",   pct:12, ventas:2211},
-    ],
-    plataformas: [
-      {n:"Rappi",     ico:"🛵",  pedidos:228, ventas:10944, rating:4.9, comision:"24.5%", color:"#ef4444", status:"connected"},
-      {n:"PedidosYa", ico:"🟡",  pedidos:103, ventas:4532,  rating:4.7, comision:"26.0%", color:"#f59e0b", status:"connected"},
-      {n:"Didi Food", ico:"🟠",  pedidos:51,  ventas:2449,  rating:4.6, comision:"25.2%", color:"#f97316", status:"connected"},
-    ],
-    creds: [
-      {plat:"Rappi",     user:"mr.smash.delivery",     last_sync:"Hoy 06:00", status:"connected"},
-      {plat:"PedidosYa", user:"mrsmash@gmail.com",     last_sync:"Hoy 06:05", status:"connected"},
-      {plat:"Didi Food", user:"mrsmash.didi",           last_sync:"Hoy 06:10", status:"connected"},
-    ],
-    campanas: [
-      {t:"Descuento 20% — Smash Clásico", plat:"Rappi",     tipo:"Descuento", inv:1200, extra:5040, roas:4.2, vence:"28 Feb"},
-      {t:"Envío gratis fin de semana",    plat:"PedidosYa", tipo:"Envío gratis", inv:600, extra:2220, roas:3.7, vence:"28 Feb"},
-      {t:"Destacado almuerzo",            plat:"Didi Food",  tipo:"Destacado",  inv:400, extra:1480, roas:3.7, vence:"28 Feb"},
-    ],
-    menu: [
-      {n:"Smash Clásico",   precio:38, ventas:"Alta",  foto:"✅", opt:"✅", badge:"bg-g", badge_t:"Optimizado"},
-      {n:"Combo Doble",     precio:55, ventas:"Alta",  foto:"✅", opt:"✅", badge:"bg-g", badge_t:"Optimizado"},
-      {n:"Smash con Queso", precio:42, ventas:"Media", foto:"✅", opt:"✅", badge:"bg-g", badge_t:"Optimizado"},
-      {n:"Combo Premium",   precio:68, ventas:"—",     foto:"❌", opt:"❌", badge:"bg-r", badge_t:"Foto pendiente"},
-      {n:"Papas Sazonadas", precio:15, ventas:"Alta",  foto:"✅", opt:"✅", badge:"bg-g", badge_t:"Optimizado"},
-      {n:"Bebida del día",  precio:12, ventas:"Media", foto:"⚠️", opt:"✅", badge:"bg-o", badge_t:"Foto mejorable"},
-    ],
-    reportes: [
-      {mes:"Enero 2025",     pedidos:267, ventas:12816, crec:"+38%", rating:4.7, campanas:3},
-      {mes:"Diciembre 2024", pedidos:195, ventas:9360,  crec:"+22%", rating:4.6, campanas:2},
-      {mes:"Noviembre 2024", pedidos:160, ventas:7680,  crec:"Línea base", rating:4.5, campanas:1},
-    ]
+// ── WEEKLY ACTION PLAN ──────────────────────
+function sofiaActionPlan(b){
+  const plans = [];
+  // Analyze menu risks
+  const riskItems = b.menu.filter(m=>m.st==='risk');
+  if(riskItems.length>0){
+    plans.push({
+      pri:'high', ico:'⚠️',
+      title:`${riskItems[0].n}: conversión cayendo ${Math.abs(riskItems[0].trend)}%`,
+      sub:`Esta semana reemplaza la foto y ajusta el precio en S/${riskItems[0].trend<-8?4:2}. El posicionamiento en los primeros 3 lugares del menú incrementa conversión hasta 35%.`,
+      impact:`+S/${Math.round(riskItems[0].ped * riskItems[0].tick * 0.25).toLocaleString()}/mes estimado`,
+      action:'sim-menu', label:'Ver en Optimizador',
+    });
   }
+  // Check if there's a rising new item
+  const rising = b.menu.filter(m=>m.st==='new'&&m.trend>15).sort((a,b)=>b.trend-a.trend)[0];
+  if(rising){
+    plans.push({
+      pri:'high', ico:'🚀',
+      title:`"${rising.n}" creció +${rising.trend}% sin campaña`,
+      sub:`Hay demanda orgánica real. Una campaña de descuento del 15% en ${b.channels[0]?.n||'Rappi'} puede convertirlo en tu nuevo ítem estrella en menos de 30 días.`,
+      impact:`+${Math.round(rising.ped*0.4)} pedidos/mes proyectados`,
+      action:'sim-campana', label:'Simular campaña',
+    });
+  }
+  // Platform concentration risk
+  const topCh = b.channels[0];
+  if(topCh && topCh.share > 55){
+    plans.push({
+      pri:'med', ico:'📊',
+      title:`${Math.round(topCh.share)}% de pedidos en ${topCh.n} — diversifica`,
+      sub:`Dependencia alta de una sola plataforma. Activar ${b.channels.length<3?'una plataforma adicional':'campañas en '+b.channels[b.channels.length-1].n} puede proteger ingresos ante cambios de algoritmo.`,
+      impact:'Reduce riesgo de concentración',
+      action:null, label:null,
+    });
+  }
+  // Ticket opportunity
+  const avgTick = b.ticket;
+  const starItem = b.menu.find(m=>m.st==='star');
+  if(starItem && starItem.tick < avgTick * 0.9){
+    plans.push({
+      pri:'med', ico:'💰',
+      title:`Precio de "${starItem.n}" puede subir S/${Math.round(avgTick*0.08)}`,
+      sub:`Tu ítem estrella tiene alta conversión (${starItem.conv}%) con precio inferior al ticket promedio. Una prueba de precio confirmaría si la demanda es inelástica.`,
+      impact:`+S/${Math.round(starItem.ped * Math.round(avgTick*0.08)).toLocaleString()}/mes sin perder pedidos`,
+      action:'sim-precio', label:'Simular precio',
+    });
+  }
+  // Rating opportunity
+  if(b.reviews.score < 4.5){
+    const neg = b.reviews.dist[3]+b.reviews.dist[4];
+    plans.push({
+      pri:'med', ico:'⭐',
+      title:`${neg} reseñas negativas sin responder`,
+      sub:`Responder en <24h puede subir tu rating 0.2-0.4 puntos en 30 días. Mayor rating = mejor posición en algoritmos de las apps. Genera textos aquí abajo.`,
+      impact:`+${Math.round(b.pedidos*0.08)} pedidos/mes con rating 4.6+`,
+      action:null, label:null,
+    });
+  }
+  // Cross-sell opportunity
+  plans.push({
+    pri:'low', ico:'🛒',
+    title:'Combos cruzados pueden subir ticket +12%',
+    sub:`Ver las 3 combinaciones de productos con mayor potencial para ${b.name} según patrones de pedido.`,
+    impact:`+S/${Math.round(b.pedidos * b.ticket * 0.12).toLocaleString()}/mes si el 60% adopta el combo`,
+    action:null, label:'Ver combos',
+  });
+  return plans.slice(0,4);
+}
+
+function renderSofiaPlan(b){
+  const plans = sofiaActionPlan(b);
+  const now = new Date();
+  const opts = {month:'long',day:'numeric'};
+  document.getElementById('sf-plan-date').textContent =
+    `Plan de acción · Semana ${now.toLocaleDateString('es-PE',opts)}`;
+
+  document.getElementById('sf-actions-list').innerHTML = plans.map(p=>`
+    <div class="sf-action-row" onclick="${p.action?`toggleSim('${p.action}')`:''}" style="${p.action?'':'cursor:default'}">
+      <div class="sf-pri ${p.pri}">${p.pri==='high'?'!':p.pri==='med'?'2':'3'}</div>
+      <div style="flex:1">
+        <div class="sf-act-title">${p.ico} ${p.title}</div>
+        <div class="sf-act-sub">${p.sub}</div>
+        <div class="sf-act-impact" style="color:${p.pri==='high'?'var(--green)':'var(--gold)'}">${p.impact}</div>
+      </div>
+      ${p.action?`<button class="sf-btn sim" onclick="event.stopPropagation();toggleSim('${p.action}')">${p.label||'Simular'}</button>`:''}
+    </div>`).join('');
+}
+
+// ── SCORE ────────────────────────────────────
+function calcScore(b){
+  let s = 0, breakdown = [];
+  // Pedidos growth (0-25)
+  const g = parseFloat(b.d_ped)||0;
+  const gScore = Math.min(Math.max(g*0.5, 0), 25);
+  s += gScore;
+  breakdown.push({l:'Crecimiento pedidos', v:Math.round(gScore), max:25, color:g>=0?'var(--green)':'var(--red)'});
+  // Rating (0-25)
+  const rScore = Math.round((b.rating - 3) / 2 * 25);
+  s += rScore;
+  breakdown.push({l:'Rating', v:rScore, max:25, color:b.rating>=4.5?'var(--green)':'var(--gold)'});
+  // Conversion (0-25)
+  const cScore = Math.min(b.conv * 3, 25);
+  s += cScore;
+  breakdown.push({l:'Conversión', v:Math.round(cScore), max:25, color:b.conv>=6?'var(--green)':'var(--gold)'});
+  // Platform diversity (0-25)
+  const dScore = Math.min(b.channels.length * 8, 25);
+  s += dScore;
+  breakdown.push({l:'Diversif. canales', v:dScore, max:25, color:b.channels.length>=3?'var(--green)':'var(--gold)'});
+  return {score:Math.round(Math.min(Math.max(s,0),100)), breakdown};
+}
+
+function renderScore(b){
+  const {score, breakdown} = calcScore(b);
+  const ring = 213 * (1 - score/100);
+  document.getElementById('scoreArc').style.strokeDashoffset = ring;
+  document.getElementById('scoreArc').style.stroke = score>=75?'var(--green)':score>=50?'var(--gold)':'var(--red)';
+  document.getElementById('scoreNum').textContent = score;
+  document.getElementById('scoreLabel').textContent = score>=75?'Marca saludable 🚀':score>=50?'En desarrollo ⚡':'Necesita atención ⚠️';
+  document.getElementById('scoreBreakdown').innerHTML = breakdown.map(d=>`
+    <div style="display:flex;justify-content:space-between;margin-bottom:3px">
+      <span>${d.l}</span><strong style="color:${d.color}">${d.v}/${d.max}</strong>
+    </div>`).join('');
+}
+
+// ── ACHIEVEMENTS ─────────────────────────────
+function renderAchievements(b){
+  const ped = b.pedidos;
+  const achs = [
+    {ico:'🚀',name:'Despegue',   desc:'100+ pedidos/mes', ok:ped>=100},
+    {ico:'📈',name:'Crecimiento',desc:'+20% este mes',    ok:parseFloat(b.d_ped)>=20},
+    {ico:'⭐',name:'Estrella',   desc:'Rating 4.7+',     ok:b.rating>=4.7},
+    {ico:'💎',name:'Multi-app',  desc:'3+ plataformas',  ok:b.channels.length>=3},
+    {ico:'🔥',name:'Volumen',    desc:'300+ pedidos/mes', ok:ped>=300},
+    {ico:'🎯',name:'Conversión', desc:'Tasa 7%+',         ok:b.conv>=7},
+    {ico:'👑',name:'Top Seller', desc:'Ítem estrella',   ok:b.menu.some(m=>m.st==='star')},
+    {ico:'💰',name:'Ticket Alto',desc:'Ticket S/50+',    ok:b.ticket>=50},
+  ];
+  document.getElementById('achGrid').innerHTML = achs.map(a=>`
+    <div class="ach ${a.ok?'unlocked':'locked'}">
+      <div class="ach-ico">${a.ico}</div>
+      <div class="ach-name">${a.name}</div>
+      <div class="ach-desc">${a.desc}</div>
+    </div>`).join('');
+}
+
+// ── CAMPAIGN SIMULATOR ───────────────────────
+let campState = {platIdx:0, type:'desc20', dur:1};
+const CAMP_EFFECTS = {
+  desc20:{label:'Descuento 20%', pedMulti:1.35, tickMulti:0.80, cost:0.20},
+  desc30:{label:'Descuento 30%', pedMulti:1.55, tickMulti:0.70, cost:0.30},
+  envio: {label:'Envío gratis',  pedMulti:1.28, tickMulti:1.00, cost:0.05},
+  '2x1': {label:'2×1',          pedMulti:1.45, tickMulti:0.50, cost:0.50},
+  dest:  {label:'Destacado',     pedMulti:1.18, tickMulti:1.00, cost:0.08},
 };
 
-let currentClient = null;
-let uploadedFiles = [];
+function initCampTabs(b){
+  document.getElementById('camp-plat-tabs').innerHTML = b.channels.map((ch,i)=>`
+    <button class="sim-tab${i===0?' on':''}" onclick="setCampPlat(${i},this)" style="border-color:${i===0?ch.c:''};">${ch.n}</button>`).join('');
+}
 
-// ─── AUTH ────────────────────────────────────────────────────────────────────
-function loginCliente() {
-  const em = document.getElementById("cl-email").value.trim().toLowerCase();
-  const cl = CLIENTES[em];
-  const msg = document.getElementById("cl-msg");
-  if (!cl) {
-    msg.textContent = "Email no encontrado. Usa mauricio@mrsmash.pe para la demo.";
-    msg.className = "lmsg lerr";
+function setCampPlat(idx,btn){
+  campState.platIdx=idx;
+  document.querySelectorAll('#camp-plat-tabs .sim-tab').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  updateCampSim();
+}
+function setCampType(t,btn){
+  campState.type=t;
+  document.querySelectorAll('#camp-type-tabs .sim-tab').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+  updateCampSim();
+}
+
+function updateCampSim(){
+  const b    = BRANDS[curBrand];
+  const dur  = parseInt(document.getElementById('camp-dur-slider').value);
+  const labs = ['1 semana','2 semanas','3 semanas','1 mes'];
+  document.getElementById('camp-dur-label').textContent = labs[dur-1];
+  campState.dur = dur;
+
+  const ch   = b.channels[campState.platIdx] || b.channels[0];
+  const eff  = CAMP_EFFECTS[campState.type];
+  const weeks = dur;
+
+  const basePed  = Math.round(ch.pedidos / 4 * weeks);          // pedidos del canal en el periodo
+  const newPed   = Math.round(basePed * eff.pedMulti);
+  const extraPed = newPed - basePed;
+  const baseRev  = basePed * ch.ticket;
+  const newRev   = newPed  * ch.ticket * eff.tickMulti;
+  const campCost = Math.round(newRev * eff.cost);
+  const netGain  = Math.round(newRev - baseRev - campCost);
+  const roi      = baseRev > 0 ? Math.round((netGain/campCost)*100) : 0;
+
+  document.getElementById('camp-proj-main').textContent = `+${extraPed} pedidos`;
+  document.getElementById('camp-proj-sub').textContent  = `en ${ch.n} durante ${labs[dur-1]}`;
+  document.getElementById('camp-proj-rows').innerHTML   = [
+    {l:'Pedidos base',      v:basePed+' ped'},
+    {l:'Pedidos con promo', v:newPed+' ped',  c:'var(--green)'},
+    {l:'Ingresos extra',    v:'S/'+Math.max(0,newRev-baseRev).toLocaleString(), c:'var(--green)'},
+    {l:'Costo campaña',     v:'S/'+campCost.toLocaleString(), c:'var(--red)'},
+    {l:'Ganancia neta',     v:'S/'+netGain.toLocaleString(),  c:netGain>0?'var(--green)':'var(--red)'},
+    {l:'ROI campaña',       v:roi+'%', c:roi>100?'var(--green)':roi>50?'var(--gold)':'var(--red)'},
+  ].map(r=>`<div class="sim-row"><span>${r.l}</span><strong style="color:${r.c||'var(--txt)'}">${r.v}</strong></div>`).join('');
+}
+
+function aplicarCampana(){
+  const b    = BRANDS[curBrand];
+  const ch   = b.channels[campState.platIdx]||b.channels[0];
+  const eff  = CAMP_EFFECTS[campState.type];
+  const msg  = `✅ Campaña "${eff.label}" en ${ch.n} programada para esta semana.
+
+Sofia notificará al equipo de operaciones para activarla en las próximas 24h.
+
+¿Confirmas?`;
+  if(confirm(msg)){
+    // Mark in insights as applied
+    const el = document.getElementById('sim-campana');
+    el.style.borderColor = 'rgba(74,222,128,.4)';
+    el.style.background  = 'rgba(74,222,128,.04)';
+    setTimeout(()=>{ el.style.borderColor=''; el.style.background=''; },3000);
+  }
+}
+
+// ── MENU OPTIMIZER ───────────────────────────
+let menuOrder = [];
+function initMenuOrder(b){
+  menuOrder = b.menu.map((m,i)=>({...m, origIdx:i}));
+}
+
+function renderMenuOptimizer(b){
+  initMenuOrder(b);
+  updateMenuOrder();
+  // Sofia recommendation
+  const star  = b.menu.find(m=>m.st==='star');
+  const risk  = b.menu.find(m=>m.st==='risk');
+  const ideal = [...b.menu].sort((a,x)=>x.conv-a.conv);
+  document.getElementById('menu-sofia-rec').textContent =
+    `Los ítems con mayor conversión deberían ir en posiciones 1-3. ${star?`"${star.n}" (${star.conv}% conv) debería estar en #1.`:''} ${risk?`"${risk.n}" necesita actualizarse antes de ocupar una posición visible.`:''}`;
+}
+
+function updateMenuOrder(){
+  const topConv = [...menuOrder].sort((a,b)=>b.conv-a.conv);
+  let impactPct = 0;
+  menuOrder.forEach((m,newPos)=>{
+    const idealPos = topConv.findIndex(x=>x.n===m.n);
+    if(newPos < idealPos) impactPct += 3;
+  });
+
+  document.getElementById('menu-order-list').innerHTML = menuOrder.map((m,i)=>`
+    <div class="menu-opt-item ${m.conv>=7?'highlight':m.st==='risk'?'demote':''}">
+      <span style="font-size:10px;color:var(--muted);width:14px;text-align:center">${i+1}</span>
+      <div style="flex:1">
+        <div style="font-size:12px;font-weight:600">${m.n}</div>
+        <div style="font-size:10px;color:var(--muted)">Conv ${m.conv}% · S/${m.tick} · ${m.trend>0?'↑':'↓'}${Math.abs(m.trend)}%</div>
+      </div>
+      <div style="display:flex;gap:3px">
+        <button class="move-btn" onclick="moveItem(${i},-1)" ${i===0?'disabled':''}>▲</button>
+        <button class="move-btn" onclick="moveItem(${i},1)"  ${i===menuOrder.length-1?'disabled':''}>▼</button>
+      </div>
+    </div>`).join('');
+
+  document.getElementById('menu-impact').innerHTML = `
+    <div style="font-size:9.5px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:8px">Impacto del reorden</div>
+    <div class="sim-big" style="font-size:22px">+${impactPct}% CTR</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:10px">estimado en la primera semana</div>
+    ${[
+      {l:'Posición óptima #1', v: menuOrder[0]?.n||'—'},
+      {l:'Ítem a mover arriba', v: [...menuOrder].sort((a,b)=>b.conv-a.conv)[0]?.n||'—', c:'var(--green)'},
+      {l:'Ítem a revisar', v: menuOrder.find(m=>m.st==='risk')?.n||'✓ OK', c:'var(--red)'},
+    ].map(r=>`<div class="sim-row"><span>${r.l}</span><strong style="color:${r.c||'var(--txt)'}">${r.v}</strong></div>`).join('')}`;
+}
+
+function moveItem(idx, dir){
+  const newIdx = idx + dir;
+  if(newIdx<0||newIdx>=menuOrder.length) return;
+  [menuOrder[idx], menuOrder[newIdx]] = [menuOrder[newIdx], menuOrder[idx]];
+  updateMenuOrder();
+}
+function resetMenuOrder(){ initMenuOrder(BRANDS[curBrand]); updateMenuOrder(); }
+function aplicarOrdenMenu(){
+  const top3 = menuOrder.slice(0,3).map(m=>m.n).join(', ');
+  alert(`✅ Orden aplicado.
+
+Los primeros 3 ítems ("${top3}") serán actualizados en las plataformas en las próximas 24h.
+
+Sofia enviará confirmación cuando esté activo.`);
+}
+
+// ── PRICE OPTIMIZER ──────────────────────────
+function initPrecioSim(b){
+  const sel = document.getElementById('precio-item');
+  sel.innerHTML = b.menu.map((m,i)=>`<option value="${i}">${m.n} — S/${m.tick}</option>`).join('');
+  updatePrecioSim();
+}
+function updatePrecioSim(){
+  const b    = BRANDS[curBrand];
+  const idx  = parseInt(document.getElementById('precio-item').value)||0;
+  const item = b.menu[idx];
+  if(!item) return;
+  const base = item.tick;
+  const sliderVal = parseInt(document.getElementById('precio-slider').value);
+  // Range: -20% to +25%
+  const minP = Math.round(base * 0.80);
+  const maxP = Math.round(base * 1.25);
+  const newP = Math.round(minP + (sliderVal/100) * (maxP - minP));
+
+  document.getElementById('precio-actual').textContent = `S/ ${base}`;
+  document.getElementById('precio-nuevo').textContent  = `S/ ${newP}`;
+  document.getElementById('precio-min').textContent    = `S/ ${minP}`;
+  document.getElementById('precio-max').textContent    = `S/ ${maxP}`;
+
+  // Demand elasticity: -0.8 (inelastic at <10%, elastic at >15%)
+  const pctChange = (newP - base) / base;
+  const elasticity = Math.abs(pctChange) > 0.12 ? -1.2 : -0.6;
+  const demandChange = pctChange * elasticity;
+  const newPed    = Math.round(item.ped * (1 + demandChange));
+  const oldRev    = item.ped * base;
+  const newRev    = newPed * newP;
+  const revChange = newRev - oldRev;
+
+  const recText = pctChange > 0.15
+    ? `Subida agresiva. Alta elasticidad — podrías perder ${Math.round(-demandChange*item.ped)} pedidos. Recomendamos subir máx S/${Math.round(base*0.08)} e incluir una foto nueva.`
+    : pctChange > 0
+    ? `Subida razonable. La demanda debería mantenerse estable. Con la justificación visual correcta (foto actualizada) es implementable esta semana.`
+    : `Bajada de precio. Aumenta la conversión pero reduce el margen. Solo recomendable como promoción temporal o si el ítem está en declive.`;
+
+  document.getElementById('precio-result-rows').innerHTML = [
+    {l:'Pedidos actuales', v:item.ped+' ped'},
+    {l:'Pedidos proyectados', v:newPed+' ped', c:newPed>item.ped?'var(--green)':'var(--red)'},
+    {l:'Revenue actual',  v:'S/'+oldRev.toLocaleString()},
+    {l:'Revenue proyectado', v:'S/'+newRev.toLocaleString(), c:newRev>oldRev?'var(--green)':'var(--red)'},
+    {l:'Impacto mensual', v:(revChange>=0?'+':'')+'S/'+revChange.toLocaleString(), c:revChange>=0?'var(--green)':'var(--red)'},
+  ].map(r=>`<div class="sim-row"><span>${r.l}</span><strong style="color:${r.c||'var(--txt)'}">${r.v}</strong></div>`).join('');
+  document.getElementById('precio-rec').textContent = recText;
+}
+
+// ── CROSS-SELL ───────────────────────────────
+function renderCrossSell(b){
+  // Generate pairs based on order frequency compatibility
+  const items = b.menu.filter(m=>m.ped>20).sort((a,x)=>x.ped-a.ped);
+  const pairs = [];
+  for(let i=0;i<Math.min(3,items.length-1);i++){
+    const main = items[i];
+    // Pair with complementary (different price range)
+    const comp = items.find(m=>m!==main && Math.abs(m.tick-main.tick)>10 && m.tick < main.tick);
+    if(!comp) continue;
+    const ticketGain = Math.round(comp.tick * 0.7);
+    const adoptPct   = 35;
+    const monthly    = Math.round(main.ped * (adoptPct/100) * ticketGain);
+    pairs.push({main, comp, ticketGain, adoptPct, monthly});
+  }
+  document.getElementById('crossSellList').innerHTML = pairs.length
+    ? pairs.map(p=>`
+      <div class="cs-pair">
+        <div style="display:flex;align-items:center;gap:6px;margin-bottom:6px;font-size:12.5px">
+          <strong>${p.main.n}</strong><span class="cs-arrow">+</span>
+          <strong>${p.comp.n}</strong>
+          <span style="margin-left:auto;font-size:10px;color:var(--muted)">combo sugerido</span>
+        </div>
+        <div style="display:flex;gap:16px;font-size:11px;color:var(--muted)">
+          <span>Ticket extra: <strong style="color:var(--green)">+S/${p.ticketGain}</strong></span>
+          <span>Adopción estimada: <strong>${p.adoptPct}%</strong></span>
+          <span>Impacto mensual: <strong style="color:var(--acc)">+S/${p.monthly.toLocaleString()}</strong></span>
+        </div>
+        <div style="font-size:10.5px;color:var(--muted);margin-top:6px;padding-top:6px;border-top:1px solid var(--bd)">
+          💡 Muestra "${p.main.n} + ${p.comp.n}" como combo en el menú con precio atractivo (S/${p.main.tick+p.comp.tick-p.ticketGain} vs S/${p.main.tick+p.comp.tick} separados).
+        </div>
+      </div>`).join('')
+    : '<div style="font-size:12px;color:var(--muted)">Agrega más ítems al menú para generar sugerencias de canasta cruzada.</div>';
+}
+
+// ── TOGGLE SIMULATORS ────────────────────────
+function toggleSim(id){
+  const body  = document.getElementById('sim-'+id+'-body');
+  const arrow = document.getElementById('sim-'+id+'-arrow');
+  if(!body) return;
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  if(arrow) arrow.style.transform = isOpen ? '' : 'rotate(180deg)';
+  // Scroll to
+  if(!isOpen) document.getElementById('sim-'+id).scrollIntoView({behavior:'smooth', block:'nearest'});
+}
+
+// ── RENDER SOFIA (called from main render) ───
+function renderSofiaAll(b){
+  renderSofiaPlan(b);
+  renderScore(b);
+  renderAchievements(b);
+  initCampTabs(b);
+  updateCampSim();
+  renderMenuOptimizer(b);
+  initPrecioSim(b);
+  updatePrecioSim();
+  renderCrossSell(b);
+}
+</script><script>
+// ═══════════════════════════════════════════════════════════════
+//  CONFIG
+// ═══════════════════════════════════════════════════════════════
+const WA = "51952363643";
+const GEMINI_KEY = ""; // Agrega tu VITE_GEMINI_KEY aquí (gratis en aistudio.google.com)
+// En Netlify: env var VITE_GEMINI_KEY; accede con: const GEMINI_KEY = typeof __VITE_GEMINI_KEY__ !== 'undefined' ? __VITE_GEMINI_KEY__ : "";
+
+// ═══════════════════════════════════════════════════════════════
+//  AUTH MAP — email → brands they can see (isolation)
+// ═══════════════════════════════════════════════════════════════
+const AUTH = {
+  "demo@sazonpartner.com":     [0,1,2,3],  // operador con 4 marcas
+  "mrsmash@sazonpartner.com":  [0],         // Mr Smash solo
+  "greenbowl@sazonpartner.com":[2],         // Green Bowl solo
+  "wokroll@sazonpartner.com":  [3],         // Wok & Roll solo
+};
+
+// ═══════════════════════════════════════════════════════════════
+//  BRAND DATA
+// ═══════════════════════════════════════════════════════════════
+function genHeat(hotHours){
+  const hrs=['11am','12pm','1pm','2pm','3pm','6pm','7pm','8pm','9pm','10pm'];
+  const d={};
+  hrs.forEach(h=>{
+    d[h]={};
+    for(let i=0;i<7;i++){
+      const hot=hotHours.indexOf(parseInt(h))>-1||hotHours.indexOf(parseInt(h.replace('pm','').replace('am',''))+(h.includes('pm')&&parseInt(h)!==12?12:0))>-1;
+      d[h][i]=Math.round((hot?55:8)+Math.random()*40);
+    }
+  });
+  return {hrs,d};
+}
+
+const BRANDS=[
+  {
+    name:'Mr Smash', emoji:'🍔', av:'linear-gradient(135deg,#2d1a0a,#4a2a0a)', plan:'Growth', month:4,
+    wa:WA,
+    pedidos:382, ventas:18420, ticket:48, rating:4.8, conv:6.8,
+    d_ped:'+45%', d_ven:'+38%', d_tick:'+S/5', d_rat:'+0.2', d_conv:'+1.1pp',
+    channels:[
+      {n:'Rappi',     c:'var(--rappi)', share:60, pedidos:229, ventas:11004, ticket:48, rating:4.9},
+      {n:'PedidosYa', c:'var(--peya)',  share:27, pedidos:103, ventas:4944,  ticket:48, rating:4.7},
+      {n:'Didi Food', c:'var(--didi)',  share:13, pedidos:50,  ventas:2400,  ticket:48, rating:4.6},
+    ],
+    trend:[180,195,210,225,245,260,278,295,315,330,350,365,375,382],
+    heatData:genHeat([12,13,19,20,21]),
+    menu:[
+      {n:'Smash Clásico',     ped:98,  conv:8.2, tick:38, trend:15,  st:'star'},
+      {n:'Combo Doble',       ped:76,  conv:7.1, tick:55, trend:8,   st:'ok'},
+      {n:'Smash con Queso',   ped:64,  conv:6.8, tick:42, trend:5,   st:'ok'},
+      {n:'Combo Premium',     ped:12,  conv:2.1, tick:68, trend:-18, st:'risk'},
+      {n:'Papas Sazonadas',   ped:44,  conv:5.9, tick:15, trend:22,  st:'new'},
+      {n:'Bebida del día',    ped:38,  conv:4.8, tick:12, trend:-4,  st:'risk'},
+    ],
+    insights:[
+      {t:'opp',  ico:'🚀', ti:'Campaña flash viernes 7-9pm',        bo:'Tus smash clásicos tienen 42% de reorden los viernes. Una promo 2x1 en ese horario puede generar +30 pedidos semanales sin costo adicional.'},
+      {t:'warn', ico:'⚠️', ti:'Combo Premium necesita impulso',      bo:'Solo 12 pedidos con una conversión de 2.1%. La foto está desactualizada y el precio (S/68) no está ancla correctamente. Recomendamos foto + bajada de S/5.'},
+      {t:'info', ico:'💡', ti:'PedidosYa: ticket igual a Rappi',     bo:'A diferencia de muchos restaurantes, tu ticket en PedidosYa (S/48) es igual a Rappi. Hay oportunidad de crear combos exclusivos PedidosYa con ticket mayor.'},
+      {t:'alert',ico:'🔔', ti:'Bebida del día: tendencia -4%',       bo:'Cayó 4% sin causa aparente. Sofia revisará la posición en el menú digital y la descripción. Posiblemente es un problema de visibilidad, no de demanda.'},
+    ],
+    reviews:{score:4.8, total:186, dist:[46,34,8,2,0]},
+    reportes:[
+      {mes:'Marzo 2025',    ped:345, ven:16560, crec:'+38%', rat:4.7},
+      {mes:'Febrero 2025',  ped:267, ven:12816, crec:'+28%', rat:4.6},
+      {mes:'Enero 2025',    ped:208, ven:9984,  crec:'línea base', rat:4.5},
+    ],
+    solicitudes:[
+      {txt:'Fotos combo premium', est:'Pendiente tuyo', cls:'bg-y'},
+      {txt:'Campaña marzo',       est:'En proceso',     cls:'bg-b'},
+      {txt:'Negociación comisión Rappi', est:'Completado', cls:'bg-g'},
+    ],
+  },
+  {
+    name:'Forno Romano', emoji:'🍕', av:'linear-gradient(135deg,#0d1a2d,#1a2a3a)', plan:'Starter', month:1,
+    wa:WA,
+    pedidos:87, ventas:3393, ticket:39, rating:4.2, conv:3.1,
+    d_ped:'Nuevo', d_ven:'Nuevo', d_tick:'S/39', d_rat:'4.2', d_conv:'3.1%',
+    channels:[
+      {n:'PedidosYa', c:'var(--peya)', share:100, pedidos:87, ventas:3393, ticket:39, rating:4.2},
+    ],
+    trend:[0,0,0,0,12,18,22,25,31,28,35,40,38,44],
+    heatData:genHeat([18,19,20]),
+    menu:[
+      {n:'Pizza Margherita',  ped:32, conv:5.2, tick:35, trend:0,  st:'ok'},
+      {n:'Pizza 4 Formaggi',  ped:22, conv:4.1, tick:42, trend:8,  st:'ok'},
+      {n:'Pasta Carbonara',   ped:18, conv:3.8, tick:38, trend:4,  st:'new'},
+      {n:'Tiramisú',          ped:10, conv:2.9, tick:18, trend:15, st:'new'},
+      {n:'Pizza Diavola',     ped:5,  conv:1.8, tick:38, trend:-5, st:'risk'},
+    ],
+    insights:[
+      {t:'warn', ico:'⚠️', ti:'8 ítems sin foto',              bo:'Los ítems sin foto tienen 60% menos conversión. Esta es la acción #1 del mes. Sofia te guiará para enviar las fotos esta semana.'},
+      {t:'info', ico:'💡', ti:'Pico: 7-10pm',                  bo:'78% de tus pedidos llegan entre 7 y 10pm. Optimiza tiempos de preparación en ese bloque para mejorar el rating.'},
+      {t:'opp',  ico:'🚀', ti:'Primera campaña recomendada',   bo:'2x1 en pizzas medianas los miércoles. Miércoles es tu día más flojo — esta promo genera +40% en ese día según nuestros benchmarks con 12+ pizzerías.'},
+    ],
+    reviews:{score:4.2, total:34, dist:[18,8,4,3,1]},
+    reportes:[{mes:'Enero 2025', ped:87, ven:3393, crec:'Primer mes', rat:4.2}],
+    solicitudes:[
+      {txt:'Setup inicial completado', est:'Completado', cls:'bg-g'},
+      {txt:'Fotos de menú',            est:'Pendiente tuyo', cls:'bg-y'},
+    ],
+  },
+  {
+    name:'Green Bowl', emoji:'🥗', av:'linear-gradient(135deg,#0d2a1a,#1a3a0d)', plan:'Growth', month:6,
+    wa:WA,
+    pedidos:310, ventas:15500, ticket:50, rating:4.5, conv:5.2,
+    d_ped:'⚠️ -9%', d_ven:'-7%', d_tick:'-S/2', d_rat:'-0.1', d_conv:'-0.4pp',
+    channels:[
+      {n:'Rappi',     c:'var(--rappi)', share:40, pedidos:124, ventas:6200, ticket:50, rating:4.5},
+      {n:'PedidosYa', c:'var(--peya)',  share:35, pedidos:108, ventas:5400, ticket:50, rating:4.6},
+      {n:'Glovo',     c:'var(--glovo)', share:25, pedidos:78,  ventas:3900, ticket:50, rating:4.4},
+    ],
+    trend:[280,295,310,325,340,335,330,320,310,300,295,305,300,310],
+    heatData:genHeat([11,12,13,18,19]),
+    menu:[
+      {n:'Buddha Bowl Quinoa', ped:78, conv:6.8, tick:48, trend:-12, st:'risk'},
+      {n:'Acaí Bowl',          ped:65, conv:5.9, tick:55, trend:5,   st:'ok'},
+      {n:'Bowl Proteico',      ped:54, conv:5.1, tick:52, trend:8,   st:'ok'},
+      {n:'Smoothie Verde',     ped:42, conv:4.6, tick:25, trend:-4,  st:'risk'},
+      {n:'Tostadas Aguacate',  ped:38, conv:4.2, tick:35, trend:18,  st:'new'},
+      {n:'Bowl Keto',          ped:33, conv:3.8, tick:58, trend:11,  st:'new'},
+    ],
+    insights:[
+      {t:'alert',ico:'🚨', ti:'Nuevo competidor: -12% mercado',  bo:'Quinoa House abrió en San Isidro hace 3 semanas. Precios 15% más bajos, 4.4 rating. Es la causa principal de tu caída. Sofia ya tiene un plan defensivo listo.'},
+      {t:'opp',  ico:'🚀', ti:'Estrategia: diferenciación premium',bo:'Tu ticket (S/50) supera al competidor (S/38). Campaña de calidad premium + programa de fidelización para retener clientes de alta frecuencia.'},
+      {t:'warn', ico:'⚠️', ti:'Buddha Bowl cayó 12%',             bo:'Tu ítem estrella perdió tracción. Foto desactualizada y precio sin ajuste en 4 meses. Revisión urgente esta semana.'},
+      {t:'info', ico:'💡', ti:'Bowl Keto: +11% orgánico',         bo:'Creció sin campaña. Hay demanda real de ese segmento. Una campaña dedicada puede convertirlo en el nuevo ítem estrella.'},
+    ],
+    reviews:{score:4.5, total:198, dist:[40,35,14,7,4]},
+    reportes:[
+      {mes:'Febrero 2025', ped:341, ven:17050, crec:'+2%', rat:4.6},
+      {mes:'Enero 2025',   ped:334, ven:16700, crec:'+8%', rat:4.6},
+    ],
+    solicitudes:[
+      {txt:'Análisis competidor Quinoa House', est:'En proceso', cls:'bg-b'},
+      {txt:'Actualizar foto Buddha Bowl',      est:'Pendiente tuyo', cls:'bg-y'},
+    ],
+  },
+  {
+    name:'Wok & Roll', emoji:'🍜', av:'linear-gradient(135deg,#2a1a0d,#3a2a00)', plan:'Growth', month:5,
+    wa:WA,
+    pedidos:890, ventas:38270, ticket:43, rating:4.6, conv:7.4,
+    d_ped:'+24%', d_ven:'+28%', d_tick:'+S/2', d_rat:'+0.1', d_conv:'+0.8pp',
+    channels:[
+      {n:'Rappi',     c:'var(--rappi)', share:35, pedidos:311, ventas:13394, ticket:43, rating:4.5},
+      {n:'PedidosYa', c:'var(--peya)',  share:30, pedidos:267, ventas:11481, ticket:43, rating:4.7},
+      {n:'Didi Food', c:'var(--didi)',  share:22, pedidos:196, ventas:8428,  ticket:43, rating:4.6},
+      {n:'Glovo',     c:'var(--glovo)', share:13, pedidos:116, ventas:4967,  ticket:43, rating:4.5},
+    ],
+    trend:[520,545,580,610,650,670,700,720,740,760,800,820,860,890],
+    heatData:genHeat([11,12,13,18,19,20,21]),
+    menu:[
+      {n:'Wonton Sopa',    ped:180, conv:8.9, tick:38, trend:18, st:'star'},
+      {n:'Arroz Chaufa',   ped:165, conv:8.2, tick:42, trend:12, st:'star'},
+      {n:'Lomo Saltado',   ped:142, conv:7.6, tick:46, trend:8,  st:'ok'},
+      {n:'Dim Sum x8',     ped:110, conv:6.8, tick:55, trend:22, st:'new'},
+      {n:'Fideos Saltados',ped:98,  conv:6.1, tick:40, trend:5,  st:'ok'},
+      {n:'Pato Peking',    ped:72,  conv:5.4, tick:68, trend:30, st:'new'},
+    ],
+    insights:[
+      {t:'opp',  ico:'🚀', ti:'Pato Peking: ítem premium emergente',  bo:'Creció 30% sin campaña. Ticket S/68 vs promedio S/43. Posicionarlo como diferenciador premium puede subir el ticket general del restaurante.'},
+      {t:'info', ico:'💡', ti:'Listo para 5ta plataforma',            bo:'Volumen y rating permiten negociar entrada a Uber Eats con condiciones favorables. Proyección: +18% pedidos en el primer mes.'},
+      {t:'opp',  ico:'🚀', ti:'Combo familiar Dim Sum dominical',     bo:'Los domingos tu conversión baja 15% pero el ticket sube (familias). Combo familiar Dim Sum para domingo puede capitalizar ese patrón.'},
+    ],
+    reviews:{score:4.6, total:412, dist:[65,22,8,3,2]},
+    reportes:[
+      {mes:'Febrero 2025', ped:718, ven:30874, crec:'+24%', rat:4.5},
+      {mes:'Enero 2025',   ped:579, ven:24897, crec:'+15%', rat:4.5},
+    ],
+    solicitudes:[
+      {txt:'Nueva plataforma: Uber Eats', est:'En evaluación', cls:'bg-b'},
+      {txt:'Campaña Pato Peking',         est:'En proceso',    cls:'bg-b'},
+    ],
+  },
+];
+
+// ═══════════════════════════════════════════════════════════════
+//  APP STATE
+// ═══════════════════════════════════════════════════════════════
+let session    = null;   // {email, allowedBrands}
+let curBrand   = 0;      // index into BRANDS
+let tChart     = null;
+let donut      = null;
+let chatHist   = [];
+let menuFilter = 'all';
+
+// ═══════════════════════════════════════════════════════════════
+//  AUTH
+// ═══════════════════════════════════════════════════════════════
+function doLogin(){
+  const em = document.getElementById('loginEmail').value.trim().toLowerCase();
+  const msg = document.getElementById('loginMsg');
+  const allowed = AUTH[em];
+  if(!allowed){
+    msg.textContent = 'Email no encontrado en el sistema.';
+    msg.className = 'lmsg err';
     return;
   }
-  msg.textContent = "Accediendo...";
-  msg.className = "lmsg lok";
-  currentClient = cl;
-  setTimeout(() => {
-    document.getElementById("login").style.display = "none";
-    document.getElementById("app").classList.add("on");
-    renderAll();
-  }, 500);
+  msg.textContent = 'Verificando acceso...';
+  msg.className = 'lmsg ok';
+  session = {email:em, allowedBrands:allowed};
+  curBrand = allowed[0];
+  document.getElementById('waFloat').href = `https://wa.me/${WA}?text=${encodeURIComponent('Hola! Soy de '+BRANDS[curBrand].name+'. Necesito ayuda.')}`;
+  setTimeout(()=>{
+    document.getElementById('loginScreen').style.display = 'none';
+    document.getElementById('app').classList.add('on');
+    buildDropdown();
+    render();
+  }, 400);
 }
 
-function logoutCliente() {
-  if (!confirm("¿Cerrar sesión?")) return;
-  document.getElementById("app").classList.remove("on");
-  document.getElementById("login").style.display = "flex";
-  currentClient = null;
+function doLogout(){
+  if(!confirm('¿Cerrar sesión?')) return;
+  session = null;
+  document.getElementById('app').classList.remove('on');
+  document.getElementById('loginScreen').style.display = 'flex';
+  document.getElementById('loginMsg').textContent = '';
 }
 
-document.addEventListener("keydown", e => {
-  if (e.key === "Enter" && document.getElementById("login").style.display !== "none") loginCliente();
+document.addEventListener('keydown', e=>{
+  if(e.key==='Enter' && document.getElementById('loginScreen').style.display !== 'none') doLogin();
+  if(e.key==='Escape') document.querySelectorAll('.modal-bg.open').forEach(m=>m.classList.remove('open'));
 });
 
-// ─── NAVIGATION ──────────────────────────────────────────────────────────────
-function goTab(id) {
-  document.querySelectorAll(".tab").forEach(b => b.classList.remove("on"));
-  document.querySelectorAll(".panel").forEach(p => { p.classList.remove("on"); p.classList.remove("fadein"); });
-  const btn = document.querySelector(`.tab[onclick="goTab('${id}')"]`);
-  if (btn) btn.classList.add("on");
-  const p = document.getElementById("t-" + id);
-  if (p) { p.classList.add("on"); void p.offsetWidth; p.classList.add("fadein"); }
+// ═══════════════════════════════════════════════════════════════
+//  BRAND SWITCHER
+// ═══════════════════════════════════════════════════════════════
+function buildDropdown(){
+  const dd = document.getElementById('bdd');
+  dd.innerHTML = session.allowedBrands.map((bi,i)=>{
+    const b = BRANDS[bi];
+    const sub = b.d_ped.startsWith('-')||b.d_ped.startsWith('⚠️')
+      ? `<span style="color:var(--red)">${b.d_ped}</span>` : `<span style="color:var(--green)">${b.d_ped}</span>`;
+    return `<div class="bdi${bi===curBrand?' sel':''}" onclick="switchBrand(${bi})">
+      <div class="bsav" style="background:${b.av}">${b.emoji}</div>
+      <div><div class="bdi-name">${b.name}</div><div class="bdi-sub">${b.plan} · Mes ${b.month} · ${sub.replace(/<[^>]+>/g,'')} </div></div>
+    </div>`;
+  }).join('');
 }
 
-function toggleNotif() {
-  document.getElementById("notif-panel").classList.toggle("on");
-  document.getElementById("notif-dot").style.display = "none";
+function toggleDrop(){
+  document.getElementById('bdd').classList.toggle('open');
 }
-document.addEventListener("click", e => {
-  const np = document.getElementById("notif-panel");
-  if (np.classList.contains("on") && !e.target.closest(".notif-btn") && !e.target.closest(".notif-panel"))
-    np.classList.remove("on");
+document.addEventListener('click',e=>{
+  if(!e.target.closest('.bs') && !e.target.closest('.bdd'))
+    document.getElementById('bdd').classList.remove('open');
 });
 
-// ─── RENDER ALL ───────────────────────────────────────────────────────────────
-function renderAll() {
-  const c = currentClient;
-  document.getElementById("rest-name").textContent = c.restaurante;
-  document.getElementById("greeting-name").textContent = c.nombre;
-  animateNum("stat-pedidos", 0, c.stats.pedidos, "");
-  animateNum("stat-ventas",  0, c.stats.ventas,  "S/ ");
-  document.getElementById("stat-rating").textContent   = c.stats.rating + " ⭐";
-  document.getElementById("stat-ticket").textContent   = "S/ " + c.stats.ticket;
-  document.getElementById("stat-pedidos-d").innerHTML  = '<span class="up">↑ +45% vs mes anterior</span>';
-  document.getElementById("stat-ventas-d").innerHTML   = '<span class="up">↑ +38% vs mes anterior</span>';
-  document.getElementById("stat-rating-d").innerHTML   = '<span class="up">↑ +0.3 vs mes anterior</span>';
-  document.getElementById("stat-ticket-d").innerHTML   = '<span class="up">↑ +8% vs mes anterior</span>';
-  renderBarChart(); renderTopItems(); renderPlatformsMini();
-  renderPlatCards(); renderCredsList();
-  renderCampanas(); renderMenu(); renderReportes();
-  renderVentasChart(); renderHourChart(); renderDayChart();
+function switchBrand(bi){
+  curBrand = bi;
+  chatHist = [];
+  document.getElementById('aiResp').className = 'ai-resp';
+  document.getElementById('bdd').classList.remove('open');
+  buildDropdown();
+  render();
 }
 
-function animateNum(id, from, to, prefix) {
-  const el = document.getElementById(id);
-  const steps = 30, inc = (to - from) / steps;
-  let i = 0;
-  const t = setInterval(() => {
-    i++; const v = Math.round(from + inc * i);
-    el.textContent = prefix + v.toLocaleString();
-    if (i >= steps) { clearInterval(t); el.textContent = prefix + to.toLocaleString(); }
-  }, 22);
+// ═══════════════════════════════════════════════════════════════
+//  TABS
+// ═══════════════════════════════════════════════════════════════
+function openTab(id){
+  document.querySelectorAll('.tab').forEach(t=>t.classList.remove('on'));
+  document.querySelectorAll('.tab-panel').forEach(p=>p.classList.remove('on'));
+  document.querySelector(`.tab[onclick="openTab('${id}')"]`).classList.add('on');
+  document.getElementById('tp-'+id).classList.add('on');
 }
 
-// ─── CHARTS ──────────────────────────────────────────────────────────────────
-function renderBarChart() {
-  const c = currentClient;
-  const max = Math.max(...c.pedidos_hist, ...c.pedidos_prev);
-  document.getElementById("bar-chart").innerHTML = c.pedidos_hist.map((v, i) => {
-    const hp = Math.round((v / max) * 110);
-    const pp = Math.round((c.pedidos_prev[i] / max) * 110);
-    return `<div class="bar-group">
-      <div style="font-size:.65rem;color:var(--soft)">${v}</div>
-      <div class="bar-wrap">
-        <div class="bar tooltip" data-tip="Ant: ${c.pedidos_prev[i]}" style="width:16px;height:${pp}px;background:var(--cream2);border:1px solid #ccc;"></div>
-        <div class="bar tooltip" data-tip="${c.semanas[i]}: ${v} ped." style="width:16px;height:${hp}px;background:var(--red);"></div>
+function setPeriod(btn){
+  document.querySelectorAll('.pb').forEach(b=>b.classList.remove('on'));
+  btn.classList.add('on');
+}
+
+// ═══════════════════════════════════════════════════════════════
+//  RENDER
+// ═══════════════════════════════════════════════════════════════
+function render(){
+  const b = BRANDS[curBrand];
+  // Nav
+  document.getElementById('navAv').textContent = b.emoji;
+  document.getElementById('navAv').style.background = b.av;
+  document.getElementById('navName').textContent = b.name;
+  document.getElementById('navPlan').textContent = `Plan ${b.plan} · Mes ${b.month}`;
+  // WA float
+  document.getElementById('waFloat').href = `https://wa.me/${b.wa}?text=${encodeURIComponent('Hola! Soy de '+b.name+'. Necesito ayuda de mi Growth Manager.')}`;
+
+  // KPIs
+  const kv = [
+    [b.pedidos, b.d_ped], ['S/'+(b.ventas>=1000?(b.ventas/1000).toFixed(1)+'k':b.ventas), b.d_ven],
+    ['S/'+b.ticket, b.d_tick], [b.rating+'⭐', b.d_rat], [b.conv+'%', b.d_conv]
+  ];
+  kv.forEach(([v,d],i)=>{
+    document.getElementById('kpi'+(i+1)).textContent = v;
+    const el = document.getElementById('kpi'+(i+1)+'d');
+    el.textContent = d;
+    el.className = 'kpi-delta ' + (d.startsWith('+')?'up': d.startsWith('-')||d.startsWith('⚠️')?'dn':'neu');
+  });
+
+  renderChannels(b);
+  renderTrend(b);
+  renderDonut(b);
+  renderHeatmap(b);
+  renderMenu(b);
+  renderReviews(b);
+  renderInsights(b);
+  renderReportes(b);
+  renderSofia(b);
+  renderCanalesDetail(b);
+}
+
+function renderChannels(b){
+  document.getElementById('chGrid').innerHTML = b.channels.map(c=>`
+    <div class="ch-card">
+      <div class="ch-head">
+        <div class="ch-dot" style="background:${c.c}"></div>
+        <div class="ch-name">${c.n}</div>
+        <div class="ch-share" style="color:${c.c}">${c.share}%</div>
       </div>
-      <div class="bar-label">${c.semanas[i].split(" ")[0]}</div>
-    </div>`;
-  }).join("");
-}
-
-function renderTopItems() {
-  document.getElementById("top-items").innerHTML = currentClient.top_items.map((it, i) => `
-    <div>
-      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:5px;">
-        <span style="font-size:.84rem;font-weight:500;">${i+1}. ${it.n}</span>
-        <span style="font-size:.78rem;color:var(--soft)">S/ ${it.ventas.toLocaleString()}</span>
+      <div class="ch-bar"><div class="ch-fill" style="width:${c.share}%;background:${c.c}"></div></div>
+      <div class="ch-metrics">
+        <div><div class="cm-l">Pedidos</div><div class="cm-v">${c.pedidos}</div></div>
+        <div><div class="cm-l">Ventas</div><div class="cm-v">S/${c.ventas.toLocaleString()}</div></div>
+        <div><div class="cm-l">Ticket</div><div class="cm-v">S/${c.ticket}</div></div>
+        <div><div class="cm-l">Rating</div><div class="cm-v" style="color:var(--gold)">${c.rating}⭐</div></div>
       </div>
-      <div class="pbar"><div class="pbar-f" style="width:${it.pct*2.8}%;background:${i===0?'var(--red)':i===1?'var(--gold)':'#d1d5db'}"></div></div>
-    </div>`).join("");
+    </div>`).join('');
 }
 
-function renderPlatformsMini() {
-  document.getElementById("platforms-mini").innerHTML = currentClient.plataformas.map(p => `
-    <div style="text-align:center;padding:18px;background:var(--cream2);border-radius:10px;cursor:pointer;" onclick="goTab('plataformas')">
-      <div style="font-size:1.4rem;margin-bottom:8px;">${p.ico}</div>
-      <div style="font-weight:700;margin-bottom:6px;">${p.n}</div>
-      <div style="font-size:.78rem;color:var(--soft);margin-bottom:4px;">${p.pedidos} pedidos</div>
-      <div style="font-size:.82rem;font-weight:600;color:var(--green)">S/ ${p.ventas.toLocaleString()}</div>
-      <div style="font-size:.76rem;color:var(--soft);margin-top:4px">⭐ ${p.rating}</div>
-      <div style="height:4px;background:rgba(0,0,0,.1);border-radius:100px;margin-top:10px;overflow:hidden;">
-        <div style="width:${Math.round((p.pedidos/382)*100)}%;height:100%;background:${p.color};border-radius:100px"></div>
+function renderCanalesDetail(b){
+  document.getElementById('canalesDetail').innerHTML = b.channels.map(c=>`
+    <div class="cw" style="margin-bottom:14px">
+      <div class="sh">
+        <div style="width:10px;height:10px;border-radius:50%;background:${c.c}"></div>
+        <div class="sh-t">${c.n}</div>
+        <span class="badge bg-g" style="margin-left:auto">${c.share}% del mix</span>
       </div>
-    </div>`).join("");
-}
-
-function renderPlatCards() {
-  document.getElementById("plat-cards").innerHTML = currentClient.plataformas.map(p => `
-    <div class="plat-card connected">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px;">
-        <div style="display:flex;align-items:center;gap:10px;">
-          <span style="font-size:1.6rem">${p.ico}</span>
-          <div>
-            <div style="font-weight:700;">${p.n}</div>
-            <div style="font-size:.72rem;color:var(--soft)">Comisión: ${p.comision}</div>
-          </div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px">
+        <div style="text-align:center;padding:14px;background:var(--s2);border-radius:10px">
+          <div style="font-family:'Fraunces',serif;font-size:24px;font-weight:900">${c.pedidos}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:4px">Pedidos/mes</div>
         </div>
-        <span class="bg bg-g">● Activa</span>
-      </div>
-      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;font-size:.82rem;">
-        <div style="background:rgba(0,0,0,.04);border-radius:8px;padding:10px;text-align:center;">
-          <div style="font-weight:700;font-size:1.1rem">${p.pedidos}</div>
-          <div style="color:var(--soft);font-size:.7rem">Pedidos/mes</div>
+        <div style="text-align:center;padding:14px;background:var(--s2);border-radius:10px">
+          <div style="font-family:'Fraunces',serif;font-size:24px;font-weight:900;color:var(--green)">S/${c.ventas.toLocaleString()}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:4px">Ventas</div>
         </div>
-        <div style="background:rgba(0,0,0,.04);border-radius:8px;padding:10px;text-align:center;">
-          <div style="font-weight:700;font-size:1.1rem;color:var(--green)">S/${(p.ventas/1000).toFixed(1)}k</div>
-          <div style="color:var(--soft);font-size:.7rem">Ventas/mes</div>
+        <div style="text-align:center;padding:14px;background:var(--s2);border-radius:10px">
+          <div style="font-family:'Fraunces',serif;font-size:24px;font-weight:900">S/${c.ticket}</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:4px">Ticket avg</div>
         </div>
-      </div>
-      <div style="display:flex;align-items:center;gap:6px;margin-top:12px;font-size:.74rem;color:var(--soft)">
-        <div class="status-dot green"></div> Gestionado por Sazón · ⭐ ${p.rating}
-      </div>
-    </div>`).join("");
-}
-
-function renderCredsList() {
-  document.getElementById("creds-list").innerHTML = currentClient.creds.map(cr => `
-    <div style="display:flex;align-items:center;justify-content:space-between;padding:12px 0;border-bottom:1px solid var(--border);">
-      <div style="display:flex;align-items:center;gap:12px;">
-        <div class="status-dot ${cr.status==='connected'?'green':'yellow'}"></div>
-        <div>
-          <div style="font-weight:600;font-size:.87rem">${cr.plat}</div>
-          <div style="font-size:.74rem;color:var(--soft)">Usuario: ${cr.user}</div>
+        <div style="text-align:center;padding:14px;background:var(--s2);border-radius:10px">
+          <div style="font-family:'Fraunces',serif;font-size:24px;font-weight:900;color:var(--gold)">${c.rating}⭐</div>
+          <div style="font-size:10px;color:var(--muted);margin-top:4px">Rating</div>
         </div>
       </div>
-      <div style="text-align:right;">
-        <span class="bg ${cr.status==='connected'?'bg-g':'bg-o'}">${cr.status==='connected'?'Activa':'Pendiente'}</span>
-        <div style="font-size:.7rem;color:var(--soft);margin-top:3px">Última sync: ${cr.last_sync}</div>
-      </div>
-    </div>`).join("") + `
-    <div style="margin-top:14px;">
-      <button class="btn btn-o btn-sm" onclick="syncPlatforms()">🔄 Sincronizar datos ahora</button>
-    </div>`;
+    </div>`).join('');
 }
 
-function syncPlatforms() {
-  const btn = event.currentTarget;
-  btn.textContent = "⟳ Sincronizando...";
-  btn.disabled = true;
-  setTimeout(() => {
-    btn.textContent = "✅ Sincronizado";
-    setTimeout(() => { btn.textContent = "🔄 Sincronizar datos ahora"; btn.disabled = false; }, 2000);
-  }, 2200);
+function renderTrend(b){
+  const ctx = document.getElementById('trendChart').getContext('2d');
+  const lbs = Array.from({length:14},(_,i)=>'Día '+(i+1));
+  if(tChart) tChart.destroy();
+  tChart = new Chart(ctx,{
+    type:'line',
+    data:{labels:lbs, datasets:[{data:b.trend, borderColor:'#e8501f', backgroundColor:'rgba(232,80,31,.12)', fill:true, tension:.4, pointRadius:0, borderWidth:2}]},
+    options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{display:false,grid:{display:false}},y:{display:false,grid:{display:false}}}}
+  });
 }
 
-function renderCampanas() {
-  document.getElementById("campanas-grid").innerHTML = currentClient.campanas.map(ca => `
-    <div class="camp-card">
-      <div class="camp-plat">${ca.plat}</div>
-      <div style="font-weight:600;margin-bottom:6px">${ca.t}</div>
-      <div style="font-size:.78rem;color:var(--soft);margin-bottom:12px">Vence: ${ca.vence}</div>
-      <div style="display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px">
-        <span class="bg bg-g">Activa</span>
-        <span class="bg bg-k">${ca.tipo}</span>
-      </div>
-      <div style="display:flex;justify-content:space-between;font-size:.82rem;border-top:1px solid var(--border);padding-top:10px">
-        <div><div style="color:var(--soft)">Inversión</div><strong>S/ ${ca.inv.toLocaleString()}</strong></div>
-        <div><div style="color:var(--soft)">Ventas extra</div><strong style="color:var(--green)">S/ ${ca.extra.toLocaleString()}</strong></div>
-        <div><div style="color:var(--soft)">ROAS</div><strong>${ca.roas}x</strong></div>
-      </div>
-    </div>`).join("");
+function renderDonut(b){
+  const ctx = document.getElementById('donutChart').getContext('2d');
+  if(donut) donut.destroy();
+  donut = new Chart(ctx,{
+    type:'doughnut',
+    data:{
+      labels: b.channels.map(c=>c.n),
+      datasets:[{data:b.channels.map(c=>c.share), backgroundColor:b.channels.map(c=>c.c), borderWidth:0}]
+    },
+    options:{responsive:true,maintainAspectRatio:false,cutout:'65%',plugins:{legend:{display:true,position:'bottom',labels:{color:'rgba(238,234,224,.45)',font:{size:10},padding:10,boxWidth:9}}}}
+  });
 }
 
-function renderMenu() {
-  document.getElementById("menu-grid").innerHTML = currentClient.menu.map(m => `
-    <div class="camp-card">
-      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px">
-        <div style="font-weight:600;font-size:.88rem">${m.n}</div>
-        <span class="bg ${m.badge}">${m.badge_t}</span>
-      </div>
-      <div style="font-size:.78rem;color:var(--soft);margin-bottom:8px">S/ ${m.precio}</div>
-      <div style="display:flex;gap:12px;font-size:.78rem">
-        <span>Foto: ${m.foto}</span>
-        <span>Copy: ${m.opt}</span>
-        <span>Ventas: ${m.ventas}</span>
-      </div>
-    </div>`).join("");
+function setChart(mode, btn){
+  document.querySelectorAll('.pill').forEach(p=>p.classList.remove('on'));
+  btn.classList.add('on');
 }
 
-function renderReportes() {
-  document.getElementById("reportes-list").innerHTML = currentClient.reportes.map((r, i) => `
-    <div class="rep-card" onclick="generarPDF('${r.mes}', ${r.pedidos}, ${r.ventas}, '${r.crec}', ${r.rating}, ${r.campanas})">
+function renderHeatmap(b){
+  const grid = document.getElementById('hmGrid');
+  grid.innerHTML = '';
+  const days=['L','M','Mi','J','V','S','D'];
+  const {hrs,d} = b.heatData;
+  // headers
+  const blank = document.createElement('div');
+  blank.className = 'hm-hdr';
+  grid.appendChild(blank);
+  days.forEach(dy=>{
+    const el=document.createElement('div');
+    el.className='hm-hdr';
+    el.textContent=dy;
+    grid.appendChild(el);
+  });
+  hrs.forEach(h=>{
+    const lbl=document.createElement('div');
+    lbl.className='hm-lbl';
+    lbl.textContent=h;
+    grid.appendChild(lbl);
+    for(let i=0;i<7;i++){
+      const v=d[h][i];
+      const intensity=Math.min(v/90,1);
+      const cell=document.createElement('div');
+      cell.className='hm-cell';
+      cell.style.background=`rgba(232,80,31,${0.05+intensity*0.92})`;
+      cell.title=`${days[i]} ${h}: ${v} pedidos`;
+      grid.appendChild(cell);
+    }
+  });
+  // Find peak
+  let maxV=0, maxH='', maxD='';
+  hrs.forEach(h=>{ days.forEach((dy,i)=>{ if(d[h][i]>maxV){maxV=d[h][i];maxH=h;maxD=dy;} }); });
+  document.getElementById('hmInsight').innerHTML = `<strong style="color:var(--acc)">💡 Hora pico detectada:</strong> ${maxD} a las ${maxH} con un promedio de ${maxV} pedidos. Esta es la ventana ideal para activar campañas de visibilidad — los usuarios ya están comprando, un descuento aquí tiene el mayor impacto.`;
+}
+
+function renderReviews(b){
+  const r=b.reviews;
+  document.getElementById('rvScore').textContent=r.score;
+  document.getElementById('rvStars').textContent='★'.repeat(Math.floor(r.score))+(r.score%1>=.5?'☆':'')+'☆'.repeat(5-Math.ceil(r.score));
+  document.getElementById('rvTotal').textContent=`${r.total} reseñas`;
+  const total=r.dist.reduce((a,c)=>a+c,0);
+  document.getElementById('rvBars').innerHTML=[5,4,3,2,1].map((s,i)=>`
+    <div class="rb-row">
+      <div class="rb-lbl">${s}</div>
+      <div class="rb-bar"><div class="rb-fill" style="width:${Math.round(r.dist[i]/total*100)}%"></div></div>
+      <div class="rb-n">${r.dist[i]}</div>
+    </div>`).join('');
+  const pos=Math.round((r.dist[0]+r.dist[1])/total*100);
+  document.getElementById('distCards').innerHTML=[
+    {v:pos+'%',l:'Positivas',c:'var(--green)'},
+    {v:Math.round(r.dist[2]/total*100)+'%',l:'Neutras',c:'var(--gold)'},
+    {v:Math.round((r.dist[3]+r.dist[4])/total*100)+'%',l:'Negativas',c:'var(--red)'},
+  ].map(x=>`<div style="flex:1;background:var(--s2);border-radius:10px;padding:12px;text-align:center;min-width:70px">
+    <div style="font-family:'Fraunces',serif;font-size:22px;font-weight:900;color:${x.c}">${x.v}</div>
+    <div style="font-size:10px;color:var(--muted);margin-top:3px">${x.l}</div>
+  </div>`).join('');
+}
+
+function renderMenu(b){
+  const tbody = document.getElementById('menuBody');
+  const tags={star:'⭐ Estrella',ok:'✓ OK',risk:'⚠️ Riesgo',new:'✨ Nuevo'};
+  const tcls={star:'tag-star',ok:'tag-ok',risk:'tag-risk',new:'tag-new'};
+  tbody.innerHTML = b.menu
+    .filter(m=>menuFilter==='all'||m.st===menuFilter)
+    .map(m=>{
+      const trc=m.trend>0?'tu':m.trend<0?'td':'tn';
+      const trSign=m.trend>0?'↑':m.trend<0?'↓':'→';
+      const pctW=Math.min(m.conv*10,100);
+      const pctC=m.conv>6?'var(--green)':m.conv>4?'var(--gold)':'var(--red)';
+      return `<tr>
+        <td><div class="it-name">${m.n}</div></td>
+        <td>${m.ped}</td>
+        <td><span class="pb-bar"><span class="pb-fill" style="width:${pctW}%;display:block;height:100%;background:${pctC};border-radius:100px"></span></span>${m.conv}%</td>
+        <td>S/${m.tick}</td>
+        <td class="${trc}">${trSign} ${Math.abs(m.trend)}%</td>
+        <td><span class="it-tag ${tcls[m.st]}">${tags[m.st]}</span></td>
+      </tr>`;
+    }).join('');
+}
+
+function filterMenu(f, btn){
+  menuFilter=f;
+  document.querySelectorAll('#tp-menu .pill').forEach(p=>p.classList.remove('on'));
+  btn.classList.add('on');
+  renderMenu(BRANDS[curBrand]);
+}
+
+function renderInsights(b){
+  const cols={opp:'var(--green)',warn:'var(--gold)',alert:'var(--red)',info:'var(--blue)'};
+  const lbls={opp:'OPORTUNIDAD',warn:'ATENCIÓN',alert:'ALERTA',info:'INSIGHT'};
+  document.getElementById('insightsList').innerHTML = b.insights.map(ins=>`
+    <div class="ic">
+      <div class="ic-type" style="color:${cols[ins.t]}">${ins.ico} ${lbls[ins.t]}</div>
+      <div class="ic-title">${ins.ti}</div>
+      <div class="ic-body">${ins.bo}</div>
+      <div class="ic-action" onclick="ask('Dame un análisis completo de: ${ins.ti.replace(/'/g,"\\'")}')">Ver análisis completo →</div>
+    </div>`).join('');
+}
+
+function renderReportes(b){
+  document.getElementById('reportesList').innerHTML = b.reportes.map(r=>`
+    <div class="report-row" onclick="genPDF('${r.mes}',${r.ped},${r.ven},'${r.crec}',${r.rat})">
       <div class="rep-ico">📊</div>
-      <div style="flex:1">
-        <div style="font-weight:600;margin-bottom:3px">${r.mes}</div>
-        <div style="font-size:.78rem;color:var(--soft)">${r.pedidos} pedidos · S/ ${r.ventas.toLocaleString()} · Crecimiento: ${r.crec} · Rating: ⭐${r.rating}</div>
+      <div class="rep-info">
+        <div class="rep-title">${r.mes}</div>
+        <div class="rep-meta">${r.ped} pedidos · S/${r.ven.toLocaleString()} ventas · Crecimiento: ${r.crec} · Rating: ⭐${r.rat}</div>
       </div>
       <div style="display:flex;gap:8px;align-items:center">
-        <span class="bg bg-g">Disponible</span>
-        <button class="btn btn-r btn-sm" onclick="event.stopPropagation();generarPDF('${r.mes}',${r.pedidos},${r.ventas},'${r.crec}',${r.rating},${r.campanas})">📥 Descargar PDF</button>
+        <span class="badge bg-g">Disponible</span>
+        <button class="btn-r" style="padding:7px 14px;font-size:.78rem" onclick="event.stopPropagation();genPDF('${r.mes}',${r.ped},${r.ven},'${r.crec}',${r.rat})">📥 PDF</button>
       </div>
-    </div>`).join("");
+    </div>`).join('');
 }
 
-function renderVentasChart() {
-  const dias = currentClient.ventas_diarias;
-  const max = Math.max(...dias);
-  const labels = [];
-  document.getElementById("ventas-chart").innerHTML = dias.map((v, i) => {
-    labels.push(i % 5 === 0 ? (i+1) + " Feb" : "");
-    const h = Math.round((v / max) * 130);
-    return `<div style="flex:1;display:flex;align-items:flex-end">
-      <div class="tooltip" data-tip="${i+1} Feb: S/${v.toLocaleString()}" style="width:100%;height:${h}px;background:${i===dias.length-1?'var(--red)':'#e8e0d4'};border:1px solid rgba(0,0,0,.06);border-radius:3px 3px 0 0;transition:opacity .2s;cursor:pointer" onmouseover="this.style.opacity=.7" onmouseout="this.style.opacity=1"></div>
-    </div>`;
-  }).join("");
-  document.getElementById("ventas-labels").innerHTML = labels.map(l => `<span>${l}</span>`).join("");
+function renderSofia(b){
+  document.getElementById('sofSolicitudes').innerHTML = (b.solicitudes||[]).map(s=>`
+    <div style="display:flex;justify-content:space-between;align-items:center;padding:10px 12px;background:var(--s2);border-radius:8px;font-size:12px;margin-bottom:6px">
+      <span>${s.txt}</span>
+      <span class="badge ${s.cls}">${s.est}</span>
+    </div>`).join('') || '<div style="font-size:12px;color:var(--muted);padding:8px 0">Sin solicitudes recientes.</div>';
 }
 
-function renderHourChart() {
-  const h = currentClient.by_hour;
-  const max = Math.max(...h);
-  document.getElementById("hour-chart").innerHTML = h.map((v, i) => {
-    const ht = Math.round((v / max) * 85);
-    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">
-      <div style="font-size:.6rem;color:var(--soft)">${v}</div>
-      <div class="tooltip" data-tip="${11+i}:00 — ${v} ped." style="width:100%;height:${ht}px;background:${v>=18?'var(--red)':'#ddd6c8'};border-radius:3px 3px 0 0"></div>
-    </div>`;
-  }).join("");
-}
+// ═══════════════════════════════════════════════════════════════
+//  PDF EXPORT
+// ═══════════════════════════════════════════════════════════════
+function genPDF(mes, pedidos, ventas, crec, rating){
+  const b = BRANDS[curBrand];
+  const m = document.getElementById('m-loading');
+  if(m) m.classList.add('open');
 
-function renderDayChart() {
-  const d = currentClient.by_day;
-  const max = Math.max(...d);
-  const nms = ["Lun","Mar","Mié","Jue","Vie","Sáb","Dom"];
-  document.getElementById("day-chart").innerHTML = d.map((v, i) => {
-    const ht = Math.round((v / max) * 85);
-    return `<div style="flex:1;display:flex;flex-direction:column;align-items:center;gap:3px">
-      <div style="font-size:.6rem;color:var(--soft)">${v}</div>
-      <div class="tooltip" data-tip="${nms[i]}: ${v} ped." style="width:100%;height:${ht}px;background:${i>=4?'var(--red)':'#ddd6c8'};border-radius:3px 3px 0 0"></div>
-    </div>`;
-  }).join("");
-}
+  setTimeout(()=>{
+    try{
+      const {jsPDF}=window.jspdf;
+      const doc=new jsPDF({unit:'mm',format:'a4'});
+      const W=210, ml=20, mr=190;
+      let y=0;
 
-// ─── PDF GENERATION ───────────────────────────────────────────────────────────
-function generarPDF(mes, pedidos, ventas, crec, rating, campanas) {
-  const m = document.getElementById("m-pdf");
-  const st = document.getElementById("pdf-status");
-  m.classList.add("open");
-  st.textContent = "Preparando datos...";
+      // Header
+      doc.setFillColor(232,80,31);
+      doc.rect(0,0,W,40,'F');
+      doc.setFont('helvetica','bold'); doc.setFontSize(20); doc.setTextColor(255,255,255);
+      doc.text('SAZÓN GROWTH PARTNER', ml, 16);
+      doc.setFont('helvetica','normal'); doc.setFontSize(10);
+      doc.text(`Reporte de Rendimiento · ${mes} · ${b.name}`, ml, 26);
+      doc.setFontSize(8);
+      doc.text(`Plan ${b.plan} · Mes ${b.month} con Sazón`, ml, 34);
 
-  setTimeout(() => { st.textContent = "Generando reporte..."; }, 600);
-  setTimeout(() => { st.textContent = "Aplicando formato Sazón..."; }, 1200);
-  setTimeout(() => {
-    try {
-      const { jsPDF } = window.jspdf;
-      const doc = new jsPDF({ unit:"mm", format:"a4" });
-      const W = 210, ml = 20, mr = 190;
-      let y = 0;
+      y=52;
+      doc.setFont('helvetica','bold'); doc.setFontSize(12); doc.setTextColor(26,26,26);
+      doc.text('Resumen Ejecutivo', ml, y); y+=2;
+      doc.setDrawColor(232,80,31); doc.setLineWidth(.5); doc.line(ml,y,mr,y); y+=8;
 
-      // Header fondo rojo
-      doc.setFillColor(200, 57, 43);
-      doc.rect(0, 0, W, 42, "F");
-      doc.setFont("helvetica","bold");
-      doc.setFontSize(22);
-      doc.setTextColor(255,255,255);
-      doc.text("SAZÓN GROWTH PARTNER", ml, 18);
-      doc.setFontSize(11);
-      doc.setFont("helvetica","normal");
-      doc.text("Reporte de Rendimiento · " + mes, ml, 28);
-      doc.setFontSize(9);
-      doc.text("Cliente: " + currentClient.restaurante + " · Plan: " + currentClient.plan, ml, 36);
-
-      y = 54;
-      // Sección: Resumen ejecutivo
-      doc.setFont("helvetica","bold");
-      doc.setFontSize(13);
-      doc.setTextColor(26,26,26);
-      doc.text("Resumen Ejecutivo", ml, y);
-      y += 2;
-      doc.setDrawColor(200,57,43);
-      doc.setLineWidth(0.5);
-      doc.line(ml, y, mr, y);
-      y += 8;
-
-      // Stat boxes
-      const boxes = [
-        {l:"PEDIDOS TOTALES", v: pedidos.toString()},
-        {l:"VENTAS TOTALES", v:"S/ "+ventas.toLocaleString()},
-        {l:"CRECIMIENTO", v:crec},
-        {l:"RATING PROMEDIO", v:"⭐ "+rating},
-      ];
-      const bw = 40, bh = 22, gap = 2;
-      boxes.forEach((b, i) => {
-        const bx = ml + i*(bw+gap);
-        doc.setFillColor(245,239,224);
-        doc.roundedRect(bx, y, bw, bh, 2, 2, "F");
-        doc.setFont("helvetica","bold");
-        doc.setFontSize(14);
-        doc.setTextColor(200,57,43);
-        doc.text(b.v, bx + bw/2, y+13, {align:"center"});
-        doc.setFont("helvetica","normal");
-        doc.setFontSize(6);
-        doc.setTextColor(90,78,62);
-        doc.text(b.l, bx + bw/2, y+20, {align:"center"});
+      // Stats boxes
+      const boxes=[{l:'PEDIDOS',v:String(pedidos)},{l:'VENTAS',v:'S/'+ventas.toLocaleString()},{l:'CRECIMIENTO',v:crec},{l:'RATING',v:'⭐ '+rating}];
+      boxes.forEach((bx,i)=>{
+        const bx2=ml+i*43;
+        doc.setFillColor(245,239,224); doc.roundedRect(bx2,y,40,20,2,2,'F');
+        doc.setFont('helvetica','bold'); doc.setFontSize(13); doc.setTextColor(232,80,31);
+        doc.text(bx.v, bx2+20, y+11, {align:'center'});
+        doc.setFont('helvetica','normal'); doc.setFontSize(6); doc.setTextColor(90,78,62);
+        doc.text(bx.l, bx2+20, y+18, {align:'center'});
       });
-      y += 34;
+      y+=28;
 
-      // Sección: Pedidos por semana
-      doc.setFont("helvetica","bold");
-      doc.setFontSize(11);
-      doc.setTextColor(26,26,26);
-      doc.text("Evolución de Pedidos — Últimas 8 Semanas", ml, y);
-      y += 6;
-      const hist = currentClient.pedidos_hist;
-      const maxH = Math.max(...hist);
-      const chH = 35, chW = mr - ml, barW = chW / hist.length - 2;
-      hist.forEach((v, i) => {
-        const bh2 = (v / maxH) * chH;
-        const bx = ml + i * (chW / hist.length);
-        doc.setFillColor(200,57,43);
-        doc.rect(bx, y + chH - bh2, barW, bh2, "F");
-        doc.setFontSize(6);
-        doc.setTextColor(90,78,62);
-        doc.setFont("helvetica","normal");
-        doc.text(String(v), bx + barW/2, y + chH - bh2 - 1, {align:"center"});
-        doc.text(currentClient.semanas[i].split(" ")[0], bx + barW/2, y + chH + 5, {align:"center"});
+      // Canales
+      doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(26,26,26);
+      doc.text('Rendimiento por Canal', ml, y); y+=6;
+      doc.setFillColor(237,228,206); doc.rect(ml,y,mr-ml,6,'F');
+      ['PLATAFORMA','PEDIDOS','VENTAS','TICKET','RATING'].forEach((h2,i)=>{
+        doc.setFont('helvetica','bold'); doc.setFontSize(7); doc.setTextColor(90,78,62);
+        doc.text(h2, ml+[0,40,75,120,155][i], y+4);
+      }); y+=8;
+      b.channels.forEach(c=>{
+        doc.setFont('helvetica','normal'); doc.setFontSize(9); doc.setTextColor(26,26,26);
+        doc.text(c.n,ml,y+4); doc.text(String(c.pedidos),ml+40,y+4);
+        doc.text('S/'+c.ventas.toLocaleString(),ml+75,y+4); doc.text('S/'+c.ticket,ml+120,y+4);
+        doc.text('★ '+c.rating,ml+155,y+4);
+        doc.setDrawColor(220,213,200); doc.setLineWidth(.2); doc.line(ml,y+7,mr,y+7);
+        y+=8;
       });
-      y += chH + 12;
+      y+=4;
 
-      // Sección: Plataformas
-      doc.setFont("helvetica","bold");
-      doc.setFontSize(11);
-      doc.setTextColor(26,26,26);
-      doc.text("Rendimiento por Plataforma", ml, y);
-      y += 6;
-      doc.setFillColor(237,228,206);
-      doc.rect(ml, y, mr-ml, 7, "F");
-      ["PLATAFORMA","PEDIDOS","VENTAS","RATING","COMISIÓN"].forEach((h2, i) => {
-        doc.setFont("helvetica","bold"); doc.setFontSize(7); doc.setTextColor(90,78,62);
-        doc.text(h2, ml + [0,32,66,110,145][i], y+5);
-      });
-      y += 9;
-      currentClient.plataformas.forEach(p => {
-        doc.setFont("helvetica","normal"); doc.setFontSize(8.5); doc.setTextColor(26,26,26);
-        doc.text(p.n, ml, y+4);
-        doc.text(String(p.pedidos), ml+32, y+4);
-        doc.text("S/ "+p.ventas.toLocaleString(), ml+66, y+4);
-        doc.text("★ "+p.rating, ml+110, y+4);
-        doc.text(p.comision, ml+145, y+4);
-        doc.setDrawColor(220,213,200); doc.setLineWidth(0.2);
-        doc.line(ml, y+7, mr, y+7);
-        y += 8;
-      });
-      y += 4;
-
-      // Sección: Campañas
-      doc.setFont("helvetica","bold");
-      doc.setFontSize(11);
-      doc.setTextColor(26,26,26);
-      doc.text("Campañas del Mes", ml, y);
-      y += 6;
-      doc.setFillColor(237,228,206);
-      doc.rect(ml, y, mr-ml, 7, "F");
-      ["CAMPAÑA","PLATAFORMA","INVERSIÓN","VENTAS EXTRA","ROAS"].forEach((h3, i) => {
-        doc.setFont("helvetica","bold"); doc.setFontSize(7); doc.setTextColor(90,78,62);
-        doc.text(h3, ml + [0,60,95,125,165][i], y+5);
-      });
-      y += 9;
-      currentClient.campanas.forEach(ca => {
-        doc.setFont("helvetica","normal"); doc.setFontSize(8); doc.setTextColor(26,26,26);
-        doc.text(ca.t.substring(0,28), ml, y+4);
-        doc.text(ca.plat, ml+60, y+4);
-        doc.text("S/"+ca.inv, ml+95, y+4);
-        doc.text("S/"+ca.extra, ml+125, y+4);
-        doc.text(ca.roas+"x", ml+165, y+4);
-        doc.setDrawColor(220,213,200); doc.setLineWidth(0.2);
-        doc.line(ml, y+7, mr, y+7);
-        y += 8;
-      });
-      y += 8;
-
-      // Recomendaciones
-      doc.setFillColor(200,57,43);
-      doc.rect(0, y, W, 6, "F");
-      y += 12;
-      doc.setFont("helvetica","bold"); doc.setFontSize(11); doc.setTextColor(26,26,26);
-      doc.text("Recomendaciones para el Próximo Mes", ml, y);
-      y += 7;
-      const recs = [
-        "1. Subir foto del Combo Premium para activar campaña en Rappi (potencial +S/1,800/mes)",
-        "2. Ampliar descuento a PedidosYa — tendencia creciente sugiere mayor conversión",
-        "3. Revisar descripción de Bebida del día — foto mejorable afecta clics",
-        "4. Evaluar campaña '2x1 lunes' en Didi Food para aumentar volumen en días bajos",
-      ];
-      recs.forEach(r => {
-        doc.setFont("helvetica","normal"); doc.setFontSize(8.5); doc.setTextColor(26,26,26);
-        doc.text(r, ml, y); y += 7;
+      // Insights
+      doc.setFont('helvetica','bold'); doc.setFontSize(11); doc.setTextColor(26,26,26);
+      doc.text('Insights y Recomendaciones', ml, y); y+=6;
+      b.insights.forEach((ins,i)=>{
+        doc.setFont('helvetica','bold'); doc.setFontSize(9); doc.setTextColor(232,80,31);
+        doc.text(`${i+1}. ${ins.ti}`, ml, y); y+=5;
+        doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(90,78,62);
+        const lines=doc.splitTextToSize(ins.bo, mr-ml-5);
+        doc.text(lines, ml+5, y); y+=lines.length*5+3;
       });
 
       // Footer
-      doc.setFillColor(26,26,26);
-      doc.rect(0, 277, W, 20, "F");
-      doc.setFont("helvetica","normal"); doc.setFontSize(8); doc.setTextColor(255,255,255);
-      doc.text("Sazón Growth Partner · comercial@sazonpartner.com", ml, 287);
-      doc.setTextColor(200,57,43);
-      doc.text("sazonpartner.com", mr, 287, {align:"right"});
+      doc.setFillColor(26,26,26); doc.rect(0,274,W,23,'F');
+      doc.setFont('helvetica','normal'); doc.setFontSize(8); doc.setTextColor(255,255,255);
+      doc.text('Sazón Growth Partner · comercial@sazonpartner.com · sazonpartner.com', ml, 284);
+      doc.setTextColor(232,80,31);
+      doc.text('Confidencial — solo para uso del cliente', mr, 284, {align:'right'});
 
-      doc.save("Sazon_Reporte_" + mes.replace(/ /g,"_") + ".pdf");
-      m.classList.remove("open");
-    } catch(e) {
-      console.error(e);
-      st.textContent = "Error al generar. Intentando alternativa...";
-      setTimeout(() => { m.classList.remove("open"); imprimirReporte(mes, pedidos, ventas, crec, rating); }, 800);
+      doc.save(`Sazon_${b.name.replace(/ /g,'_')}_${mes.replace(/ /g,'_')}.pdf`);
+    }catch(e){
+      // Fallback: print page
+      window.print();
     }
-  }, 1800);
+    if(m) m.classList.remove('open');
+  }, 800);
 }
 
-function imprimirReporte(mes, pedidos, ventas, crec, rating) {
-  const w = window.open("", "_blank");
-  w.document.write(`<!DOCTYPE html><html><head><title>Reporte ${mes} - ${currentClient.restaurante}</title>
-  <style>
-    body{font-family:Arial,sans-serif;margin:0;padding:0;color:#1A1A1A;}
-    .header{background:#C8392B;color:white;padding:30px 40px;}
-    .header h1{margin:0;font-size:24px;}
-    .header p{margin:8px 0 0;opacity:.8;}
-    .body{padding:30px 40px;}
-    .stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:20px 0;}
-    .stat{background:#F5EFE0;padding:16px;border-radius:8px;text-align:center;}
-    .stat-n{font-size:22px;font-weight:700;color:#C8392B;}
-    .stat-l{font-size:11px;color:#5A4E3E;text-transform:uppercase;margin-top:4px;}
-    table{width:100%;border-collapse:collapse;margin:16px 0;}
-    th{background:#EDE4CE;padding:8px 12px;text-align:left;font-size:11px;}
-    td{padding:8px 12px;border-bottom:1px solid #f0e8d8;}
-    h2{color:#C8392B;border-bottom:2px solid #C8392B;padding-bottom:6px;}
-    @media print{button{display:none}}
-  </style></head><body>
-  <div class="header">
-    <h1>Sazón Growth Partner</h1>
-    <p>Reporte de Rendimiento · ${mes} · ${currentClient.restaurante}</p>
-  </div>
-  <div class="body">
-    <div class="stats">
-      <div class="stat"><div class="stat-n">${pedidos}</div><div class="stat-l">Pedidos</div></div>
-      <div class="stat"><div class="stat-n">S/ ${ventas.toLocaleString()}</div><div class="stat-l">Ventas</div></div>
-      <div class="stat"><div class="stat-n">${crec}</div><div class="stat-l">Crecimiento</div></div>
-      <div class="stat"><div class="stat-n">⭐ ${rating}</div><div class="stat-l">Rating</div></div>
-    </div>
-    <h2>Plataformas</h2>
-    <table><tr><th>Plataforma</th><th>Pedidos</th><th>Ventas</th><th>Rating</th></tr>
-    ${currentClient.plataformas.map(p=>`<tr><td>${p.n}</td><td>${p.pedidos}</td><td>S/ ${p.ventas.toLocaleString()}</td><td>⭐ ${p.rating}</td></tr>`).join("")}
-    </table>
-    <button onclick="window.print()" style="background:#C8392B;color:white;border:none;padding:12px 28px;border-radius:8px;font-size:14px;cursor:pointer;margin-top:8px;">🖨️ Imprimir / Guardar como PDF</button>
-  </div></body></html>`);
-  w.document.close();
+function exportPDF(){
+  const b=BRANDS[curBrand];
+  const r=b.reportes[0];
+  if(r) genPDF(r.mes, r.ped, r.ven, r.crec, r.rat);
 }
 
-// ─── EXPORTAR CSV ────────────────────────────────────────────────────────────
-function exportarVentasCSV() {
-  const rows = [
-    ["Fecha","Plataforma","Pedidos","Ventas (S/)","Ticket Promedio","Rating"],
-    ["24 Feb","Rappi","22","1056","48","4.9"],
-    ["23 Feb","PedidosYa","15","660","44","4.7"],
-    ["23 Feb","Rappi","28","1428","51","4.8"],
-    ["22 Feb","Rappi","19","855","45","5.0"],
-    ["21 Feb","Didi Food","11","473","43","4.6"],
-    ["20 Feb","Rappi","25","1175","47","4.8"],
-    ["19 Feb","PedidosYa","18","774","43","4.9"],
-  ];
-  const csv = rows.map(r => r.join(",")).join("\n");
-  const blob = new Blob(["\uFEFF"+csv], {type:"text/csv;charset=utf-8"});
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url; a.download = "MrSmash_Ventas_Febrero2025.csv";
+// ═══════════════════════════════════════════════════════════════
+//  SOFIA / WA
+// ═══════════════════════════════════════════════════════════════
+const WA_LINK = `https://wa.me/${WA}`;
+function sofiaWA(tipo){
+  const b=BRANDS[curBrand];
+  const txt=encodeURIComponent(`Hola! Soy de ${b.name}. Quiero: ${tipo}.`);
+  openWA(WA_LINK+'?text='+txt);
+}
+function scheduleReview(){
+  const b=BRANDS[curBrand];
+  const txt=encodeURIComponent(`Hola! Soy de ${b.name}. Quiero agendar mi reunión de seguimiento mensual. ¿Cuándo tienen disponibilidad?`);
+  openWA(WA_LINK+'?text='+txt);
+}
+function sendSofia(){
+  const tipo=document.getElementById('sofTipo').value;
+  const msg=document.getElementById('sofMsg').value.trim();
+  const b=BRANDS[curBrand];
+  const txt=encodeURIComponent(`Hola! Soy de ${b.name}.\n\nConsulta: ${tipo}${msg?'\n\n'+msg:''}`);
+  openWA(WA_LINK+'?text='+txt);
+  document.getElementById('sofMsg').value='';
+}
+function openWA(url){
+  const a=document.createElement('a');
+  a.href=url; a.target='_blank'; a.rel='noopener noreferrer';
   document.body.appendChild(a); a.click();
-  setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 200);
+  setTimeout(()=>{ try{document.body.removeChild(a);}catch{} },200);
 }
 
-// ─── CALENDARIO ──────────────────────────────────────────────────────────────
-const SLOTS_DISP = {
-  // dias disponibles por dia del mes (usando numero de dia como key)
-  3:[" 9:00 AM","10:30 AM","3:00 PM"], 4:[" 9:00 AM","11:00 AM"],
-  5:["10:00 AM","2:00 PM","4:00 PM"],  6:[" 9:00 AM","11:30 AM","3:30 PM"],
-  7:["10:00 AM","4:00 PM"],
-  10:["9:00 AM","11:00 AM","3:00 PM"], 11:["10:30 AM","2:00 PM"],
-  12:["9:00 AM","3:00 PM","5:00 PM"],  13:["11:00 AM","4:00 PM"],
-  14:["9:00 AM","10:30 AM"],
-};
-const TAKEN = {4:["9:00 AM"], 10:["11:00 AM"]};
-let calYear = 2025, calMonth = 2; // 0-indexed: 2=marzo
-let selDay = null, selTime = null;
-
-function openCal() {
-  selDay = null; selTime = null;
-  document.getElementById("cal-slots-wrap").style.display = "none";
-  document.getElementById("cal-confirm").style.display = "none";
-  renderCal();
-  document.getElementById("m-cal").classList.add("open");
+// ═══════════════════════════════════════════════════════════════
+//  NOTIFICACIONES
+// ═══════════════════════════════════════════════════════════════
+function toggleNotif(){
+  const m=document.getElementById('m-notif');
+  const b=BRANDS[curBrand];
+  document.getElementById('notifList').innerHTML = [
+    {t:'📊 Reporte mensual disponible',  sub:'Tu reporte de este mes está listo para descargar.', dt:'Hoy 8:00am', new:true},
+    {t:'💡 Nuevo insight de Sofia',       sub:b.insights[0].ti, dt:'Hoy 9:15am', new:true},
+    {t:'✅ Campaña activa',               sub:'Tu campaña en '+(b.channels[0]?.n||'Rappi')+' está generando ventas.', dt:'Ayer', new:false},
+  ].map(n=>`<div style="padding:12px 0;border-bottom:1px solid var(--bd);${n.new?'':'opacity:.6'}">
+    <div style="font-size:12.5px;font-weight:600;margin-bottom:3px">${n.t}</div>
+    <div style="font-size:11px;color:var(--muted);margin-bottom:3px">${n.sub}</div>
+    <div style="font-size:10px;color:var(--dim)">${n.dt}</div>
+  </div>`).join('');
+  m.classList.add('open');
+  document.getElementById('notifDot').style.display='none';
 }
-
-function renderCal() {
-  const months = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
-  document.getElementById("cal-mes-label").textContent = months[calMonth] + " " + calYear;
-  const firstDay = new Date(calYear, calMonth, 1).getDay();
-  const daysInMonth = new Date(calYear, calMonth+1, 0).getDate();
-  const today = new Date();
-  let html = "";
-  for (let i = 0; i < firstDay; i++) html += `<button class="cal-day empty" disabled></button>`;
-  for (let d = 1; d <= daysInMonth; d++) {
-    const date = new Date(calYear, calMonth, d);
-    const isPast = date < new Date(today.getFullYear(), today.getMonth(), today.getDate());
-    const isToday = d===today.getDate() && calMonth===today.getMonth() && calYear===today.getFullYear();
-    const hasSlot = SLOTS_DISP[d];
-    const isSel = d === selDay;
-    const dayOfWeek = date.getDay();
-    const isWeekend = dayOfWeek===0 || dayOfWeek===6;
-    let cls = "cal-day";
-    if (isPast || isWeekend) cls += " past";
-    else if (hasSlot) cls += " has-slot";
-    if (isToday) cls += " today";
-    if (isSel) cls += " selected";
-    const disabled = isPast || isWeekend ? "disabled" : "";
-    html += `<button class="${cls}" ${disabled} onclick="selectDay(${d})">${d}</button>`;
-  }
-  document.getElementById("cal-grid").innerHTML = html;
-}
-
-function calPrev() {
-  calMonth--; if (calMonth < 0) { calMonth = 11; calYear--; }
-  selDay = null; renderCal();
-  document.getElementById("cal-slots-wrap").style.display = "none";
-  document.getElementById("cal-confirm").style.display = "none";
-}
-function calNext() {
-  calMonth++; if (calMonth > 11) { calMonth = 0; calYear++; }
-  selDay = null; renderCal();
-  document.getElementById("cal-slots-wrap").style.display = "none";
-  document.getElementById("cal-confirm").style.display = "none";
-}
-
-function selectDay(d) {
-  selDay = d; selTime = null;
-  renderCal();
-  const slots = SLOTS_DISP[d];
-  const wrap = document.getElementById("cal-slots-wrap");
-  const slotsEl = document.getElementById("cal-slots");
-  const months = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
-  if (!slots) {
-    wrap.style.display = "block";
-    document.getElementById("cal-slots-title").textContent = "Sin disponibilidad este día";
-    slotsEl.innerHTML = `<div style="grid-column:1/-1;font-size:.84rem;color:var(--soft);padding:10px 0;">No hay horarios disponibles. Elige otro día.</div>`;
-    return;
-  }
-  const taken = TAKEN[d] || [];
-  document.getElementById("cal-slots-title").textContent = months[calMonth] + " " + d + " — Horarios disponibles";
-  slotsEl.innerHTML = slots.map(s => {
-    const isTaken = taken.includes(s.trim());
-    return `<button class="time-slot${isTaken?' taken':''}" ${isTaken?'disabled':''} onclick="selectTime('${s}','${months[calMonth]} ${d}')">${s}${isTaken?'<br><span style="font-size:.65rem">Ocupado</span>':''}</button>`;
-  }).join("");
-  wrap.style.display = "block";
-  document.getElementById("cal-confirm").style.display = "none";
-}
-
-function selectTime(time, dateStr) {
-  selTime = time;
-  document.querySelectorAll(".time-slot").forEach(b => b.classList.remove("sel"));
-  event.currentTarget.classList.add("sel");
-  const months = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
-  document.getElementById("cal-confirm-text").innerHTML =
-    `<strong>Reunión seleccionada:</strong><br>${months[calMonth]} ${selDay}, ${calYear} · ${time.trim()}<br><br>Tu Growth Manager confirmará la disponibilidad por WhatsApp.`;
-  document.getElementById("cal-confirm").style.display = "block";
-}
-
-function confirmarReunion() {
-  const months = ["Enero","Febrero","Marzo","Abril","Mayo","Junio","Julio","Agosto","Septiembre","Octubre","Noviembre","Diciembre"];
-  const txt = encodeURIComponent(
-    "Hola, soy " + currentClient.nombre + " de " + currentClient.restaurante + ".\n\n" +
-    "Quiero agendar una reunión de seguimiento:\n" +
-    "📅 Fecha: " + months[calMonth] + " " + selDay + ", " + calYear + "\n" +
-    "🕐 Hora: " + selTime.trim() + "\n\n" +
-    "Por favor confirmar disponibilidad."
-  );
-  document.getElementById("m-cal").classList.remove("open");
-  window.open("https://wa.me/" + WA_NUMBER + "?text=" + txt, "_blank", "noopener,noreferrer");
-}
-
-function agregarCalGoogle() {
-  // Pre-fill con la próxima reunión conocida
-  const dtStart = "20250228T100000";
-  const dtEnd   = "20250228T110000";
-  const title   = encodeURIComponent("Reunión Sazón · " + currentClient.restaurante);
-  const details = encodeURIComponent("Revisión de métricas de febrero + plan de campañas para marzo\n\nGrowth Manager: Equipo Sazón\n\nSazón Growth Partner · sazonpartner.com");
-  const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${title}&dates=${dtStart}/${dtEnd}&details=${details}`;
-  window.open(url, "_blank", "noopener,noreferrer");
-}
-
-// ─── FOTOS ────────────────────────────────────────────────────────────────────
-function handleFiles(files) {
-  uploadedFiles = Array.from(files);
-  const preview = document.getElementById("fotos-preview");
-  preview.innerHTML = "";
-  uploadedFiles.forEach(f => {
-    const url = URL.createObjectURL(f);
-    preview.innerHTML += `<div style="position:relative">
-      <img src="${url}" style="width:80px;height:80px;object-fit:cover;border-radius:8px;border:2px solid var(--border)">
-      <div style="font-size:.65rem;color:var(--soft);margin-top:4px;text-align:center;max-width:80px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${f.name}</div>
-    </div>`;
-  });
-  if (uploadedFiles.length) {
-    document.getElementById("upload-zone").style.borderColor = "var(--green)";
-  }
-}
-function handleDrop(e) {
-  e.preventDefault();
-  document.getElementById("upload-zone").classList.remove("drag");
-  handleFiles(e.dataTransfer.files);
-}
-
-function enviarFotos() {
-  const plato = document.getElementById("foto-plato").value.trim();
-  const desc = document.getElementById("foto-desc").value.trim();
-  if (!plato) { document.getElementById("foto-plato").focus(); return; }
-  const msg = encodeURIComponent(
-    "Hola! Envío foto(s) de menú para " + currentClient.restaurante + ".\n\n" +
-    "Plato: " + plato + (desc ? "\nDescripción: " + desc : "") + "\n\n" +
-    (uploadedFiles.length ? "Adjunto " + uploadedFiles.length + " foto(s) en este mensaje." : "")
-  );
-  document.getElementById("m-fotos").classList.remove("open");
-  window.open("https://wa.me/" + WA_NUMBER + "?text=" + msg, "_blank", "noopener,noreferrer");
-  // Reset
-  document.getElementById("foto-plato").value = "";
-  document.getElementById("foto-desc").value = "";
-  document.getElementById("fotos-preview").innerHTML = "";
-  document.getElementById("upload-zone").style.borderColor = "";
-  uploadedFiles = [];
-}
-
-// ─── SOPORTE / CAMPAÑAS ───────────────────────────────────────────────────────
-function sendSoporte() {
-  const tipo = document.getElementById("sop-tipo").value;
-  const msg  = document.getElementById("sop-msg").value.trim();
-  const txt  = encodeURIComponent(
-    "Hola, soy " + currentClient.nombre + " de " + currentClient.restaurante + ".\n\n" +
-    "Consulta: " + tipo + (msg ? "\n\nDetalle: " + msg : "")
-  );
-  window.open("https://wa.me/" + WA_NUMBER + "?text=" + txt, "_blank", "noopener,noreferrer");
-  document.getElementById("sop-msg").value = "";
-}
-
-function contactarWA() {
-  const txt = encodeURIComponent("Hola, soy " + currentClient.nombre + " de " + currentClient.restaurante + ". ¿Está disponible?");
-  window.open("https://wa.me/" + WA_NUMBER + "?text=" + txt, "_blank", "noopener,noreferrer");
-}
-
-function solicitarCampana() {
-  document.getElementById("m-campana").classList.add("open");
-}
-
-function enviarSolicitudCampana() {
-  const plat = document.getElementById("camp-plat").value;
-  const tipo = document.getElementById("camp-tipo").value;
-  const inv  = document.getElementById("camp-inv").value;
-  const dur  = document.getElementById("camp-dur").value;
-  const nota = document.getElementById("camp-nota").value.trim();
-  const txt  = encodeURIComponent(
-    "Hola, soy " + currentClient.nombre + " de " + currentClient.restaurante + ". Quiero solicitar una campaña:\n\n" +
-    "📣 Plataforma: " + plat + "\n" +
-    "🏷️ Tipo: " + tipo + "\n" +
-    "💰 Inversión: S/ " + (inv||"a definir") + "\n" +
-    "📅 Duración: " + dur + (nota ? "\n📝 Nota: " + nota : "")
-  );
-  document.getElementById("m-campana").classList.remove("open");
-  window.open("https://wa.me/" + WA_NUMBER + "?text=" + txt, "_blank", "noopener,noreferrer");
-}
-
-// ─── UTIL ─────────────────────────────────────────────────────────────────────
-function renderVentasPanel() {
-  // Actualizar stats según mes seleccionado
-  const mes = document.getElementById("ventas-mes").value;
-  const data = {
-    feb:{t:"S/ 18,420",p:"382",tk:"S/ 48"},
-    ene:{t:"S/ 12,816",p:"267",tk:"S/ 48"},
-    dic:{t:"S/ 9,360", p:"195",tk:"S/ 48"},
-  };
-  const d = data[mes];
-  document.getElementById("v-total").textContent   = d.t;
-  document.getElementById("v-pedidos").textContent = d.p;
-  document.getElementById("v-ticket").textContent  = d.tk;
-}
-
-// Cerrar modales con ESC o click fuera
-document.addEventListener("keydown", e => {
-  if (e.key==="Escape") document.querySelectorAll(".modal-bg.open").forEach(m=>m.classList.remove("open"));
-  if (e.key==="Enter" && document.getElementById("login").style.display !== "none") loginCliente();
+document.addEventListener('click',e=>{
+  if(e.target.id==='m-notif') document.getElementById('m-notif').classList.remove('open');
 });
-document.querySelectorAll(".modal-bg").forEach(mb => {
-  mb.addEventListener("click", e => { if (e.target === mb && mb.id !== "m-pdf") mb.classList.remove("open"); });
-});
-</script>
-</body>
-</html>
+
+// ═══════════════════════════════════════════════════════════════
+//  ASK AI (Gemini / Fallback)
+// ═══════════════════════════════════════════════════════════════
+async function ask(q){
+  if(!q.trim()) return;
+  document.getElementById('askInp').value='';
+  const resp=document.getElementById('aiResp');
+  resp.className='ai-resp on';
+  resp.innerHTML='<div class="ai-thinking"><div class="spin"></div>Analizando tus datos...</div>';
+
+  const b=BRANDS[curBrand];
+  const ctx=`Eres Sofia, la Growth Manager de IA de Sazón Growth Partner. Analiza los datos reales del restaurante "${b.name}" y responde en español con lenguaje claro para el dueño del restaurante. Máximo 4-5 líneas. Sin markdown.\n\nDatos actuales:\n- Pedidos: ${b.pedidos} (${b.d_ped})\n- Ventas: S/${b.ventas} (${b.d_ven})\n- Ticket: S/${b.ticket}, Rating: ${b.rating}/5, Conversión: ${b.conv}%\n- Canales: ${b.channels.map(c=>`${c.n} (${c.share}%, ${c.pedidos} ped, ⭐${c.rating})`).join(', ')}\n- Menú top: ${b.menu.map(m=>`${m.n} (${m.ped} ped, conv ${m.conv}%, trend ${m.trend>0?'+':''}${m.trend}%)`).join('; ')}`;
+
+  chatHist.push({role:'user',content:q});
+
+  // Try Gemini first (free)
+  if(GEMINI_KEY){
+    try{
+      const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`,{
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body:JSON.stringify({system_instruction:{parts:[{text:ctx}]}, contents:chatHist.map(m=>({role:m.role==='assistant'?'model':'user',parts:[{text:m.content}]})), generationConfig:{maxOutputTokens:300,temperature:.75}})
+      });
+      const d=await r.json();
+      const rep=d.candidates?.[0]?.content?.parts?.[0]?.text;
+      if(rep){ chatHist.push({role:'assistant',content:rep}); resp.textContent=rep; return; }
+    }catch(e){}
+  }
+
+  // Fallback inteligente sin API
+  const fallbackResp = sofiaSmart(q, b);
+  chatHist.push({role:'assistant',content:fallbackResp});
+  resp.textContent=fallbackResp;
+}
+
+function sofiaSmart(q, b){
+  const ql=q.toLowerCase();
+  if(/martes|bajaron|caída|caida|baj/.test(ql)){
+    const lowDay=b.heatData?.d;
+    return `Mirando el heatmap, los martes tienen menor actividad. Tu pico real está en ${b.channels[0]?.n||'Rappi'} los viernes y sábados. Para recuperar el martes, una campaña flash en horario de almuerzo (12-2pm) suele generar entre 15-25 pedidos adicionales en ese día.`;
+  }
+  if(/ítem|item|promover|campaña/.test(ql)){
+    const star=b.menu.find(m=>m.st==='star')||b.menu[0];
+    return `Este fin de semana recomiendo enfocarte en "${star.n}" — tiene ${star.conv}% de conversión y tendencia ${star.trend>0?'positiva +'+star.trend+'%':'estable'}. Una campaña de descuento del 15% en ese ítem en ${b.channels[0]?.n||'Rappi'} puede generar entre 20-35 pedidos adicionales.`;
+  }
+  if(/hora|horario|mejor momento|cuándo/.test(ql)){
+    return `Tu mejor ventana para campañas es justo antes de tu hora pico. Si tu pico es a las 7pm, activa la campaña a las 6pm. El algoritmo de ${b.channels[0]?.n||'Rappi'} favorece los restaurantes con campañas activas en las horas de mayor demanda — la visibilidad sube hasta 3x.`;
+  }
+  if(/rating|reseña|calificación/.test(ql)){
+    const r=b.reviews;
+    const neg=r.dist[3]+r.dist[4];
+    return `Tienes ${r.score}/5 con ${r.total} reseñas y ${neg} negativas. Responder las negativas en menos de 24h puede subir tu rating entre 0.2-0.4 puntos en 30 días. Sofia puede redactar las respuestas para tu aprobación — ¿quieres que las preparemos?`;
+  }
+  const top=b.insights[0];
+  return `Basado en tus datos actuales: ${top.bo} ¿Quieres que profundice en algún aspecto específico?`;
+}
+
+async function regen(){
+  const btn=event.currentTarget;
+  btn.textContent='⏳ Generando...'; btn.disa
