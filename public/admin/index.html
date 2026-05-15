@@ -32,7 +32,7 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif;}
 ::-webkit-scrollbar{width:5px;height:5px;}
 ::-webkit-scrollbar-track{background:transparent;}
 ::-webkit-scrollbar-thumb{background:rgba(255,255,255,.1);border-radius:10px;}
-
+ 
 /* ── LOGIN ── */
 #login{position:fixed;inset:0;background:var(--bg);z-index:9999;display:flex;align-items:center;justify-content:center;}
 .lcard{width:420px;background:var(--bg3);border:1px solid var(--border2);border-radius:20px;padding:44px;box-shadow:0 40px 100px rgba(0,0,0,.7);}
@@ -53,11 +53,11 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif;}
 .code-box p{font-size:.74rem;color:var(--muted);margin-bottom:8px;}
 .code-val{font-family:'DM Mono',monospace;font-size:2.2rem;font-weight:700;color:var(--gold);letter-spacing:.35em;}
 .code-note{font-size:.68rem;color:var(--dim);margin-top:5px;}
-
+ 
 /* ── APP ── */
 #app{display:none;height:100vh;overflow:hidden;}
 #app.on{display:grid;grid-template-columns:240px 1fr;}
-
+ 
 /* ── SIDEBAR ── */
 .sb{background:var(--bg2);border-right:1px solid var(--border);display:flex;flex-direction:column;height:100vh;overflow-y:auto;}
 .sb-top{padding:20px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:11px;flex-shrink:0;}
@@ -74,14 +74,14 @@ input,select,textarea,button{font-family:'DM Sans',sans-serif;}
 .sb-foot{padding:12px;border-top:1px solid var(--border);}
 .logout{display:flex;align-items:center;gap:8px;padding:9px 10px;font-size:.8rem;color:var(--muted);cursor:pointer;background:none;border:none;width:100%;transition:color .2s;}
 .logout:hover{color:#f87171;}
-
+ 
 /* ── CONTENT ── */
 .cnt{display:flex;flex-direction:column;height:100vh;overflow:hidden;}
 .topbar{display:flex;align-items:center;justify-content:space-between;padding:13px 26px;border-bottom:1px solid var(--border);background:rgba(10,10,10,.85);backdrop-filter:blur(8px);flex-shrink:0;}
 .topbar h2{font-size:.98rem;font-weight:600;color:white;}
 .topbar-sub{font-size:.72rem;color:var(--muted);margin-top:1px;}
 .main{flex:1;overflow-y:auto;padding:22px 26px;}
-
+ 
 /* ── COMPONENTS ── */
 .card{background:var(--bg3);border:1px solid var(--border);border-radius:14px;padding:20px 22px;}
 .ct{font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--dim);margin-bottom:14px;}
@@ -152,7 +152,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
 </style>
 </head>
 <body>
-
+ 
 <!-- ═══ LOGIN ═══ -->
 <div id="login">
   <div class="lcard">
@@ -161,7 +161,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
       <div class="lh">Saz<span style="font-family:'DM Sans',sans-serif">ó</span>n<span>.</span></div>
       <div class="lsub">Panel Admin · Acceso restringido</div>
     </div>
-
+ 
     <div id="step1">
       <div class="lf">
         <label>Email del administrador</label>
@@ -170,7 +170,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
       <button class="lbtn" onclick="sendCode()">Enviar codigo de acceso</button>
       <div id="lmsg1" class="lmsg" style="margin-top:8px;font-size:.78rem;text-align:center;"></div>
     </div>
-
+ 
     <div id="step2" style="display:none;">
       <div class="code-box" id="cbox">
         <p style="font-size:.75rem;color:rgba(238,234,224,.5);margin-bottom:10px">Tu código de acceso es:</p>
@@ -187,10 +187,10 @@ tr:hover td{background:rgba(255,255,255,.02);}
     </div>
   </div>
 </div>
-
+ 
 <!-- ═══ APP ═══ -->
 <div id="app">
-
+ 
   <aside class="sb">
     <div class="sb-top">
       <div class="sb-av">GC</div>
@@ -203,7 +203,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
       <button class="sb-btn" onclick="go('leads')"><span class="sb-ico">🎯</span>Leads</button>
       <button class="sb-btn" onclick="go('carlos')"><span class="sb-ico">🤖</span>Bot Carlos</button>
       <button class="sb-btn" onclick="go('auto')"><span class="sb-ico">⚡</span>Automatizacion</button>
-
+ 
       <div class="sb-sec">Operaciones</div>
       <button class="sb-btn" onclick="go('reportes')"><span class="sb-ico">📈</span>Reportes</button>
       <button class="sb-btn" onclick="go('pagos')"><span class="sb-ico">💳</span>Pagos</button>
@@ -211,7 +211,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
       <button class="sb-btn" onclick="go('roi')"><span class="sb-ico">🧮</span>Calc. ROI</button>
       <button class="sb-btn" onclick="go('negociacion')"><span class="sb-ico">🤝</span>Negociaciones</button>
       <button class="sb-btn" onclick="window.open('/outbound','_blank')"><span class="sb-ico">📤</span>Carlos Outbound ↗</button>
-
+ 
       <div class="sb-sec">Sistema</div>
       <button class="sb-btn" onclick="go('marcas')"><span class="sb-ico">🏪</span>Marcas y Usuarios</button>
       <button class="sb-btn" onclick="go('config')"><span class="sb-ico">⚙️</span>Configuracion</button>
@@ -221,7 +221,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
       <button class="logout" onclick="logout()"><span>🚪</span>Cerrar sesion</button>
     </div>
   </aside>
-
+ 
   <div class="cnt">
     <div class="topbar">
       <div><h2 id="ptitle">Dashboard</h2><div class="topbar-sub" id="psub">Resumen general</div></div>
@@ -231,7 +231,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
       </div>
     </div>
     <div class="main">
-
+ 
       <!-- DASHBOARD -->
       <div id="p-dashboard" class="panel on fadein">
         <div class="alert aw">⚠️ <div><strong>Pendiente:</strong> Configura VITE_MP_STARTER y VITE_MP_GROWTH en Netlify con tus links reales de Mercado Pago para activar los pagos en la web.</div></div>
@@ -287,7 +287,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
           </table>
         </div>
       </div>
-
+ 
       <!-- CLIENTES -->
       <div id="p-clientes" class="panel fadein">
         <div style="display:flex;justify-content:space-between;margin-bottom:16px;">
@@ -296,7 +296,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
         </div>
         <div class="g3" id="clients-grid"></div>
       </div>
-
+ 
       <!-- LEADS -->
       <div id="p-leads" class="panel fadein">
         <div class="alert ai">ℹ️ <div>Los leads se registran aqui cuando alguien usa el formulario de la web o interactua con Carlos. Por ahora son manuales.</div></div>
@@ -322,7 +322,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
           </table>
         </div>
       </div>
-
+ 
       <!-- CARLOS -->
       <div id="p-carlos" class="panel fadein">
         <div class="alert aw">⚠️ <div>Carlos opera en <strong>modo fallback inteligente</strong>. Para activar IA completa en tiempo real, configura VITE_ANTHROPIC_KEY en Netlify (variable de entorno del frontend).</div></div>
@@ -367,7 +367,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
           </div>
         </div>
       </div>
-
+ 
       <!-- AUTOMATIZACION -->
       <div id="p-auto" class="panel fadein">
         <div class="g2" style="margin-bottom:14px;">
@@ -399,7 +399,7 @@ score = (growth_pedidos  * 0.35)
       + (rating / 5      * 0.25)
       + (conversion      * 0.25)
       + (campana_roi     * 0.15)
-
+ 
 <span style="color:rgba(255,255,255,.3);">// Umbrales de accion</span>
 score >= 0.75 → <span style="color:#4ade80;">VERDE (sano)</span>
 score >= 0.50 → <span style="color:#fbbf24;">AMARILLO (monitorear)</span>
@@ -407,7 +407,7 @@ score  < 0.50 → <span style="color:#f87171;">ROJO (intervencion)</span></pre>
           </div>
         </div>
       </div>
-
+ 
       <!-- REPORTES -->
       <div id="p-reportes" class="panel fadein">
         <div class="alert ai">ℹ️ <div>Los reportes se generan automaticamente el dia 1 de cada mes. Cuando conectes Supabase, se archivan y envian por email.</div></div>
@@ -443,7 +443,7 @@ score  < 0.50 → <span style="color:#f87171;">ROJO (intervencion)</span></pre>
           </div>
         </div>
       </div>
-
+ 
       <!-- PAGOS -->
       <div id="p-pagos" class="panel fadein">
         <div class="alert aw">⚠️ <div><strong>Configura los links de Mercado Pago en Netlify:</strong> Ve a Site settings → Environment variables → agrega VITE_MP_STARTER y VITE_MP_GROWTH con tus links reales de MP. Luego redeploy.</div></div>
@@ -484,7 +484,7 @@ score  < 0.50 → <span style="color:#f87171;">ROJO (intervencion)</span></pre>
           </div>
         </div>
       </div>
-
+ 
       <!-- CAMPAÑAS -->
       <div id="p-campanas" class="panel fadein">
         <div style="display:flex;justify-content:space-between;margin-bottom:14px;"><div></div>
@@ -508,7 +508,7 @@ score  < 0.50 → <span style="color:#f87171;">ROJO (intervencion)</span></pre>
           </table>
         </div>
       </div>
-
+ 
       <!-- ROI CALCULATOR -->
       <div id="p-roi" class="panel fadein">
         <div class="g2">
@@ -544,7 +544,7 @@ score  < 0.50 → <span style="color:#f87171;">ROJO (intervencion)</span></pre>
           </div>
         </div>
       </div>
-
+ 
       <!-- NEGOCIACION DE COMISIONES -->
       <div id="p-negociacion" class="panel fadein">
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px;">
@@ -553,9 +553,9 @@ score  < 0.50 → <span style="color:#f87171;">ROJO (intervencion)</span></pre>
           <div class="card"><div style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;color:var(--gold);" id="neg-s-ganadas">0</div><div style="font-size:.68rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Ganadas (comision baja)</div></div>
           <div class="card"><div style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;color:var(--red);">3.2%</div><div style="font-size:.68rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted);">Reduccion promedio lograda</div></div>
         </div>
-
+ 
         <div style="display:grid;grid-template-columns:320px 1fr;gap:16px;">
-
+ 
           <!-- CONFIGURADOR -->
           <div>
             <div class="card" style="margin-bottom:12px;">
@@ -608,7 +608,7 @@ score  < 0.50 → <span style="color:#f87171;">ROJO (intervencion)</span></pre>
                 <button class="btn btn-r" onclick="negGen()" style="width:100%;">Generar propuesta</button>
               </div>
             </div>
-
+ 
             <!-- CALCULADORA DE AHORRO -->
             <div class="card" id="neg-calc-wrap">
               <div class="ct">Impacto del acuerdo</div>
@@ -619,7 +619,7 @@ score  < 0.50 → <span style="color:#f87171;">ROJO (intervencion)</span></pre>
               <div id="neg-calc-rows" style="display:flex;flex-direction:column;gap:8px;font-size:.8rem;"></div>
             </div>
           </div>
-
+ 
           <!-- PREVIEW + CONTACTOS -->
           <div style="display:flex;flex-direction:column;gap:12px;">
             <div class="card" style="flex:1;">
@@ -634,7 +634,7 @@ score  < 0.50 → <span style="color:#f87171;">ROJO (intervencion)</span></pre>
               <div id="neg-msg-preview" style="white-space:pre-wrap;font-size:.83rem;line-height:1.75;color:var(--fg);background:rgba(0,0,0,.02);border:1px solid var(--bd);border-radius:8px;padding:16px;min-height:200px;font-family:'DM Mono',monospace;">
 Selecciona un cliente para generar el mensaje.</div>
             </div>
-
+ 
             <!-- CONTACTOS PLATAFORMA -->
             <div class="card">
               <div class="ct">Contacto de la plataforma</div>
@@ -642,7 +642,7 @@ Selecciona un cliente para generar el mensaje.</div>
             </div>
           </div>
         </div>
-
+ 
         <!-- HISTORIAL -->
         <div class="card" style="margin-top:16px;">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:14px;">
@@ -667,12 +667,12 @@ Selecciona un cliente para generar el mensaje.</div>
           </div>
         </div>
       </div>
-
+ 
       <!-- MARCAS Y USUARIOS -->
       <div id="p-marcas" class="panel fadein">
-
+ 
         <div class="alert ai" style="margin-bottom:16px">ℹ️ <div>Los accesos se guardan en el navegador y en el archivo <code>public/cliente/index.html</code>. Al agregar una marca, el sistema genera el bloque de código listo para copiar y reemplazar en GitHub.</div></div>
-
+ 
         <!-- STATS -->
         <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-bottom:20px">
           <div class="card"><div style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;color:var(--gold)" id="mu-stat-marcas">0</div><div style="font-size:.68rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted)">Marcas activas</div></div>
@@ -680,9 +680,9 @@ Selecciona un cliente para generar el mensaje.</div>
           <div class="card"><div style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;color:var(--green)" id="mu-stat-planes">0</div><div style="font-size:.68rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted)">Plans activos</div></div>
           <div class="card"><div style="font-family:'Playfair Display',serif;font-size:2rem;font-weight:700;color:var(--blue)">2</div><div style="font-size:.68rem;text-transform:uppercase;letter-spacing:1px;color:var(--muted)">Máx usuarios/marca</div></div>
         </div>
-
+ 
         <div style="display:grid;grid-template-columns:1fr 1.4fr;gap:16px">
-
+ 
           <!-- FORMULARIO NUEVA MARCA -->
           <div>
             <div class="card">
@@ -716,7 +716,7 @@ Selecciona un cliente para generar el mensaje.</div>
               </div>
             </div>
           </div>
-
+ 
           <!-- LISTA DE MARCAS -->
           <div>
             <div class="card">
@@ -726,7 +726,7 @@ Selecciona un cliente para generar el mensaje.</div>
               </div>
               <div id="mu-lista"></div>
             </div>
-
+ 
             <!-- CÓDIGO GENERADO -->
             <div class="card" id="mu-code-card" style="margin-top:12px;display:none">
               <div class="ct">Código generado — copia esto a GitHub</div>
@@ -740,7 +740,7 @@ Selecciona un cliente para generar el mensaje.</div>
           </div>
         </div>
       </div>
-
+ 
       <!-- CONFIG -->
       <div id="p-config" class="panel fadein">
         <div class="alert ai">ℹ️ <div>Las variables de entorno deben configurarse en Netlify (no en GitHub). Ve a Site settings → Build & deploy → Environment variables.</div></div>
@@ -793,11 +793,11 @@ Selecciona un cliente para generar el mensaje.</div>
           </div>
         </div>
       </div>
-
+ 
     </div>
   </div>
 </div>
-
+ 
 <!-- MODALES -->
 <div class="modal-bg" id="m-cliente">
   <div class="modal">
@@ -815,7 +815,7 @@ Selecciona un cliente para generar el mensaje.</div>
     </div>
   </div>
 </div>
-
+ 
 <div class="modal-bg" id="m-campana">
   <div class="modal">
     <button class="mc" onclick="document.getElementById('m-campana').classList.remove('open')">×</button>
@@ -828,12 +828,12 @@ Selecciona un cliente para generar el mensaje.</div>
     </div>
   </div>
 </div>
-
+ 
 <style>
 .cav-sm{width:28px;height:28px;border-radius:50%;background:linear-gradient(135deg,var(--red),var(--gold));display:flex;align-items:center;justify-content:center;font-size:.8rem;flex-shrink:0;}
 </style>
-
-
+ 
+<script>
 // ─── NEGOCIACION DE COMISIONES ─────────────────────────────────────────────
 const NEG_CONTACTS = {
   rappi: {
@@ -858,125 +858,125 @@ const NEG_CONTACTS = {
     tiers:  [{gmv:5000,comis:30},{gmv:12000,comis:27},{gmv:20000,comis:25},{gmv:35000,comis:23}]
   }
 };
-
+ 
 const NEG_TEMPLATES = {
   inicial: (d) => `Estimado equipo de ${d.platNombre},
-
+ 
 Mi nombre es [Tu nombre], Growth Manager de Sazón Growth Partner. Representamos a ${d.cliente}, restaurante activo en su plataforma con los siguientes resultados:
-
+ 
 📊 MÉTRICAS ACTUALES — ${d.mes}:
 • GMV mensual: S/ ${d.gmv.toLocaleString()}
 • Pedidos/mes: ${d.pedidos}
 • Ticket promedio: S/ ${d.ticket}
 • Crecimiento últimos 3 meses: +${d.growth}%
 • Rating promedio: ${d.rating} ⭐
-
+ 
 En base al volumen y la tendencia de crecimiento, solicitamos revisar las condiciones comerciales actuales. La comisión vigente de ${d.ca}% representa una barrera para continuar invirtiendo en campañas dentro de la plataforma.
-
+ 
 Nuestra propuesta:
 ✅ Comisión objetivo: ${d.ct}%
 ✅ Compromiso de nuestro lado: mantener mínimo S/ ${Math.round(d.gmv * 1.15).toLocaleString()} GMV mensual
 ✅ Inversión activa en campañas pagadas dentro de ${d.platNombre}
-
+ 
 El ajuste de ${d.ca}% → ${d.ct}% nos permitiría redirigir S/ ${d.ahorro.toLocaleString()}/mes en campañas adicionales, lo que históricamente incrementa el GMV un 18-25% adicional.
-
+ 
 ¿Podríamos coordinar una llamada esta semana para revisar la propuesta?
-
+ 
 Quedo atento. Saludos,
 [Tu nombre] — Sazón Growth Partner`,
-
+ 
   milestone: (d) => `Estimado equipo de ${d.platNombre},
-
+ 
 Escribo para compartir una excelente noticia y, en consecuencia, revisar las condiciones comerciales de ${d.cliente}.
-
+ 
 📈 HITO ALCANZADO — ${d.mes}:
 • Nuevo GMV mensual: S/ ${d.gmv.toLocaleString()} (+${d.growth}% vs hace 3 meses)
 • Hemos cruzado el umbral de S/ ${d.umbral.toLocaleString()} mensuales
 • Pedidos: ${d.pedidos}/mes (crecimiento sostenido)
-
+ 
 Este crecimiento nos posiciona en el siguiente tier de su estructura comercial. Solicitamos la actualización de comisión de ${d.ca}% a ${d.ct}% en línea con los acuerdos vigentes para volúmenes de este nivel.
-
+ 
 El ajuste es automático según los criterios de su plataforma — adjuntamos reporte de los últimos 3 meses para su validación.
-
+ 
 ¿Cuál es el proceso para formalizar este ajuste?
-
+ 
 Gracias y saludos,
 [Tu nombre] — Sazón Growth Partner`,
-
+ 
   paridad: (d) => `Estimado equipo de ${d.platNombre},
-
+ 
 Apreciamos la relación comercial con ${d.cliente} en su plataforma, y precisamente por eso queremos ser directos en esta comunicación.
-
+ 
 SITUACIÓN ACTUAL:
 • Comisión en ${d.platNombre}: ${d.ca}%
 • Comisión en plataforma alternativa (${d.platAlternativa}): ~${Math.max(d.ct - 1, 20)}%
 • Diferencia mensual para ${d.cliente}: S/ ${Math.round(d.gmv * (d.ca - d.ct) / 100).toLocaleString()}
-
+ 
 ${d.cliente} genera S/ ${d.gmv.toLocaleString()}/mes en ${d.platNombre} y tiene un fuerte compromiso con la plataforma. Sin embargo, mantener esta brecha de comisión hace cada vez más difícil justificar la inversión en campañas internas.
-
+ 
 Nuestra propuesta concreta:
 • Comisión: ${d.ct}% (paridad competitiva de mercado)
 • A cambio: incremento de inversión en campañas de ${d.platNombre} de mínimo 30%
-
+ 
 Esta propuesta beneficia a ambas partes. ¿Tienen apertura para revisarla antes del ${d.fechaLimite}?
-
+ 
 Saludos,
 [Tu nombre] — Sazón Growth Partner`,
-
+ 
   retencion: (d) => `Estimado equipo de ${d.platNombre},
-
+ 
 Escribo con urgencia sobre la situación comercial de ${d.cliente} en su plataforma.
-
+ 
 Hemos estado evaluando la estructura de costos de operación y, lamentablemente, la comisión actual de ${d.ca}% hace que la operación en ${d.platNombre} no sea sostenible a mediano plazo para el restaurante.
-
+ 
 IMPACTO ACTUAL:
 • Costo mensual en comisiones: S/ ${Math.round(d.gmv * d.ca / 100).toLocaleString()}
 • GMV mensual: S/ ${d.gmv.toLocaleString()}
 • Margen operativo actual: presionado
-
+ 
 Si no logramos ajustar las condiciones antes del ${d.fechaLimite}, nos veríamos obligados a reducir significativamente la presencia y la inversión en campañas en ${d.platNombre}, redirigiendo presupuesto a otras plataformas.
-
+ 
 Valoramos la plataforma y queremos continuar creciendo juntos. Una comisión de ${d.ct}% cambia completamente el panorama y nos compromete a duplicar la inversión en campañas.
-
+ 
 ¿Podemos hablar hoy o mañana?
-
+ 
 [Tu nombre] — Sazón Growth Partner`,
-
+ 
   escalacion: (d) => `Estimado equipo de ${d.platNombre},
-
+ 
 En seguimiento a nuestra comunicación anterior del ${d.fechaAnterior} (adjunto), aún no hemos recibido respuesta sobre la solicitud de revisión de comisión para ${d.cliente}.
-
+ 
 Entendemos que tienen muchos restaurantes bajo gestión. Sin embargo, la situación requiere una resolución esta semana:
-
+ 
 • GMV mensual: S/ ${d.gmv.toLocaleString()} — contribución importante para la plataforma
 • Solicitud vigente: ajuste de ${d.ca}% a ${d.ct}%
 • Ahorro proyectado cliente: S/ ${d.ahorro.toLocaleString()}/mes
-
+ 
 De no recibir respuesta antes del ${d.fechaLimite}, procederemos a reasignar el presupuesto de campañas a otras plataformas. No es la decisión que queremos tomar.
-
+ 
 ¿A quién debería dirigir esta solicitud para agilizar la respuesta?
-
+ 
 Gracias,
 [Tu nombre] — Sazón Growth Partner`,
-
+ 
   agradecimiento: (d) => `Estimado equipo de ${d.platNombre},
-
+ 
 Quería escribirles para agradecer la revisión y el acuerdo alcanzado respecto a las condiciones comerciales de ${d.cliente}.
-
+ 
 RESUMEN DEL ACUERDO ALCANZADO:
 • Comisión anterior: ${d.ca}%
 • Comisión acordada: ${d.ct}%
 • Fecha de aplicación: ${d.fechaAcuerdo || "según lo coordinado"}
 • Ahorro mensual para el restaurante: S/ ${d.ahorro.toLocaleString()}
-
+ 
 Este ajuste nos permite comprometer mayor inversión en campañas dentro de ${d.platNombre}. Nuestro plan para el próximo trimestre incluye al menos 3 campañas activas con objetivo de incrementar el GMV un 20%.
-
+ 
 Quedamos en confirmar cuando se refleje el ajuste en el portal para tener constancia del cierre.
-
+ 
 Muchas gracias por la gestión,
 [Tu nombre] — Sazón Growth Partner`,
 };
-
+ 
 // Datos por cliente (en produccion viene del backend)
 const NEG_CLIENT_DATA = {
   "Mr Smash":          {pedidos:380, ticket:48, gmv:18240, growth:45, rating:4.8},
@@ -985,47 +985,47 @@ const NEG_CLIENT_DATA = {
   "Terminal Pesquero": {pedidos:420, ticket:55, gmv:23100, growth:52, rating:4.8},
   "Tokuyo":            {pedidos:185, ticket:44, gmv:8140,  growth:28, rating:4.7},
 };
-
+ 
 let negHistory = JSON.parse(localStorage.getItem('neg_history') || '[]');
 let negCurrentMsg = '';
 let negCurrentData = null;
-
+ 
 function negGen() {
   const clienteEl = document.getElementById('neg-cliente');
   const cliente = clienteEl.value;
   if (!cliente) return;
-
+ 
   const plat     = document.getElementById('neg-plat').value;
   const tipo     = document.getElementById('neg-tipo').value;
   const ca       = parseFloat(document.getElementById('neg-ca').value) || 28;
   const ct       = parseFloat(document.getElementById('neg-ct').value) || 24;
   const gmvInput = parseFloat(document.getElementById('neg-gmv').value) || 0;
-
+ 
   const cd = NEG_CLIENT_DATA[cliente] || {pedidos:200, ticket:40, gmv:8000, growth:30, rating:4.5};
   const gmv = gmvInput || cd.gmv;
   const pc  = NEG_CONTACTS[plat];
   const platNombres = {rappi:"Rappi", pedidosya:"PedidosYa", didi:"Didi Food"};
   const platAlts    = {rappi:"PedidosYa", pedidosya:"Rappi", didi:"Rappi"};
-
+ 
   const ahorro = Math.round(gmv * (ca - ct) / 100);
   const umbral  = pc.tiers.find(t => gmv >= t.gmv)?.gmv || pc.tiers[0].gmv;
   const hoy     = new Date();
   const mes     = hoy.toLocaleDateString('es-PE', {month:'long', year:'numeric'});
   const fechaLimite = new Date(hoy.getTime() + 5*24*3600000).toLocaleDateString('es-PE', {day:'numeric', month:'long'});
   const fechaAnterior = new Date(hoy.getTime() - 7*24*3600000).toLocaleDateString('es-PE', {day:'numeric', month:'long'});
-
+ 
   negCurrentData = {
     cliente, plat, platNombre: platNombres[plat], platAlternativa: platAlts[plat],
     ca, ct, gmv, ahorro, umbral, mes, fechaLimite, fechaAnterior,
     pedidos: cd.pedidos, ticket: cd.ticket, growth: cd.growth, rating: cd.rating,
     tipo, fechaAcuerdo: mes,
   };
-
+ 
   const fn = NEG_TEMPLATES[tipo];
   negCurrentMsg = fn ? fn(negCurrentData) : 'Template no disponible.';
-
+ 
   document.getElementById('neg-msg-preview').textContent = negCurrentMsg;
-
+ 
   // Mostrar calculadora
   document.getElementById('neg-ahorro-val').textContent = 'S/ ' + ahorro.toLocaleString();
   const costoActual = Math.round(gmv * ca / 100);
@@ -1040,7 +1040,7 @@ function negGen() {
     <span style="color:var(--muted)">${r.l}</span>
     <strong style="color:${r.color}">${r.v}</strong>
   </div>`).join('');
-
+ 
   // Contacto plataforma
   document.getElementById('neg-contact-info').innerHTML = `
     <div style="font-weight:600;margin-bottom:6px;">${pc.nombre}</div>
@@ -1052,11 +1052,11 @@ function negGen() {
         <span>GMV >= S/${t.gmv.toLocaleString()}</span><span>Comision: ${t.comis}%</span>
       </div>`).join('')}
     </div>`;
-
+ 
   // Actualizar stats
   negRenderStats();
 }
-
+ 
 function negWA() {
   if (!negCurrentMsg || !negCurrentData) return;
   const pc  = NEG_CONTACTS[negCurrentData.plat];
@@ -1067,7 +1067,7 @@ function negWA() {
   document.body.appendChild(a); a.click();
   setTimeout(() => document.body.removeChild(a), 200);
 }
-
+ 
 function negCopy() {
   if (!negCurrentMsg) return;
   navigator.clipboard.writeText(negCurrentMsg).then(() => {
@@ -1077,7 +1077,7 @@ function negCopy() {
     setTimeout(() => btn.textContent = orig, 1500);
   });
 }
-
+ 
 function negSave() {
   if (!negCurrentData) return;
   const ca = negCurrentData.ca, ct = negCurrentData.ct, gmv = negCurrentData.gmv;
@@ -1101,7 +1101,7 @@ function negSave() {
   btn.textContent = '✅ Guardado';
   setTimeout(() => btn.textContent = orig, 1500);
 }
-
+ 
 function negSetEstado(id, estado) {
   const e = negHistory.find(x => x.id === id);
   if (e) {
@@ -1111,7 +1111,7 @@ function negSetEstado(id, estado) {
     negRenderStats();
   }
 }
-
+ 
 function negRenderStats() {
   const total = negHistory.reduce((s, e) => s + (e.estado === 'aceptada' ? e.ahorro : 0), 0);
   const activas = negHistory.filter(e => e.estado === 'enviada' || e.estado === 'en_proceso').length;
@@ -1120,7 +1120,7 @@ function negRenderStats() {
   document.getElementById('neg-s-activas').textContent = activas;
   document.getElementById('neg-s-ganadas').textContent = ganadas;
 }
-
+ 
 function negRenderHistorial() {
   const tbody = document.getElementById('neg-hist-body');
   const empty = document.getElementById('neg-hist-empty');
@@ -1158,7 +1158,7 @@ function negRenderHistorial() {
       </td>
     </tr>`).join('');
 }
-
+ 
 function negExport() {
   const rows = [['Cliente','Plataforma','Tipo','Comision Ant.','Comision Nueva','Ahorro/mes','Estado','Fecha']];
   negHistory.forEach(e => rows.push([e.cliente, e.plat, e.tipo, e.ca+'%', e.ct+'%', 'S/'+e.ahorro, e.estado, e.fecha]));
@@ -1171,21 +1171,21 @@ function negExport() {
   document.body.appendChild(a); a.click();
   setTimeout(() => { document.body.removeChild(a); URL.revokeObjectURL(url); }, 200);
 }
-
+ 
 // Inicializar historial al cargar
 document.addEventListener('DOMContentLoaded', () => {
   negRenderHistorial();
   negRenderStats();
 });
-
-
-
+ 
+ 
+ 
 // ════════════════════════════════════════════════════════════════
 //  MARCAS Y USUARIOS — gestión sin editar GitHub
 // ════════════════════════════════════════════════════════════════
 let muMarcas = JSON.parse(localStorage.getItem('sazon_marcas') || '[]');
 let muEditIdx = null; // null = nueva, número = editar
-
+ 
 // Datos de las marcas demo (que ya existen en el cliente dashboard)
 const MU_DEMO = [
   {id:'mrsmash',    nombre:'Mr Smash',           emoji:'🍔', plan:'Growth', mes:4, emails:['mrsmash@sazonpartner.com'], pedidos:382, ticket:48, growth:'+45%'},
@@ -1193,7 +1193,7 @@ const MU_DEMO = [
   {id:'wokroll',    nombre:'Wok & Roll',           emoji:'🍜', plan:'Growth', mes:5, emails:['wokroll@sazonpartner.com'], pedidos:890, ticket:43, growth:'+24%'},
   {id:'fornoromano',nombre:'Forno Romano',         emoji:'🍕', plan:'Starter', mes:1, emails:[], pedidos:87, ticket:39, growth:'nuevo'},
 ];
-
+ 
 function muInit(){
   // Merge demo if first run
   if(muMarcas.length === 0) {
@@ -1203,11 +1203,11 @@ function muInit(){
   muRender();
   muStats();
 }
-
+ 
 function muSave(){
   localStorage.setItem('sazon_marcas', JSON.stringify(muMarcas));
 }
-
+ 
 function muStats(){
   const totalMarcas = muMarcas.length;
   const totalUsers  = muMarcas.reduce((s,m) => s + m.emails.filter(e=>e.trim()).length, 0);
@@ -1216,7 +1216,7 @@ function muStats(){
   document.getElementById('mu-stat-users').textContent   = totalUsers;
   document.getElementById('mu-stat-planes').textContent  = totalActivos;
 }
-
+ 
 function muRender(){
   const lista = document.getElementById('mu-lista');
   if(!muMarcas.length){
@@ -1245,7 +1245,7 @@ function muRender(){
     </div>`;
   }).join('');
 }
-
+ 
 function muGuardar(){
   const nombre  = document.getElementById('mu-nombre').value.trim();
   const emoji   = document.getElementById('mu-emoji').value.trim() || '🍽️';
@@ -1258,19 +1258,19 @@ function muGuardar(){
   const ticket  = parseInt(document.getElementById('mu-ticket').value)||0;
   const growth  = document.getElementById('mu-growth').value.trim()||'—';
   const msgEl   = document.getElementById('mu-msg');
-
+ 
   if(!nombre){ msgEl.textContent='Nombre obligatorio.'; msgEl.style.color='var(--red)'; return; }
   if(emails.length === 0){ msgEl.textContent='Agrega al menos un email.'; msgEl.style.color='var(--red)'; return; }
   if(emails.length > 2){ msgEl.textContent='Máximo 2 emails por marca.'; msgEl.style.color='var(--red)'; return; }
-
+ 
   // Check email conflicts with other brands
   const otherEmails = muMarcas.flatMap((m,i) => muEditIdx === i ? [] : (m.emails||[]));
   const conflict = emails.find(e => otherEmails.includes(e));
   if(conflict){ msgEl.textContent=`"${conflict}" ya está asignado a otra marca.`; msgEl.style.color='var(--red)'; return; }
-
+ 
   const id = nombre.toLowerCase().replace(/[^a-z0-9]/g,'');
   const marca = {id, nombre, emoji, plan, mes, emails, pedidos, ticket, growth};
-
+ 
   if(muEditIdx !== null){
     muMarcas[muEditIdx] = marca;
     msgEl.textContent = '✅ Marca actualizada.';
@@ -1283,7 +1283,7 @@ function muGuardar(){
   document.getElementById('mu-form-title').textContent = 'Nueva marca';
   setTimeout(()=>{ if(msgEl) msgEl.textContent=''; }, 4000);
 }
-
+ 
 function muEditar(idx){
   const m = muMarcas[idx];
   muEditIdx = idx;
@@ -1299,7 +1299,7 @@ function muEditar(idx){
   document.getElementById('mu-form-title').textContent = 'Editar: ' + m.nombre;
   document.getElementById('mu-msg').textContent = '';
 }
-
+ 
 function muEliminar(idx){
   const m = muMarcas[idx];
   if(!confirm('Eliminar la marca "'+m.nombre+'" y sus accesos?')) return;
@@ -1307,7 +1307,7 @@ function muEliminar(idx){
   muSave(); muRender(); muStats();
   if(muEditIdx === idx){ muNuevo(); }
 }
-
+ 
 function muNuevo(){
   muEditIdx = null;
   ['mu-nombre','mu-emoji','mu-emails','mu-pedidos','mu-ticket','mu-growth'].forEach(id=>{
@@ -1318,7 +1318,7 @@ function muNuevo(){
   document.getElementById('mu-form-title').textContent = 'Nueva marca';
   document.getElementById('mu-msg').textContent = '';
 }
-
+ 
 function muGenerarCodigo(){
   // Generate the AUTH object code to paste into cliente/index.html
   const lines = ['const AUTH = {'];
@@ -1332,21 +1332,21 @@ function muGenerarCodigo(){
   });
   lines.push('  "demo@sazonpartner.com": ["'+muMarcas.map(m=>m.id).join('","')+'"],  // demo operador (acceso a todas)');
   lines.push('};');
-
+ 
   // Also generate BRANDS-like info comment
   lines.push('');
   lines.push('// Marcas y sus índices:');
   muMarcas.forEach((m,i) => {
     lines.push('// '+i+': "'+m.nombre+'" ('+m.plan+') — Emails: '+(m.emails||[]).join(', ')||'sin asignar');
   });
-
+ 
   const code = lines.join('
 ');
   document.getElementById('mu-code-output').value = code;
   document.getElementById('mu-code-card').style.display = 'block';
   document.getElementById('mu-code-card').scrollIntoView({behavior:'smooth'});
 }
-
+ 
 function muCopiarCodigo(){
   const ta = document.getElementById('mu-code-output');
   navigator.clipboard.writeText(ta.value).then(()=>{
@@ -1356,14 +1356,14 @@ function muCopiarCodigo(){
     setTimeout(()=>btn.textContent = orig, 2000);
   });
 }
-
+ 
 // Init when panel opens
 const _origGo = go;
 function go(id){
   _origGo(id);
   if(id === 'marcas') muInit();
 }
-
+ 
 // Also init stats on dashboard load
 document.addEventListener('DOMContentLoaded', ()=>{
   // Stats visible from dashboard
@@ -1373,12 +1373,12 @@ document.addEventListener('DOMContentLoaded', ()=>{
     localStorage.setItem('sazon_marcas', JSON.stringify(muMarcas));
   }
 });
-
-</script><script>
+ 
+ 
 // ── AUTH ──────────────────────────────────────────────────────────────────────
 const ADMIN_EMAIL = "gc.asin.zapata@gmail.com";
 let code = "";
-
+ 
 function sendCode() {
   const emEl  = document.getElementById("lemail");
   const em    = emEl ? emEl.value.trim().toLowerCase() : "";
@@ -1402,7 +1402,7 @@ function sendCode() {
   // Auto-expire code in 5 minutes
   setTimeout(function(){ code = ""; if(cv) cv.textContent = "EXPIRADO"; }, 5 * 60 * 1000);
 }
-
+ 
 function verify() {
   const ci = document.getElementById("ci").value.trim();
   if (ci === code) {
@@ -1417,23 +1417,23 @@ function verify() {
     document.getElementById("ci").value = "";
   }
 }
-
+ 
 function back() {
   document.getElementById("step2").style.display = "none";
   document.getElementById("step1").style.display = "block";
   document.getElementById("msg1").textContent = "";
 }
-
+ 
 function msg1(t,c){const el=document.getElementById("msg1");el.textContent=t;el.className="lmsg l"+c;}
 function msg2(t,c){const el=document.getElementById("msg2");el.textContent=t;el.className="lmsg l"+c;}
-
+ 
 document.addEventListener("keydown",e=>{
   if(e.key==="Enter"){
     if(document.getElementById("step1").style.display!=="none") sendCode();
     else verify();
   }
 });
-
+ 
 // ── PANELS ────────────────────────────────────────────────────────────────────
 const panelMeta = {
   dashboard:  ["Dashboard","Resumen general del sistema"],
@@ -1449,7 +1449,7 @@ const panelMeta = {
   marcas:     ["Marcas y Usuarios","Gestiona el acceso al portal de cliente"],
   config:     ["Configuracion","APIs y variables de entorno"],
 };
-
+ 
 function go(id) {
   document.querySelectorAll(".panel").forEach(p=>p.classList.remove("on"));
   document.querySelectorAll(".sb-btn").forEach(b=>b.classList.remove("on"));
@@ -1461,7 +1461,7 @@ function go(id) {
   document.getElementById("ptitle").textContent=m[0];
   document.getElementById("psub").textContent=m[1];
 }
-
+ 
 // ── CLIENTS ───────────────────────────────────────────────────────────────────
 let clients = [
   {n:"Mr Smash",plan:"Growth",pedidos:380,growth:45,rating:4.8,health:"g",url:"https://www.instagram.com/mrsmash.pe/"},
@@ -1470,7 +1470,7 @@ let clients = [
   {n:"Terminal Pesquero",plan:"Growth",pedidos:420,growth:52,rating:4.8,health:"g",url:"https://www.instagram.com/terminalpesqueroperu/"},
   {n:"Tokuyo",plan:"Starter",pedidos:185,growth:28,rating:4.7,health:"y",url:"https://www.instagram.com/tokuyolima/"},
 ];
-
+ 
 function renderClients() {
   document.getElementById("clients-grid").innerHTML = clients.map(c => `
     <div class="cl-card">
@@ -1486,7 +1486,7 @@ function renderClients() {
       </div>
     </div>`).join("");
 }
-
+ 
 function addClient() {
   const n = document.getElementById("nc-n").value.trim();
   if (!n) { alert("Ingresa el nombre"); return; }
@@ -1499,12 +1499,12 @@ function addClient() {
   document.getElementById("m-cliente").classList.remove("open");
   go("clientes");
 }
-
+ 
 function updateAlertBadge() {
   const c = document.querySelectorAll("#alerts-container > div").length;
   document.getElementById("ab").textContent = c;
 }
-
+ 
 // ── LEADS ─────────────────────────────────────────────────────────────────────
 let leads = [];
 function addLead() {
@@ -1518,7 +1518,7 @@ function addLead() {
   renderLeads();
   ["lead-nombre","lead-wa","lead-pedidos","lead-ticket"].forEach(id=>document.getElementById(id).value="");
 }
-
+ 
 function renderLeads() {
   const tb = document.getElementById("leads-table");
   if (!leads.length) { tb.innerHTML='<tr><td colspan="6" style="text-align:center;color:var(--dim);padding:20px;">No hay leads aun.</td></tr>'; return; }
@@ -1538,7 +1538,7 @@ function renderLeads() {
       <td><button onclick="leads.splice(${i},1);renderLeads();" style="background:rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.2);color:#f87171;padding:4px 10px;border-radius:6px;font-size:.76rem;cursor:pointer;">✕</button></td>
     </tr>`).join("");
 }
-
+ 
 // ── CARLOS DEMO ───────────────────────────────────────────────────────────────
 const demoResponses = [
   "En que plataformas estan activos actualmente? (Rappi, PedidosYa, Didi...)",
@@ -1548,7 +1548,7 @@ const demoResponses = [
   "Excelente! Para activar tu cuenta esta semana, el pago se hace via Mercado Pago. Es mensual, sin contratos. Quieres proceder?",
 ];
 let demoTurn = 0;
-
+ 
 function adminSend() {
   const inp = document.getElementById("admin-inp");
   const msg = inp.value.trim();
@@ -1564,7 +1564,7 @@ function adminSend() {
     chat.scrollTop = chat.scrollHeight;
   }, 600);
 }
-
+ 
 // ── AUTO SYSTEMS ──────────────────────────────────────────────────────────────
 const autoSystems = [
   {ico:"🤖",name:"Bot Carlos (Sales)",desc:"Califica y cierra ventas en el chat web",pct:75,st:"Fallback activo",sc:"bg-o"},
@@ -1577,7 +1577,7 @@ const autoSystems = [
 ];
 const tgls = {};
 autoSystems.forEach((_,i) => tgls[i] = i < 2);
-
+ 
 function renderAuto() {
   document.getElementById("auto-list").innerHTML = autoSystems.map((s,i) => `
     <div style="background:var(--bg3);border:1px solid var(--border);border-radius:11px;padding:16px 18px;display:flex;align-items:center;gap:14px;">
@@ -1596,7 +1596,7 @@ function renderAuto() {
       <button class="tgl ${tgls[i]?'on':'off'}" id="tgl-${i}" onclick="tgls[${i}]=!tgls[${i}];this.className='tgl '+(tgls[${i}]?'on':'off')"></button>
     </div>`).join("");
 }
-
+ 
 // ── ROI ADMIN ─────────────────────────────────────────────────────────────────
 function calcAdminROI() {
   const p = parseFloat(document.getElementById("roi-p").value)||0;
@@ -1611,7 +1611,7 @@ function calcAdminROI() {
   document.getElementById("roi-pct-d").textContent = pct+"% mensual";
   document.getElementById("roi-res").style.display = "block";
 }
-
+ 
 function copyAdminROI() {
   const n = document.getElementById("roi-n").value||"tu restaurante";
   const p = document.getElementById("roi-p").value||"?";
@@ -1621,7 +1621,7 @@ function copyAdminROI() {
   const txt = `Hola! El diagnostico rapido para ${n}:\n\nCon ${p} pedidos/mes a S/${t} de ticket, nuestro equipo proyecta ${mes} de ingresos adicionales por mes (${anio} al año).\n\nEso es lo que lograriamos en 90 dias trabajando juntos. ¿Te interesa?`;
   navigator.clipboard.writeText(txt).then(() => alert("Copiado al clipboard!"));
 }
-
+ 
 // ── LOGOUT ────────────────────────────────────────────────────────────────────
 function logout() {
   if (!confirm("Cerrar sesion?")) return;
@@ -1632,5 +1632,21 @@ function logout() {
   document.getElementById("ci").value = "";
   code = "";
 }
-
-// ── INIT ──────────────────────────────────────────────────────────────�
+ 
+// ── INIT ───────────────────────────────────────────────────────────────────
+document.addEventListener("DOMContentLoaded", function() {
+  negRenderHistorial();
+  negRenderStats();
+  // Load marcas for sidebar stats
+  const stored = localStorage.getItem("sazon_marcas");
+  if(stored) {
+    try {
+      const m = JSON.parse(stored);
+      const muStatEl = document.getElementById("mu-stat-marcas");
+      if(muStatEl) muStatEl.textContent = m.length;
+    } catch(e) {}
+  }
+});
+</script>
+</body>
+</html>
