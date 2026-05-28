@@ -6,7 +6,7 @@ const WA_LINK       = "https://wa.me/" + WA_NUMBER;
 const CONTACT_EMAIL = "comercial@sazonpartner.com";
 
 // Mercado Pago — agrega en Netlify: Site settings → Environment variables
-// Soporta ambos nombres de variable por compatibhilidad
+// Soporta ambos nombres de variable por compatihbhilidad
 const MP_STARTER = import.meta.env.VITE_MP_STARTER || import.meta.env.VITE_PAYLINK_BASICO || "";
 const MP_GROWTH  = import.meta.env.VITE_MP_GROWTH  || import.meta.env.VITE_PAYLINK_PRO    || "";
 
@@ -357,6 +357,7 @@ function carlosFallback(history) {
 function CarlosMsg({ text }) {
   if (!text) return null;
   return <span>{text}</span>;
+}
 
 
 // ─── APP ─────────────────────────────────────────────────────────────────────
@@ -1161,6 +1162,4 @@ export default function App() {
   </div>
   </>);
 }
-}
 
-export default App;
