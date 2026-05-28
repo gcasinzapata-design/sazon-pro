@@ -6,7 +6,7 @@ const WA_LINK       = "https://wa.me/" + WA_NUMBER;
 const CONTACT_EMAIL = "comercial@sazonpartner.com";
 
 // Mercado Pago — agrega en Netlify: Site settings → Environment variables
-// Soporta ambos nombres de variable por compatibilidad
+// Soporta ambos nombres de variable por compatibhilidad
 const MP_STARTER = import.meta.env.VITE_MP_STARTER || import.meta.env.VITE_PAYLINK_BASICO || "";
 const MP_GROWTH  = import.meta.env.VITE_MP_GROWTH  || import.meta.env.VITE_PAYLINK_PRO    || "";
 
@@ -81,7 +81,7 @@ FLUJO NATURAL DE VENTAS:
 6. Cerrar → Cuando esten listos: "Para arrancar, completa el formulario en sazonpartner.com/#contacto y te contactamos en 24h."
 
 OBJECIONES COMUNES:
-- "muy caro" → calcula cuánto más van a ganar vs el costo. Ej: "Pagas S/890 para generar S/2,352 extra — eso es 264% de retorno"
+- "muy caro" → calcula cuánto más van a ganar vs el costo. Ej: "Pagas S/2,890 para generar S/4,500 extra — eso es 155% de retorno"
 - "voy a pensarlo" → "¿Qué te genera dudas? Te lo resuelvo ahora mismo"
 - "ya tenemos alguien" → "¿Están logrando +38% de crecimiento? Si no, algo se puede mejorar"
 - "no sé si funciona" → mencion resultados: restaurantes que crecieron 40-55%
@@ -374,7 +374,7 @@ export default function App() {
   const [showExit,  setShowExit]  = useState(false);
   const [form, setForm] = useState({
     nombre:"", restaurante:"", email:"", whatsapp:"",
-    plan:"Starter", plataformas:"Solo Rappi",
+    plan:"Starter - S/2,890/mes", plataformas:"Solo Rappi",
     pedidos:"100-300", ticket:"", mensaje:"",
   });
   const endRef   = useRef(null);
@@ -602,19 +602,19 @@ export default function App() {
     {
       name:"Starter", tag:"1 plataforma · hasta 300 pedidos/mes",
       price:"S/ 2,890", period:"/mes", fee:null,
-      badge:null, dark:false, mpLink: MP_STARTER,
+      badge:null, dark:false,
       fts:[{t:"Diagnostico inicial",ok:true},{t:"1 plataforma de delivery",ok:true},{t:"Optimizacion basica de menu",ok:true},{t:"Reporte mensual",ok:true},{t:"1 campaña mensual",ok:true},{t:"Growth Manager dedicado",ok:false},{t:"Setup en plataformas (marcas nuevas)",ok:false}],
     },
     {
       name:"Growth", tag:"Hasta 3 plataformas · escala rapida",
       price:"S/ 3,790", period:"/mes", fee:null,
-      badge:"Mas popular", dark:true, mpLink: MP_GROWTH,
+      badge:"Mas popular", dark:true,
       fts:[{t:"Diagnostico completo",ok:true},{t:"Hasta 3 plataformas",ok:true},{t:"Optimizacion menu foto+copy+precio",ok:true},{t:"Growth Manager dedicado",ok:true},{t:"Setup en plataformas + entrada negociada",ok:true},{t:"Plan comercial mensual",ok:true},{t:"Hasta 3 campañas mensuales",ok:true}],
     },
     {
       name:"Pro", tag:"Cadenas · multi-local · dark kitchens",
       price:"A medida", period:"cotizacion", fee:null,
-      badge:null, dark:false, mpLink: null,
+      badge:null, dark:false,
       fts:[{t:"Todo Growth incluido",ok:true},{t:"Plataformas ilimitadas",ok:true},{t:"Dark kitchens y marcas virtuales",ok:true},{t:"Equipo dedicado exclusivo",ok:true},{t:"Campañas ilimitadas",ok:true},{t:"Integracion con POS y tech stack",ok:true},{t:"Reunion semanal de seguimiento",ok:true}],
     },
   ];
