@@ -1,0 +1,743 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cotización — Sazón Growth Partner</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --red:   #C8392B;
+    --dark:  #0F0F0D;
+    --cream: #F5F0E8;
+    --warm:  #EDE4CE;
+    --gold:  #C8A045;
+    --text:  #1A1814;
+    --muted: #6B6560;
+    --line:  rgba(26,24,20,.12);
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    background: #E8E4DA;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--text);
+    padding: 40px 20px;
+  }
+
+  .page {
+    background: var(--cream);
+    width: 794px;
+    min-height: 1123px;
+    margin: 0 auto;
+    position: relative;
+    overflow: hidden;
+  }
+
+  .page::before {
+    content: '';
+    position: absolute;
+    top: -60px; right: -60px;
+    width: 300px; height: 300px;
+    background: radial-gradient(circle, rgba(200,57,43,.06) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  /* ── EDITABLE STYLES ── */
+  [contenteditable="true"] {
+    outline: none;
+    cursor: text;
+    position: relative;
+    transition: background .15s;
+    border-radius: 2px;
+  }
+  [contenteditable="true"]:hover {
+    background: rgba(200,57,43,.06);
+  }
+  [contenteditable="true"]:focus {
+    background: rgba(200,57,43,.08);
+    box-shadow: 0 0 0 2px rgba(200,57,43,.2);
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background: var(--dark);
+    padding: 36px 52px 32px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+  }
+  .logo-wordmark {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    font-weight: 900;
+    color: white;
+    letter-spacing: -.5px;
+    line-height: 1;
+    margin-bottom: 3px;
+  }
+  .logo-wordmark span { color: var(--red); }
+  .logo-sub {
+    font-size: .7rem;
+    font-weight: 500;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: rgba(255,255,255,.35);
+  }
+  .doc-badge { text-align: right; }
+  .doc-label {
+    font-size: .62rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: rgba(255,255,255,.3);
+    margin-bottom: 4px;
+  }
+  .doc-type {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: white;
+  }
+
+  /* ── ACCENT BAR ── */
+  .accent-bar {
+    height: 3px;
+    background: linear-gradient(90deg, var(--red) 0%, var(--gold) 100%);
+  }
+
+  /* ── META ROW ── */
+  .meta-row {
+    background: var(--warm);
+    padding: 16px 52px;
+    display: flex;
+    gap: 48px;
+    border-bottom: 1px solid var(--line);
+    flex-wrap: wrap;
+  }
+  .meta-item {}
+  .meta-lbl {
+    font-size: .6rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--muted);
+    margin-bottom: 3px;
+  }
+  .meta-val {
+    font-size: .82rem;
+    font-weight: 600;
+    color: var(--text);
+    font-family: 'DM Mono', monospace;
+    min-width: 100px;
+    display: inline-block;
+    padding: 1px 3px;
+  }
+
+  /* ── BODY ── */
+  .body { padding: 40px 52px; }
+
+  /* ── PARTIES ── */
+  .parties {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 24px;
+    margin-bottom: 36px;
+  }
+  .party-card {
+    background: white;
+    border: 1px solid var(--line);
+    border-radius: 3px;
+    padding: 20px 22px;
+  }
+  .party-card.from { border-top: 3px solid var(--red); }
+  .party-card.to   { border-top: 3px solid var(--gold); }
+  .party-role {
+    font-size: .58rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2.5px;
+    color: var(--muted);
+    margin-bottom: 10px;
+  }
+  .party-name {
+    font-family: 'Playfair Display', serif;
+    font-size: 1rem;
+    font-weight: 700;
+    color: var(--text);
+    line-height: 1.25;
+    margin-bottom: 8px;
+    display: block;
+    min-width: 160px;
+  }
+  .party-detail {
+    font-size: .75rem;
+    color: var(--muted);
+    line-height: 1.9;
+  }
+  .party-detail strong { color: var(--text); font-weight: 600; }
+  .ef {
+    display: inline-block;
+    min-width: 120px;
+    padding: 1px 3px;
+    color: var(--text);
+  }
+
+  /* ── SECTION TITLE ── */
+  .section-title {
+    font-size: .6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 3px;
+    color: var(--red);
+    margin-bottom: 14px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-title::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--line);
+  }
+
+  /* ── PLAN TABLE ── */
+  .plan-table {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 28px;
+    font-size: .8rem;
+  }
+  .plan-table thead tr { background: var(--dark); color: white; }
+  .plan-table thead th {
+    padding: 11px 16px;
+    text-align: left;
+    font-size: .62rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+  }
+  .plan-table thead th:last-child { text-align: right; }
+  .plan-table tbody tr { border-bottom: 1px solid var(--line); }
+  .plan-table tbody tr.selected { background: rgba(200,57,43,.04); }
+  .plan-table tbody tr.selected td:first-child { border-left: 3px solid var(--red); }
+  .plan-table tbody td { padding: 14px 16px; vertical-align: top; }
+  .plan-table tbody td:last-child {
+    text-align: right;
+    font-family: 'Playfair Display', serif;
+    font-weight: 700;
+    font-size: .95rem;
+  }
+  .plan-name {
+    font-weight: 700;
+    font-size: .85rem;
+    margin-bottom: 3px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    flex-wrap: wrap;
+  }
+  .plan-badge {
+    font-size: .55rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    padding: 2px 7px;
+    border-radius: 100px;
+    background: rgba(200,57,43,.1);
+    color: var(--red);
+  }
+  .plan-badge.gold { background: rgba(200,160,69,.1); color: var(--gold); }
+  .plan-desc { font-size: .73rem; color: var(--muted); line-height: 1.6; }
+  .plan-includes {
+    font-size: .7rem;
+    color: var(--muted);
+    margin-top: 6px;
+    line-height: 1.8;
+  }
+  .plan-includes span {
+    display: inline-block;
+    margin-right: 10px;
+  }
+  .plan-includes span::before { content: '✓ '; color: var(--red); font-weight: 700; }
+  .price-period {
+    font-size: .65rem;
+    font-weight: 400;
+    font-family: 'DM Sans', sans-serif;
+    color: var(--muted);
+    display: block;
+    margin-top: 2px;
+  }
+
+  /* ── TOTALS ── */
+  .totals-block { display: flex; justify-content: flex-end; margin-bottom: 32px; }
+  .totals-table { width: 300px; font-size: .8rem; }
+  .totals-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 7px 0;
+    border-bottom: 1px solid var(--line);
+  }
+  .totals-row.total {
+    border-bottom: none;
+    border-top: 2px solid var(--dark);
+    padding-top: 10px;
+    font-weight: 700;
+    font-size: .95rem;
+  }
+  .totals-row.total .t-val {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem;
+    font-weight: 900;
+    color: var(--red);
+  }
+  .t-lbl { color: var(--muted); }
+  .t-val { font-weight: 600; font-family: 'DM Mono', monospace; padding: 1px 3px; }
+
+  /* ── TERMS ── */
+  .terms-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 14px;
+    margin-bottom: 32px;
+  }
+  .term-item {
+    background: var(--warm);
+    border-radius: 3px;
+    padding: 14px 16px;
+    border-left: 2px solid var(--line);
+  }
+  .term-lbl {
+    font-size: .6rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 2px;
+    color: var(--muted);
+    margin-bottom: 4px;
+  }
+  .term-val {
+    font-size: .8rem;
+    font-weight: 500;
+    color: var(--text);
+    line-height: 1.5;
+    display: block;
+    min-width: 80px;
+    padding: 1px 3px;
+  }
+
+  /* ── NOTES ── */
+  .notes-box {
+    background: rgba(200,57,43,.04);
+    border: 1px solid rgba(200,57,43,.15);
+    border-radius: 3px;
+    padding: 16px 18px;
+    margin-bottom: 32px;
+    font-size: .77rem;
+    line-height: 1.8;
+    color: var(--text);
+  }
+
+  /* ── SIGNATURE ── */
+  .sig-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 40px;
+    margin-bottom: 32px;
+  }
+  .sig-block {
+    padding-top: 52px;
+    border-top: 1px solid var(--dark);
+  }
+  .sig-lbl { font-size: .65rem; color: var(--muted); font-weight: 500; margin-bottom: 3px; display: block; }
+  .sig-name { font-size: .82rem; font-weight: 600; display: block; padding: 1px 3px; min-width: 120px; }
+  .sig-role { font-size: .72rem; color: var(--muted); display: block; padding: 1px 3px; min-width: 100px; }
+
+  /* ── FOOTER ── */
+  .footer {
+    background: var(--warm);
+    border-top: 1px solid var(--line);
+    padding: 16px 52px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+  }
+  .footer-brand { font-family: 'Playfair Display', serif; font-size: .85rem; font-weight: 700; }
+  .footer-brand span { color: var(--red); }
+  .footer-info { font-size: .65rem; color: var(--muted); text-align: right; line-height: 1.7; }
+
+  /* ── TOOLBAR ── */
+  .toolbar {
+    max-width: 794px;
+    margin: 0 auto 20px;
+    display: flex;
+    gap: 8px;
+    align-items: center;
+    flex-wrap: wrap;
+  }
+  .btn {
+    padding: 8px 18px;
+    font-family: 'DM Sans', sans-serif;
+    font-size: .75rem;
+    font-weight: 600;
+    cursor: pointer;
+    border-radius: 3px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+    border: none;
+    transition: background .2s;
+  }
+  .btn-red   { background: var(--red);  color: white; }
+  .btn-dark  { background: var(--dark); color: white; }
+  .btn-ghost { background: white; color: var(--text); border: 1px solid var(--line); }
+  .btn-red:hover  { background: #a82d22; }
+  .btn-dark:hover { background: #2a2a28; }
+  .btn-ghost:hover{ background: var(--warm); }
+  .tip { font-size: .7rem; color: var(--muted); font-family: 'DM Sans', sans-serif; margin-left: 4px; }
+
+  /* ── PLAN SELECTOR ── */
+  .plan-selector { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+  .sel-lbl {
+    font-size: .62rem; font-weight: 700; text-transform: uppercase;
+    letter-spacing: 2px; color: var(--muted); margin-right: 2px;
+  }
+  .sel-btn {
+    padding: 6px 14px;
+    border: 1px solid var(--line);
+    background: white;
+    font-family: 'DM Sans', sans-serif;
+    font-size: .73rem; font-weight: 600;
+    cursor: pointer; border-radius: 3px;
+    transition: all .15s; color: var(--text);
+  }
+  .sel-btn:hover { border-color: var(--red); color: var(--red); }
+  .sel-btn.active { background: var(--red); color: white; border-color: var(--red); }
+
+  /* ── EDIT HINT ── */
+  .edit-hint {
+    max-width: 794px;
+    margin: 0 auto 10px;
+    font-size: .68rem;
+    color: var(--muted);
+    font-family: 'DM Sans', sans-serif;
+    padding: 6px 12px;
+    background: rgba(200,57,43,.06);
+    border-radius: 3px;
+    border-left: 2px solid var(--red);
+  }
+
+  /* ── PRINT ── */
+  @media print {
+    body { background: white; padding: 0; }
+    .toolbar, .plan-selector-bar, .edit-hint { display: none !important; }
+    .page { margin: 0; width: 100%; box-shadow: none; }
+    [contenteditable="true"] { background: transparent !important; box-shadow: none !important; }
+    .plan-table tbody tr { break-inside: avoid; }
+  }
+</style>
+</head>
+<body>
+
+<!-- TOOLBAR -->
+<div class="toolbar">
+  <button class="btn btn-red" onclick="window.print()">🖨 Exportar PDF</button>
+  <button class="btn btn-dark" onclick="guardarLocal()">💾 Guardar borrador</button>
+  <button class="btn btn-ghost" onclick="cargarLocal()">📂 Cargar borrador</button>
+  <button class="btn btn-ghost" onclick="nuevaCot()">+ Nueva</button>
+  <span class="tip">Ctrl+P → Guardar como PDF</span>
+</div>
+
+<!-- PLAN SELECTOR BAR -->
+<div class="toolbar plan-selector-bar" style="margin-bottom:10px">
+  <span class="sel-lbl">Plan a cotizar:</span>
+  <div class="plan-selector">
+    <button class="sel-btn" onclick="selectPlan('starter')">Starter — S/2,890</button>
+    <button class="sel-btn active" onclick="selectPlan('growth')">Growth — S/3,790</button>
+    <button class="sel-btn" onclick="selectPlan('pro')">Pro — A medida</button>
+    <button class="sel-btn" onclick="selectPlan('todos')">Mostrar todos los planes</button>
+  </div>
+</div>
+
+<div class="edit-hint">✏️ Todos los campos del documento son editables — haz clic en cualquier texto para modificarlo. Los cambios no se guardan automáticamente.</div>
+
+<!-- DOCUMENT -->
+<div class="page" id="cot">
+
+  <!-- HEADER -->
+  <div class="header">
+    <div>
+      <div class="logo-wordmark" contenteditable="true">Sazón<span>.</span></div>
+      <div class="logo-sub" contenteditable="true">Growth Partner</div>
+    </div>
+    <div class="doc-badge">
+      <div class="doc-label" contenteditable="true">Documento</div>
+      <div class="doc-type" contenteditable="true">COTIZACIÓN</div>
+    </div>
+  </div>
+
+  <div class="accent-bar"></div>
+
+  <!-- META ROW -->
+  <div class="meta-row">
+    <div class="meta-item">
+      <div class="meta-lbl">N° Cotización</div>
+      <div class="meta-val" contenteditable="true" id="nro">COT-2025-001</div>
+    </div>
+    <div class="meta-item">
+      <div class="meta-lbl">Fecha de emisión</div>
+      <div class="meta-val" contenteditable="true" id="fecha"></div>
+    </div>
+    <div class="meta-item">
+      <div class="meta-lbl">Válida hasta</div>
+      <div class="meta-val" contenteditable="true" id="validez"></div>
+    </div>
+    <div class="meta-item">
+      <div class="meta-lbl">Moneda</div>
+      <div class="meta-val" contenteditable="true">Soles (S/) + IGV</div>
+    </div>
+    <div class="meta-item">
+      <div class="meta-lbl">Elaborado por</div>
+      <div class="meta-val" contenteditable="true">Ejecutivo de ventas</div>
+    </div>
+  </div>
+
+  <!-- BODY -->
+  <div class="body">
+
+    <!-- PARTIES -->
+    <div class="parties">
+      <div class="party-card from">
+        <div class="party-role">Emisor / Proveedor</div>
+        <span class="party-name" contenteditable="true">Premium Food Brands SAC</span>
+        <div class="party-detail">
+          <strong>RUC:</strong> <span class="ef" contenteditable="true">20611609893</span><br>
+          <strong>Razón social:</strong> <span class="ef" contenteditable="true">PREMIUM FOOD BRANDS SAC</span><br>
+          <strong>Representante:</strong> <span class="ef" contenteditable="true">Nombre del representante</span><br>
+          <strong>Cargo:</strong> <span class="ef" contenteditable="true">Growth Executive</span><br>
+          <strong>Email:</strong> <span class="ef" contenteditable="true">comercial@sazonpartner.com</span><br>
+          <strong>Web:</strong> <span class="ef" contenteditable="true">sazonpartner.com</span>
+        </div>
+      </div>
+      <div class="party-card to">
+        <div class="party-role">Cliente / Destinatario</div>
+        <span class="party-name" contenteditable="true">Razón social del cliente</span>
+        <div class="party-detail">
+          <strong>RUC:</strong> <span class="ef" contenteditable="true">RUC del cliente</span><br>
+          <strong>Razón social:</strong> <span class="ef" contenteditable="true">Razón social completa</span><br>
+          <strong>Marca / Local:</strong> <span class="ef" contenteditable="true">Nombre del restaurante</span><br>
+          <strong>Contacto:</strong> <span class="ef" contenteditable="true">Nombre del contacto</span><br>
+          <strong>Email:</strong> <span class="ef" contenteditable="true">email@restaurante.com</span><br>
+          <strong>Teléfono:</strong> <span class="ef" contenteditable="true">+51 9XX XXX XXX</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- PLANS -->
+    <div class="section-title" contenteditable="true">Detalle del servicio</div>
+    <table class="plan-table">
+      <thead>
+        <tr>
+          <th contenteditable="true" style="width:40%">Plan / Servicio</th>
+          <th contenteditable="true">Plataformas</th>
+          <th contenteditable="true">Vigencia</th>
+          <th contenteditable="true">Precio mensual</th>
+        </tr>
+      </thead>
+      <tbody id="planBody"></tbody>
+    </table>
+
+    <!-- TOTALS -->
+    <div class="totals-block">
+      <div class="totals-table" id="totalsBlock"></div>
+    </div>
+
+    <!-- TERMS -->
+    <div class="section-title" contenteditable="true">Condiciones comerciales</div>
+    <div class="terms-grid">
+      <div class="term-item">
+        <div class="term-lbl" contenteditable="true">Forma de pago</div>
+        <div class="term-val" contenteditable="true">Mensual adelantado · Transferencia bancaria o Yape/Plin</div>
+      </div>
+      <div class="term-item">
+        <div class="term-lbl" contenteditable="true">Inicio de servicio</div>
+        <div class="term-val" contenteditable="true">A coordinar tras aprobación</div>
+      </div>
+      <div class="term-item">
+        <div class="term-lbl" contenteditable="true">Permanencia mínima</div>
+        <div class="term-val" contenteditable="true">Sin contrato de largo plazo · Mensual renovable</div>
+      </div>
+      <div class="term-item">
+        <div class="term-lbl" contenteditable="true">Plataformas incluidas</div>
+        <div class="term-val" contenteditable="true">Rappi / PedidosYa / Didi Food</div>
+      </div>
+      <div class="term-item">
+        <div class="term-lbl" contenteditable="true">Reporte mensual</div>
+        <div class="term-val" contenteditable="true">Dashboard + PDF con KPIs · Día 1 de cada mes</div>
+      </div>
+      <div class="term-item">
+        <div class="term-lbl" contenteditable="true">Datos bancarios</div>
+        <div class="term-val" contenteditable="true">Banco · N° cuenta · CCI</div>
+      </div>
+    </div>
+
+    <!-- NOTES -->
+    <div class="section-title" contenteditable="true">Notas y alcance</div>
+    <div class="notes-box" contenteditable="true">
+      <strong>Incluye:</strong> gestión de perfil y menú digital, optimización de fotos y precios, ejecución de campañas pagadas en plataforma, gestión de reseñas, reporte mensual con KPIs y dashboard de cliente 24/7.<br><br>
+      <strong>No incluye:</strong> costos de campañas (inversión publicitaria en apps de delivery), fotografía de productos ni diseño gráfico externo.<br><br>
+      <strong>Nota:</strong> Los precios indicados son en Soles peruanos y no incluyen IGV (18%). El comprobante de pago (factura electrónica) se emite a nombre de Premium Food Brands SAC — RUC 20611609893.
+    </div>
+
+    <!-- SIGNATURES -->
+    <div class="section-title" contenteditable="true">Aceptación</div>
+    <div class="sig-grid">
+      <div class="sig-block">
+        <span class="sig-lbl" contenteditable="true">Emitido por — Sazón Growth Partner</span>
+        <span class="sig-name" contenteditable="true">Nombre del ejecutivo</span>
+        <span class="sig-role" contenteditable="true">Growth Executive · Premium Food Brands SAC</span>
+      </div>
+      <div class="sig-block">
+        <span class="sig-lbl" contenteditable="true">Aprobado por — Cliente</span>
+        <span class="sig-name" contenteditable="true">Nombre y cargo del cliente</span>
+        <span class="sig-role" contenteditable="true">Razón social · RUC</span>
+      </div>
+    </div>
+
+  </div><!-- /body -->
+
+  <!-- FOOTER -->
+  <div class="footer">
+    <div class="footer-brand" contenteditable="true">Sazón<span>.</span> Growth Partner</div>
+    <div class="footer-info" contenteditable="true">comercial@sazonpartner.com · sazonpartner.com<br>Premium Food Brands SAC · RUC 20611609893</div>
+  </div>
+
+</div><!-- /page -->
+
+<script>
+const PLANS = {
+  starter: {
+    name: 'Plan Starter', badge: 'Básico', badgeClass: '',
+    plats: '1 plataforma activa', vigencia: 'Mensual · sin permanencia',
+    price: 2890,
+    desc: '1 plataforma de delivery a elección (Rappi, PedidosYa o Didi Food).',
+    includes: ['Gestión de perfil y menú','Campañas pagadas','Reporte mensual','Dashboard de cliente'],
+  },
+  growth: {
+    name: 'Plan Growth', badge: 'Más popular', badgeClass: 'gold',
+    plats: 'Hasta 3 plataformas', vigencia: 'Mensual · sin permanencia',
+    price: 3790,
+    desc: 'Hasta 3 plataformas simultáneas. Growth Manager dedicado y estrategia de crecimiento activa.',
+    includes: ['Todo el Starter','Hasta 3 plataformas','Growth Manager dedicado','Gestión de reseñas','Optimización de precio'],
+  },
+  pro: {
+    name: 'Plan Pro', badge: 'Empresarial', badgeClass: '',
+    plats: 'Multi-local / cadenas', vigencia: 'A convenir',
+    price: null,
+    desc: 'Para cadenas, multi-local y dark kitchens con más de 3 locales o marcas. Propuesta a medida.',
+    includes: ['Todo Growth','Soporte prioritario','Setup nuevas marcas','Reportes ejecutivos','SLA garantizado'],
+  },
+};
+
+let activePlan = 'growth';
+let showAll = false;
+
+function fp(n) { return 'S/ ' + n.toLocaleString('es-PE'); }
+
+function render() {
+  const tbody = document.getElementById('planBody');
+  const totals = document.getElementById('totalsBlock');
+  const keys = showAll ? Object.keys(PLANS) : [activePlan];
+
+  tbody.innerHTML = keys.map(k => {
+    const p = PLANS[k];
+    const isActive = k === activePlan && !showAll;
+    const priceCell = p.price
+      ? `<span contenteditable="true" style="font-family:'Playfair Display',serif;font-weight:700;font-size:.95rem">${fp(p.price)}</span><span class="price-period" contenteditable="true">/mes + IGV</span>`
+      : `<span contenteditable="true" style="font-size:.82rem;font-weight:600;color:var(--red)">S/ ___,___ /mes</span><span class="price-period" contenteditable="true">/mes + IGV</span>`;
+    return `<tr class="${isActive?'selected':''}">
+      <td>
+        <div class="plan-name">
+          <span contenteditable="true">${p.name}</span>
+          <span class="plan-badge ${p.badgeClass}" contenteditable="true">${p.badge}</span>
+        </div>
+        <div class="plan-desc" contenteditable="true">${p.desc}</div>
+        <div class="plan-includes">${p.includes.map(i=>`<span contenteditable="true">${i}</span>`).join('')}</div>
+      </td>
+      <td style="font-size:.78rem;color:var(--muted);vertical-align:top;padding-top:18px" contenteditable="true">${p.plats}</td>
+      <td style="font-size:.78rem;color:var(--muted);vertical-align:top;padding-top:18px" contenteditable="true">${p.vigencia}</td>
+      <td style="vertical-align:top;padding-top:14px">${priceCell}</td>
+    </tr>`;
+  }).join('');
+
+  // Totals
+  if (!showAll && PLANS[activePlan].price) {
+    const base = PLANS[activePlan].price;
+    const igv  = Math.round(base * 0.18);
+    const tot  = base + igv;
+    totals.innerHTML = `
+      <div class="totals-row"><span class="t-lbl" contenteditable="true">Subtotal (sin IGV)</span><span class="t-val" contenteditable="true">${fp(base)}</span></div>
+      <div class="totals-row"><span class="t-lbl" contenteditable="true">IGV (18%)</span><span class="t-val" contenteditable="true">${fp(igv)}</span></div>
+      <div class="totals-row total"><span contenteditable="true">Total mensual</span><span class="t-val" contenteditable="true">${fp(tot)}</span></div>`;
+  } else if (!showAll) {
+    totals.innerHTML = `
+      <div class="totals-row"><span class="t-lbl" contenteditable="true">Precio base</span><span class="t-val" contenteditable="true">A cotizar</span></div>
+      <div class="totals-row"><span class="t-lbl" contenteditable="true">IGV (18%)</span><span class="t-val" contenteditable="true">—</span></div>
+      <div class="totals-row total"><span contenteditable="true">Total mensual</span><span class="t-val" contenteditable="true">A convenir</span></div>`;
+  } else {
+    totals.innerHTML = '';
+  }
+
+  // Update selector buttons
+  document.querySelectorAll('.sel-btn').forEach((b,i) => {
+    const k = ['starter','growth','pro','todos'][i];
+    b.classList.toggle('active', k==='todos' ? showAll : (!showAll && k===activePlan));
+  });
+}
+
+function selectPlan(k) {
+  if (k === 'todos') { showAll = true; }
+  else { showAll = false; activePlan = k; }
+  render();
+}
+
+// Auto dates
+function setDates() {
+  const now = new Date();
+  const opts = {day:'2-digit', month:'long', year:'numeric'};
+  document.getElementById('fecha').textContent  = now.toLocaleDateString('es-PE', opts);
+  const v = new Date(now.getTime() + 15*86400000);
+  document.getElementById('validez').textContent = v.toLocaleDateString('es-PE', opts);
+  // Quote number
+  const n = parseInt(localStorage.getItem('sz_nro')||'0') + 1;
+  localStorage.setItem('sz_nro', n);
+  document.getElementById('nro').textContent = 'COT-' + now.getFullYear() + '-' + String(n).padStart(3,'0');
+}
+
+// Save / load draft
+function guardarLocal() {
+  const html = document.getElementById('cot').innerHTML;
+  localStorage.setItem('sz_draft', html);
+  const b = event.currentTarget;
+  b.textContent = '✅ Guardado';
+  setTimeout(() => b.textContent = '💾 Guardar borrador', 1800);
+}
+function cargarLocal() {
+  const d = localStorage.getItem('sz_draft');
+  if (!d) { alert('No hay borrador guardado.'); return; }
+  if (confirm('¿Cargar el último borrador? Se reemplazará el contenido actual.')) {
+    document.getElementById('cot').innerHTML = d;
+  }
+}
+function nuevaCot() {
+  if (confirm('¿Empezar una nueva cotización? El contenido actual se perderá.')) {
+    localStorage.removeItem('sz_nro');
+    location.reload();
+  }
+}
+
+setDates();
+render();
+</script>
+</body>
+</html>
