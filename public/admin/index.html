@@ -1162,8 +1162,7 @@ function negRenderHistorial() {
 function negExport() {
   const rows = [['Cliente','Plataforma','Tipo','Comision Ant.','Comision Nueva','Ahorro/mes','Estado','Fecha']];
   negHistory.forEach(e => rows.push([e.cliente, e.plat, e.tipo, e.ca+'%', e.ct+'%', 'S/'+e.ahorro, e.estado, e.fecha]));
-  const csv = rows.map(r => r.join(',')).join('
-');
+  const csv = rows.map(r => r.join(',')).join('\n');
   const blob = new Blob(['﻿'+csv], {type:'text/csv;charset=utf-8'});
   const url = URL.createObjectURL(blob);
   const a = document.createElement('a');
@@ -1252,8 +1251,7 @@ function muGuardar(){
   const plan    = document.getElementById('mu-plan').value;
   const mes     = parseInt(document.getElementById('mu-mes').value)||1;
   const emailsRaw = document.getElementById('mu-emails').value.trim();
-  const emails  = emailsRaw.split('
-').map(e=>e.trim()).filter(Boolean).slice(0,2);
+  const emails  = emailsRaw.split('\n').map(e=>e.trim()).filter(Boolean).slice(0,2);
   const pedidos = parseInt(document.getElementById('mu-pedidos').value)||0;
   const ticket  = parseInt(document.getElementById('mu-ticket').value)||0;
   const growth  = document.getElementById('mu-growth').value.trim()||'—';
@@ -1291,8 +1289,7 @@ function muEditar(idx){
   document.getElementById('mu-emoji').value   = m.emoji||'🍽️';
   document.getElementById('mu-plan').value    = m.plan;
   document.getElementById('mu-mes').value     = m.mes||1;
-  document.getElementById('mu-emails').value  = (m.emails||[]).join('
-');
+  document.getElementById('mu-emails').value  = (m.emails||[]).join('\n');
   document.getElementById('mu-pedidos').value = m.pedidos||'';
   document.getElementById('mu-ticket').value  = m.ticket||'';
   document.getElementById('mu-growth').value  = m.growth||'';
@@ -1340,8 +1337,7 @@ function muGenerarCodigo(){
     lines.push('// '+i+': "'+m.nombre+'" ('+m.plan+') — Emails: '+(m.emails||[]).join(', ')||'sin asignar');
   });
 
-  const code = lines.join('
-');
+  const code = lines.join('\n');
   document.getElementById('mu-code-output').value = code;
   document.getElementById('mu-code-card').style.display = 'block';
   document.getElementById('mu-code-card').scrollIntoView({behavior:'smooth'});
@@ -1357,11 +1353,45 @@ function muCopiarCodigo(){
   });
 }
 
-// Init when panel opens
-const _origGo = go;
-function go(id){
-  _origGo(id);
-  if(id === 'marcas') muInit();
+// ── PANEL SWITCHER ────────────────────────────────────────────
+function go(id) {
+  // Hide all panels
+  document.querySelectorAll('.panel').forEach(p => p.style.display = 'none');
+  // Show target panel
+  var target = document.getElementById('p-' + id);
+  if (target) { target.style.display = 'block'; target.classList.add('fadein'); }
+  // Update sidebar active state
+  document.querySelectorAll('.sb-btn').forEach(b => b.classList.remove('active'));
+  var activeBtn = document.querySelector('.sb-btn[onclick*="\'' + id + '\'"]');
+  if (activeBtn) activeBtn.classList.add('active');
+  // Update panel title
+  var meta = panelMeta[id];
+  if (meta) {
+    var titleEl = document.getElementById('panel-title');
+    var subEl   = document.getElementById('panel-sub');
+    if (titleEl) titleEl.textContent = meta[0];
+    if (subEl)   subEl.textContent   = meta[1];
+  }
+  // Special init for marcas panel
+  if (id === 'marcas') muInit();
+}
+
+// ── INIT APP (called after successful login) ───────────────────
+function initApp() {
+  // Show default panel (dashboard)
+  go('dashboard');
+  // Initialize negotiation history
+  if (typeof negRenderHistorial === 'function') negRenderHistorial();
+  if (typeof negRenderStats     === 'function') negRenderStats();
+  // Initialize marcas stats
+  try {
+    var stored = localStorage.getItem('sazon_marcas');
+    if (stored) {
+      var m = JSON.parse(stored);
+      var el = document.getElementById('mu-stat-marcas');
+      if (el) el.textContent = m.length;
+    }
+  } catch(e) {}
 }
 
 // Also init stats on dashboard load
@@ -1409,10 +1439,43 @@ function sendCode() {
       cv.style.fontWeight = "900";
       cv.style.color = "#D4A547";
       cv.style.letterSpacing = "0.3em";
-      cv.style.filter = "";
+      // Code is BLURRED by default for security
+      cv.style.filter = "blur(8px)";
+      cv.style.cursor = "pointer";
+      cv.title = "Click para revelar el código";
+      cv.onclick = function() {
+        cv.style.filter = "";
+        cv.style.cursor = "default";
+        cv.onclick = null;
+        var noteEl = document.querySelector(".code-note");
+        if (noteEl) noteEl.textContent = "Ingresa este código abajo para acceder";
+      };
+    }
+    // Update note to explain blur
+    var noteEl = document.querySelector(".code-note");
+    if (noteEl) noteEl.textContent = "Haz click en el código para revelarlo";
+    // Fallback: also show in page title briefly and in a visible div
+    document.title = "Código: " + code;
+    var fallbackEl = document.getElementById("code-fallback");
+    if (fallbackEl) {
+      fallbackEl.textContent = "Tu código: " + code;
+      fallbackEl.style.display = "block";
     }
     if (msgEl) msgEl.textContent = "";
-    if (noteEl) noteEl.textContent = "Ingresa este codigo abajo para acceder";
+    if (noteEl) noteEl.textContent = "Ingresa este codigo en el campo de abajo";
+    // Asegurarse que el codigo sea siempre visible
+    if (cv) {
+      cv.style.userSelect = "all";
+      cv.title = "Haz clic para copiar";
+      cv.style.cursor = "pointer";
+      cv.onclick = function() {
+        navigator.clipboard.writeText(code).then(function() {
+          var orig = cv.style.color;
+          cv.style.color = "#22c55e";
+          setTimeout(function(){ cv.style.color = orig; }, 800);
+        });
+      };
+    }
 
     // Auto-expire en 5 minutos
     setTimeout(function() {
@@ -1420,7 +1483,8 @@ function sendCode() {
       if (cv) { cv.textContent = "EXPIRADO"; cv.style.color = "#f87171"; }
     }, 5 * 60 * 1000);
 
-    // Intentar EmailJS si esta configurado
+    // EmailJS: intentar enviar si esta configurado
+    // Por ahora el codigo siempre se muestra en pantalla
     try {
       if (typeof emailjs !== "undefined"
           && typeof EMAILJS_PUBLIC_KEY !== "undefined"
@@ -1430,9 +1494,7 @@ function sendCode() {
           code: code,
           admin_name: "Admin Sazon"
         }).then(function() {
-          if (cv) cv.textContent = "----";
-          if (cv) cv.style.filter = "blur(6px)";
-          if (noteEl) noteEl.textContent = "Codigo enviado a " + ADMIN_EMAIL + ". Revisa tu email.";
+          if (noteEl) noteEl.textContent = "Codigo enviado a " + ADMIN_EMAIL + " y visible arriba.";
         }).catch(function(e) {
           console.warn("EmailJS send error:", e);
         });
