@@ -1,0 +1,1253 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sazón Analytics — Motor de Diagnóstico</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{
+  --red:#C8392B;--dark:#0F0F0D;--cream:#F5F0E8;--warm:#EDE4CE;
+  --gold:#C8A045;--green:#2D6A4F;--blue:#2B5797;
+  --text:#1A1814;--muted:#6B6560;--line:rgba(26,24,20,.12);
+  --bg:#E8E4DA;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--text);min-height:100vh;}
+
+/* ── NAV ── */
+nav{background:var(--dark);padding:14px 32px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.nav-logo{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:900;color:white;}
+.nav-logo span{color:var(--red);}
+.nav-sub{font-size:.62rem;font-weight:600;text-transform:uppercase;letter-spacing:3px;color:rgba(255,255,255,.3);margin-top:1px;}
+.nav-right{display:flex;gap:10px;align-items:center;}
+.nav-btn{padding:7px 16px;font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:600;cursor:pointer;border-radius:2px;border:none;text-transform:uppercase;letter-spacing:1px;transition:all .18s;}
+.nb-ghost{background:rgba(255,255,255,.07);color:rgba(255,255,255,.7);} .nb-ghost:hover{background:rgba(255,255,255,.13);}
+.nb-red{background:var(--red);color:white;} .nb-red:hover{background:#a82d22;}
+.brand-tag{font-size:.68rem;padding:4px 10px;background:rgba(200,57,43,.15);color:var(--red);border-radius:100px;font-weight:600;}
+
+/* ── MAIN LAYOUT ── */
+.wrap{max-width:1200px;margin:0 auto;padding:32px 24px;}
+
+/* ── UPLOAD ZONE ── */
+.upload-screen{min-height:calc(100vh - 56px);display:flex;align-items:center;justify-content:center;padding:40px 24px;}
+.upload-card{background:var(--cream);border:1px solid var(--line);border-radius:4px;width:100%;max-width:680px;overflow:hidden;}
+.upload-header{background:var(--dark);padding:28px 36px;}
+.upload-h{font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:900;color:white;margin-bottom:4px;}
+.upload-sub{font-size:.78rem;color:rgba(255,255,255,.4);}
+.upload-body{padding:32px 36px;}
+.drop-zone{border:2px dashed rgba(200,57,43,.3);border-radius:3px;padding:40px 24px;text-align:center;cursor:pointer;transition:all .2s;background:rgba(200,57,43,.02);}
+.drop-zone:hover,.drop-zone.dragover{border-color:var(--red);background:rgba(200,57,43,.05);}
+.drop-icon{font-size:2.5rem;margin-bottom:12px;}
+.drop-title{font-size:.95rem;font-weight:600;margin-bottom:6px;}
+.drop-sub{font-size:.75rem;color:var(--muted);line-height:1.6;}
+.drop-btn{display:inline-block;margin-top:14px;padding:9px 22px;background:var(--red);color:white;border:none;border-radius:2px;font-family:'DM Sans',sans-serif;font-size:.78rem;font-weight:600;cursor:pointer;text-transform:uppercase;letter-spacing:1px;}
+.upload-platforms{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:20px;}
+.plat-card{background:white;border:1px solid var(--line);border-radius:2px;padding:14px 16px;}
+.plat-name{font-weight:700;font-size:.82rem;margin-bottom:4px;}
+.plat-hint{font-size:.7rem;color:var(--muted);line-height:1.6;}
+.plat-hint code{background:var(--warm);padding:1px 5px;border-radius:2px;font-family:'DM Mono',monospace;font-size:.68rem;}
+.file-list{margin-top:16px;}
+.file-item{display:flex;align-items:center;gap:10px;padding:8px 12px;background:white;border:1px solid var(--line);border-radius:2px;margin-bottom:6px;font-size:.78rem;}
+.file-icon{font-size:1.1rem;flex-shrink:0;}
+.file-name{flex:1;font-weight:500;}
+.file-status{font-size:.68rem;padding:2px 8px;border-radius:100px;}
+.st-ok{background:rgba(45,106,79,.1);color:var(--green);}
+.st-err{background:rgba(200,57,43,.1);color:var(--red);}
+.analyze-btn{width:100%;padding:14px;background:var(--red);color:white;border:none;border-radius:2px;font-family:'DM Sans',sans-serif;font-size:.85rem;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:1.5px;margin-top:16px;transition:background .18s;}
+.analyze-btn:hover{background:#a82d22;}
+.analyze-btn:disabled{background:var(--muted);cursor:default;}
+
+/* ── LOADING ── */
+.loading-screen{min-height:calc(100vh - 56px);display:flex;align-items:center;justify-content:center;flex-direction:column;gap:16px;}
+.loader{width:48px;height:48px;border:3px solid var(--line);border-top-color:var(--red);border-radius:50%;animation:spin 1s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+.load-msg{font-size:.82rem;color:var(--muted);}
+
+/* ── REPORT ── */
+.report-wrap{display:none;}
+
+/* ── SECTION HEADERS ── */
+.sec-head{display:flex;align-items:center;gap:12px;margin:32px 0 16px;}
+.sec-icon{width:36px;height:36px;border-radius:50%;background:rgba(200,57,43,.1);display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
+.sec-title{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:700;}
+.sec-sub{font-size:.73rem;color:var(--muted);margin-top:1px;}
+
+/* ── KPI ROW ── */
+.kpi-row{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin-bottom:24px;}
+.kpi-card{background:var(--cream);border:1px solid var(--line);border-radius:3px;padding:16px 18px;}
+.kpi-card.highlight{border-left:3px solid var(--red);}
+.kpi-lbl{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin-bottom:6px;}
+.kpi-val{font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:900;line-height:1;margin-bottom:4px;}
+.kpi-delta{font-size:.72rem;font-weight:600;}
+.delta-up{color:var(--green);}
+.delta-down{color:var(--red);}
+.kpi-note{font-size:.67rem;color:var(--muted);margin-top:2px;}
+
+/* ── CHARTS ── */
+.charts-2{display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:24px;}
+.charts-3{display:grid;grid-template-columns:2fr 1fr;gap:16px;margin-bottom:24px;}
+.chart-card{background:var(--cream);border:1px solid var(--line);border-radius:3px;padding:18px 20px;}
+.chart-title{font-size:.72rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--muted);margin-bottom:14px;}
+.chart-wrap{position:relative;}
+
+/* ── PRODUCT MATRIX ── */
+.product-matrix{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px;}
+.matrix-quad{background:var(--cream);border:1px solid var(--line);border-radius:3px;padding:16px 18px;}
+.mq-header{display:flex;align-items:center;gap:8px;margin-bottom:12px;}
+.mq-dot{width:10px;height:10px;border-radius:50%;flex-shrink:0;}
+.mq-title{font-weight:700;font-size:.82rem;}
+.mq-sub{font-size:.7rem;color:var(--muted);}
+.product-item{display:flex;justify-content:space-between;align-items:center;padding:6px 0;border-bottom:1px solid var(--line);font-size:.76rem;}
+.product-item:last-child{border-bottom:none;}
+.pi-name{flex:1;font-weight:500;}
+.pi-orders{font-family:'DM Mono',monospace;font-size:.7rem;color:var(--muted);}
+.pi-rev{font-family:'DM Mono',monospace;font-size:.72rem;font-weight:600;}
+
+/* ── OPPORTUNITIES ── */
+.opp-list{margin-bottom:24px;}
+.opp-item{background:var(--cream);border:1px solid var(--line);border-radius:3px;padding:16px 20px;margin-bottom:10px;display:flex;gap:14px;align-items:flex-start;}
+.opp-icon{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
+.opp-icon.high{background:rgba(200,57,43,.12);}
+.opp-icon.med{background:rgba(200,160,69,.12);}
+.opp-icon.low{background:rgba(45,106,79,.1);}
+.opp-body{flex:1;}
+.opp-title{font-weight:700;font-size:.83rem;margin-bottom:3px;}
+.opp-desc{font-size:.76rem;color:var(--muted);line-height:1.6;margin-bottom:6px;}
+.opp-action{font-size:.72rem;font-weight:600;padding:4px 10px;background:rgba(200,57,43,.08);color:var(--red);border-radius:100px;display:inline-block;}
+.priority-badge{font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;padding:2px 8px;border-radius:100px;}
+.pb-high{background:rgba(200,57,43,.1);color:var(--red);}
+.pb-med{background:rgba(200,160,69,.1);color:var(--gold);}
+.pb-low{background:rgba(45,106,79,.1);color:var(--green);}
+
+/* ── ACTION PLAN ── */
+.plan-table{width:100%;border-collapse:collapse;font-size:.78rem;margin-bottom:24px;}
+.plan-table thead tr{background:var(--dark);color:white;}
+.plan-table thead th{padding:10px 14px;text-align:left;font-size:.6rem;font-weight:600;text-transform:uppercase;letter-spacing:2px;}
+.plan-table tbody tr{border-bottom:1px solid var(--line);}
+.plan-table tbody tr:hover{background:rgba(200,57,43,.03);}
+.plan-table tbody td{padding:12px 14px;vertical-align:top;}
+.action-week{font-weight:700;font-size:.7rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);}
+.action-title{font-weight:700;font-size:.82rem;margin-bottom:2px;}
+.action-desc{font-size:.73rem;color:var(--muted);line-height:1.6;}
+.impact-badge{display:inline-flex;align-items:center;gap:3px;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;padding:2px 8px;border-radius:100px;}
+.ib-high{background:rgba(45,106,79,.1);color:var(--green);}
+.ib-med{background:rgba(200,160,69,.1);color:var(--gold);}
+.owner-tag{font-size:.68rem;padding:2px 8px;background:rgba(43,87,151,.08);color:var(--blue);border-radius:100px;font-weight:600;}
+
+/* ── HEATMAP ── */
+.heatmap-grid{display:grid;grid-template-columns:40px repeat(7,1fr);gap:3px;font-size:.65rem;}
+.hm-day-label{text-align:center;font-weight:600;color:var(--muted);padding:3px 0;font-size:.6rem;text-transform:uppercase;letter-spacing:1px;}
+.hm-hour-label{display:flex;align-items:center;justify-content:flex-end;padding-right:6px;color:var(--muted);font-family:'DM Mono',monospace;font-size:.6rem;}
+.hm-cell{height:20px;border-radius:2px;cursor:default;transition:transform .15s;}
+.hm-cell:hover{transform:scale(1.1);z-index:1;position:relative;}
+
+/* ── INSIGHT BOX ── */
+.insight-box{background:white;border:1px solid var(--line);border-left:3px solid var(--red);border-radius:0 3px 3px 0;padding:14px 18px;margin-bottom:12px;font-size:.78rem;line-height:1.7;}
+.insight-box strong{color:var(--red);}
+.insight-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:24px;}
+
+/* ── EXPORT BAR ── */
+.export-bar{background:var(--dark);padding:12px 24px;display:flex;gap:10px;align-items:center;border-top:1px solid rgba(255,255,255,.06);}
+.eb-title{font-size:.72rem;color:rgba(255,255,255,.4);font-weight:600;text-transform:uppercase;letter-spacing:1px;margin-right:6px;}
+
+/* ── SUMMARY HEADER ── */
+.report-header{background:var(--dark);padding:28px 32px;display:flex;justify-content:space-between;align-items:center;}
+.rh-left{}
+.rh-title{font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:900;color:white;margin-bottom:4px;}
+.rh-sub{font-size:.73rem;color:rgba(255,255,255,.4);}
+.rh-right{text-align:right;}
+.rh-client{font-family:'Playfair Display',serif;font-size:1rem;font-weight:700;color:white;}
+.rh-period{font-size:.7rem;color:rgba(255,255,255,.35);margin-top:3px;}
+.accent-bar{height:3px;background:linear-gradient(90deg,var(--red),var(--gold));}
+
+/* ── TABS ── */
+.tabs{display:flex;gap:0;border-bottom:1px solid var(--line);margin-bottom:24px;background:var(--cream);}
+.tab{padding:12px 20px;font-size:.75rem;font-weight:600;cursor:pointer;border-bottom:2px solid transparent;margin-bottom:-1px;color:var(--muted);transition:all .18s;}
+.tab:hover{color:var(--text);}
+.tab.active{color:var(--red);border-bottom-color:var(--red);}
+.tab-content{display:none;}
+.tab-content.active{display:block;}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:6px;height:6px;}
+::-webkit-scrollbar-track{background:transparent;}
+::-webkit-scrollbar-thumb{background:rgba(0,0,0,.2);border-radius:3px;}
+
+/* RESPONSIVE */
+@media(max-width:900px){
+  .kpi-row{grid-template-columns:repeat(3,1fr);}
+  .charts-2,.charts-3{grid-template-columns:1fr;}
+  .product-matrix{grid-template-columns:1fr;}
+  .insight-grid{grid-template-columns:1fr;}
+}
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div>
+    <div class="nav-logo">Sazón<span>.</span></div>
+    <div class="nav-sub">Motor de Análisis · Diagnóstico de Delivery</div>
+  </div>
+  <div class="nav-right">
+    <span class="brand-tag" id="brandTag" style="display:none"></span>
+    <button class="nav-btn nb-ghost" id="resetBtn" style="display:none" onclick="resetTool()">← Nueva marca</button>
+    <button class="nav-btn nb-red" id="exportBtn" style="display:none" onclick="exportReport()">⬇ Exportar informe</button>
+  </div>
+</nav>
+
+<!-- UPLOAD SCREEN -->
+<div class="upload-screen" id="uploadScreen">
+  <div class="upload-card">
+    <div class="upload-header">
+      <div class="upload-h">Diagnóstico automático de delivery</div>
+      <div class="upload-sub">Sube los exports de Rappi y/o PedidosYa y el motor genera el análisis completo</div>
+    </div>
+    <div class="upload-body">
+
+      <!-- Brand input -->
+      <div style="margin-bottom:20px">
+        <label style="font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--muted);display:block;margin-bottom:6px">Nombre de la marca</label>
+        <input type="text" id="brandName" placeholder="Ej: Beso Francés" style="width:100%;padding:9px 12px;border:1px solid var(--line);border-radius:2px;font-family:'DM Sans',sans-serif;font-size:.85rem;background:white;color:var(--text);">
+      </div>
+
+      <!-- Drop zone -->
+      <div class="drop-zone" id="dropZone">
+        <div class="drop-icon">📊</div>
+        <div class="drop-title">Arrastra los archivos Excel aquí</div>
+        <div class="drop-sub">Acepta exports de Rappi Partners, PedidosYa Restaurant Hub<br>Formatos: <strong>.xlsx</strong> · <strong>.xls</strong> · <strong>.csv</strong></div>
+        <input type="file" id="fileInput" multiple accept=".xlsx,.xls,.csv" style="display:none">
+        <button class="drop-btn" onclick="document.getElementById('fileInput').click()">Seleccionar archivos</button>
+      </div>
+
+      <!-- File list -->
+      <div class="file-list" id="fileList"></div>
+
+      <!-- Platform guides -->
+      <div class="upload-platforms">
+        <div class="plat-card">
+          <div class="plat-name" style="color:#FF6900">🟠 Rappi Partners</div>
+          <div class="plat-hint">
+            Reportes → <code>Pedidos</code> → Exportar Excel<br>
+            O: Finanzas → <code>Transacciones</code> → Exportar
+          </div>
+        </div>
+        <div class="plat-card">
+          <div class="plat-name" style="color:#FF6C2F">🔵 PedidosYa</div>
+          <div class="plat-hint">
+            Restaurant Hub → <code>Informes</code> → Órdenes<br>
+            Selecciona rango de fechas → Descargar CSV
+          </div>
+        </div>
+      </div>
+
+      <button class="analyze-btn" id="analyzeBtn" disabled onclick="runAnalysis()">
+        Analizar datos →
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div class="loading-screen" id="loadingScreen" style="display:none">
+  <div class="loader"></div>
+  <div class="load-msg" id="loadMsg">Procesando archivos...</div>
+</div>
+
+<!-- REPORT -->
+<div class="report-wrap" id="reportWrap">
+  <div class="report-header">
+    <div class="rh-left">
+      <div class="rh-title" id="reportTitle">Diagnóstico de Delivery</div>
+      <div class="rh-sub" id="reportSub">Análisis generado por Sazón Growth Partner</div>
+    </div>
+    <div class="rh-right">
+      <div class="rh-client" id="reportClient"></div>
+      <div class="rh-period" id="reportPeriod"></div>
+    </div>
+  </div>
+  <div class="accent-bar"></div>
+
+  <!-- TABS -->
+  <div style="background:var(--cream);border-bottom:1px solid var(--line)">
+    <div class="tabs" style="padding:0 24px;border:none;margin:0">
+      <div class="tab active" onclick="showTab('overview')">📊 Resumen ejecutivo</div>
+      <div class="tab" onclick="showTab('products')">🍽️ Productos</div>
+      <div class="tab" onclick="showTab('patterns')">⏰ Patrones</div>
+      <div class="tab" onclick="showTab('opportunities')">💡 Oportunidades</div>
+      <div class="tab" onclick="showTab('plan')">📋 Plan de acción M1</div>
+    </div>
+  </div>
+
+  <div class="wrap" style="padding-top:20px">
+
+    <!-- TAB: OVERVIEW -->
+    <div class="tab-content active" id="tab-overview">
+      <div class="kpi-row" id="kpiRow"></div>
+      <div class="charts-3">
+        <div class="chart-card">
+          <div class="chart-title">Ventas diarias (S/)</div>
+          <div class="chart-wrap" style="height:200px"><canvas id="chartVentas"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Pedidos por plataforma</div>
+          <div class="chart-wrap" style="height:200px"><canvas id="chartPlat"></canvas></div>
+        </div>
+      </div>
+      <div class="charts-2">
+        <div class="chart-card">
+          <div class="chart-title">Ticket promedio por semana (S/)</div>
+          <div class="chart-wrap" style="height:180px"><canvas id="chartTicket"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Distribución de pedidos por día</div>
+          <div class="chart-wrap" style="height:180px"><canvas id="chartDias"></canvas></div>
+        </div>
+      </div>
+      <div class="insight-grid" id="insightGrid"></div>
+    </div>
+
+    <!-- TAB: PRODUCTS -->
+    <div class="tab-content" id="tab-products">
+      <div class="sec-head">
+        <div class="sec-icon">⭐</div>
+        <div><div class="sec-title">Matriz de rendimiento de productos</div><div class="sec-sub">Clasificados por volumen de pedidos y revenue generado</div></div>
+      </div>
+      <div class="product-matrix" id="productMatrix"></div>
+      <div class="chart-card" style="margin-bottom:24px">
+        <div class="chart-title">Top 15 productos — Pedidos vs Revenue</div>
+        <div class="chart-wrap" style="height:280px"><canvas id="chartProducts"></canvas></div>
+      </div>
+    </div>
+
+    <!-- TAB: PATTERNS -->
+    <div class="tab-content" id="tab-patterns">
+      <div class="sec-head">
+        <div class="sec-icon">⏰</div>
+        <div><div class="sec-title">Heatmap de actividad</div><div class="sec-sub">Pedidos por hora y día de la semana</div></div>
+      </div>
+      <div class="chart-card" style="margin-bottom:24px">
+        <div class="chart-title">Intensidad de pedidos — Hora × Día</div>
+        <div id="heatmapContainer" style="padding:8px 0"></div>
+      </div>
+      <div class="charts-2">
+        <div class="chart-card">
+          <div class="chart-title">Peak hours — promedio pedidos por hora</div>
+          <div class="chart-wrap" style="height:200px"><canvas id="chartHoras"></canvas></div>
+        </div>
+        <div class="chart-card">
+          <div class="chart-title">Rendimiento por semana del mes</div>
+          <div class="chart-wrap" style="height:200px"><canvas id="chartSemanas"></canvas></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TAB: OPPORTUNITIES -->
+    <div class="tab-content" id="tab-opportunities">
+      <div class="sec-head">
+        <div class="sec-icon">💡</div>
+        <div><div class="sec-title">Oportunidades detectadas automáticamente</div><div class="sec-sub">Priorizadas por impacto potencial en ventas</div></div>
+      </div>
+      <div class="opp-list" id="oppList"></div>
+    </div>
+
+    <!-- TAB: PLAN M1 -->
+    <div class="tab-content" id="tab-plan">
+      <div class="sec-head">
+        <div class="sec-icon">📋</div>
+        <div><div class="sec-title">Plan de acción — Mes 1</div><div class="sec-sub">Acciones concretas semana a semana basadas en el diagnóstico</div></div>
+      </div>
+      <table class="plan-table" id="planTable">
+        <thead>
+          <tr>
+            <th style="width:100px">Semana</th>
+            <th>Acción</th>
+            <th>Detalle</th>
+            <th>Impacto</th>
+            <th>Responsable</th>
+          </tr>
+        </thead>
+        <tbody id="planBody"></tbody>
+      </table>
+    </div>
+
+  </div><!-- /wrap -->
+
+  <!-- EXPORT BAR -->
+  <div class="export-bar">
+    <span class="eb-title">Exportar</span>
+    <button class="nav-btn nb-ghost" onclick="window.print()">🖨 PDF / Imprimir</button>
+    <button class="nav-btn nb-ghost" onclick="copyInsights()">📋 Copiar insights</button>
+  </div>
+
+</div><!-- /reportWrap -->
+
+<script>
+// ════════════════════════════════════════════════════════════════
+//  GLOBALS
+// ════════════════════════════════════════════════════════════════
+let FILES    = [];
+let DATA     = null; // normalized dataset
+let CHARTS   = {};
+
+// ════════════════════════════════════════════════════════════════
+//  FILE HANDLING
+// ════════════════════════════════════════════════════════════════
+const dropZone  = document.getElementById('dropZone');
+const fileInput = document.getElementById('fileInput');
+
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.classList.add('dragover'); });
+dropZone.addEventListener('dragleave', () => dropZone.classList.remove('dragover'));
+dropZone.addEventListener('drop', e => {
+  e.preventDefault();
+  dropZone.classList.remove('dragover');
+  handleFiles(Array.from(e.dataTransfer.files));
+});
+fileInput.addEventListener('change', e => handleFiles(Array.from(e.target.files)));
+
+function handleFiles(newFiles) {
+  newFiles.forEach(f => {
+    if (!FILES.find(x => x.name === f.name)) FILES.push(f);
+  });
+  renderFileList();
+  document.getElementById('analyzeBtn').disabled = FILES.length === 0;
+}
+
+function renderFileList() {
+  const el = document.getElementById('fileList');
+  if (!FILES.length) { el.innerHTML = ''; return; }
+  el.innerHTML = FILES.map((f, i) => `
+    <div class="file-item">
+      <span class="file-icon">📄</span>
+      <span class="file-name">${f.name}</span>
+      <span class="file-status st-ok">${(f.size/1024).toFixed(0)} KB</span>
+      <span style="cursor:pointer;color:var(--muted);font-size:.8rem" onclick="removeFile(${i})">✕</span>
+    </div>`).join('');
+}
+
+function removeFile(i) {
+  FILES.splice(i, 1);
+  renderFileList();
+  document.getElementById('analyzeBtn').disabled = FILES.length === 0;
+}
+
+// ════════════════════════════════════════════════════════════════
+//  EXCEL PARSER — detects Rappi / PedidosYa / generic formats
+// ════════════════════════════════════════════════════════════════
+async function parseFile(file) {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+      try {
+        const wb = XLSX.read(e.target.result, {type:'binary', cellDates:true});
+        const rows = [];
+        wb.SheetNames.forEach(sheetName => {
+          const ws = wb.Sheets[sheetName];
+          const json = XLSX.utils.sheet_to_json(ws, {raw:false, defval:''});
+          rows.push(...json);
+        });
+        resolve({ name: file.name, rows });
+      } catch(err) { reject(err); }
+    };
+    reader.readAsBinaryString(file);
+  });
+}
+
+// Flexible column name mapping
+function detectColumns(row) {
+  const keys = Object.keys(row).map(k => k.toLowerCase().trim());
+  const find = (patterns) => {
+    const k = Object.keys(row).find(k => patterns.some(p => k.toLowerCase().includes(p)));
+    return k || null;
+  };
+  return {
+    date:     find(['fecha','date','created','ordered','order_date','hora','datetime','f_pedido','f. pedido']),
+    total:    find(['total','monto','amount','precio','gmv','valor','venta','subtotal','net','ingreso','facturado']),
+    items:    find(['producto','product','item','nombre_producto','descripcion','articulo','items']),
+    qty:      find(['cantidad','qty','quantity','units','unidades']),
+    platform: find(['plataforma','platform','channel','canal','app']),
+    status:   find(['estado','status','estado_pedido']),
+    rating:   find(['rating','calificacion','score','puntuacion','estrella']),
+    order_id: find(['orden','order','pedido_id','id_pedido','order_id','folio']),
+  };
+}
+
+function normalizeRow(row, cols, platform) {
+  const getNum = k => {
+    if (!k) return 0;
+    const v = String(row[k] || '').replace(/[S\/\s,]/g,'').replace(/,/g,'');
+    return parseFloat(v) || 0;
+  };
+  const getStr = k => k ? String(row[k] || '').trim() : '';
+
+  // Date parsing
+  let date = null;
+  if (cols.date) {
+    const dv = row[cols.date];
+    if (dv instanceof Date) date = dv;
+    else if (typeof dv === 'string') {
+      // Try multiple date formats
+      const cleaned = dv.replace(/(\d+)\/(\d+)\/(\d{4})/, '$3-$2-$1')
+                        .replace(/(\d+)-(\d+)-(\d{4})/, '$3-$2-$1');
+      date = new Date(dv);
+      if (isNaN(date)) date = new Date(cleaned);
+      if (isNaN(date)) {
+        // Try DD/MM/YYYY
+        const m = dv.match(/(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})/);
+        if (m) date = new Date(`${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}`);
+      }
+    }
+    if (date && isNaN(date.getTime())) date = null;
+  }
+
+  const total   = getNum(cols.total);
+  const itemStr = getStr(cols.items);
+  const status  = getStr(cols.status).toLowerCase();
+  const rating  = getNum(cols.rating) || null;
+
+  // Skip cancelled orders
+  const cancelled = /cancel|rechaz|fallid|error/i.test(status);
+
+  return { date, total, item: itemStr, platform, rating, cancelled };
+}
+
+function parseAllRows(files) {
+  const allOrders = [];
+  const allItems  = {};
+
+  files.forEach(({name, rows}) => {
+    if (!rows.length) return;
+    const cols = detectColumns(rows[0]);
+
+    // Detect platform from filename
+    let platform = 'Otros';
+    if (/rappi/i.test(name)) platform = 'Rappi';
+    else if (/pedidos.*ya|peya/i.test(name)) platform = 'PedidosYa';
+    else if (/didi/i.test(name)) platform = 'Didi Food';
+
+    rows.forEach(row => {
+      const norm = normalizeRow(row, cols, platform);
+      if (norm.cancelled || norm.total <= 0) return;
+      allOrders.push(norm);
+
+      // Parse item names
+      if (norm.item) {
+        const items = norm.item.split(/[,;|]+/).map(s => s.trim()).filter(Boolean);
+        items.forEach(item => {
+          if (item.length < 2 || item.length > 80) return;
+          if (!allItems[item]) allItems[item] = { name: item, orders: 0, revenue: 0 };
+          allItems[item].orders++;
+          allItems[item].revenue += norm.total / Math.max(items.length, 1);
+        });
+      }
+    });
+  });
+
+  return { orders: allOrders, items: allItems };
+}
+
+// ════════════════════════════════════════════════════════════════
+//  ANALYSIS ENGINE
+// ════════════════════════════════════════════════════════════════
+function analyze(orders, items, brandName) {
+  if (!orders.length) return null;
+
+  // Sort by date
+  const sorted = orders.filter(o => o.date).sort((a,b) => a.date - b.date);
+  const earliest = sorted[0]?.date;
+  const latest   = sorted[sorted.length-1]?.date;
+
+  // Basic KPIs
+  const totalOrders  = orders.length;
+  const totalRevenue = orders.reduce((s, o) => s + o.total, 0);
+  const avgTicket    = totalRevenue / totalOrders;
+  const ratings      = orders.filter(o => o.rating > 0).map(o => o.rating);
+  const avgRating    = ratings.length ? ratings.reduce((a,b)=>a+b,0)/ratings.length : null;
+
+  // Platform breakdown
+  const byPlat = {};
+  orders.forEach(o => {
+    if (!byPlat[o.platform]) byPlat[o.platform] = {orders:0, revenue:0};
+    byPlat[o.platform].orders++;
+    byPlat[o.platform].revenue += o.total;
+  });
+
+  // Daily data
+  const byDay = {};
+  sorted.forEach(o => {
+    if (!o.date) return;
+    const d = o.date.toISOString().split('T')[0];
+    if (!byDay[d]) byDay[d] = {orders:0, revenue:0};
+    byDay[d].orders++;
+    byDay[d].revenue += o.total;
+  });
+  const dayKeys    = Object.keys(byDay).sort();
+  const dailyRevs  = dayKeys.map(d => byDay[d].revenue);
+  const dailyOrds  = dayKeys.map(d => byDay[d].orders);
+
+  // Weekly aggregation
+  const byWeek = {};
+  sorted.forEach(o => {
+    if (!o.date) return;
+    const wd = new Date(o.date);
+    wd.setDate(wd.getDate() - wd.getDay());
+    const wk = wd.toISOString().split('T')[0];
+    if (!byWeek[wk]) byWeek[wk] = {orders:0, revenue:0, tickets:[]};
+    byWeek[wk].orders++;
+    byWeek[wk].revenue += o.total;
+    byWeek[wk].tickets.push(o.total);
+  });
+  const weekKeys = Object.keys(byWeek).sort();
+
+  // Day-of-week
+  const dowNames  = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const dowOrders = new Array(7).fill(0);
+  const dowRev    = new Array(7).fill(0);
+  sorted.forEach(o => {
+    if (!o.date) return;
+    const d = o.date.getDay();
+    dowOrders[d]++;
+    dowRev[d] += o.total;
+  });
+
+  // Hour of day
+  const hourOrders = new Array(24).fill(0);
+  sorted.forEach(o => {
+    if (!o.date) return;
+    hourOrders[o.date.getHours()]++;
+  });
+
+  // Heatmap: hour x dow
+  const heatmap = Array.from({length:24}, () => new Array(7).fill(0));
+  sorted.forEach(o => {
+    if (!o.date) return;
+    heatmap[o.date.getHours()][o.date.getDay()]++;
+  });
+
+  // Week-of-month
+  const womOrders = [0,0,0,0];
+  sorted.forEach(o => {
+    if (!o.date) return;
+    const d = o.date.getDate();
+    const w = d <= 7 ? 0 : d <= 14 ? 1 : d <= 21 ? 2 : 3;
+    womOrders[w]++;
+  });
+
+  // Products
+  const itemArr = Object.values(items).sort((a,b) => b.orders - a.orders);
+  const top15   = itemArr.slice(0, 15);
+
+  // Split: first half vs second half for trend
+  const half = Math.floor(dailyRevs.length / 2);
+  const r1 = dailyRevs.slice(0, half).reduce((a,b)=>a+b,0) / (half||1);
+  const r2 = dailyRevs.slice(half).reduce((a,b)=>a+b,0) / (dailyRevs.length - half||1);
+  const trend = r1 > 0 ? ((r2-r1)/r1*100) : 0;
+
+  // Best/worst day
+  const bestDow  = dowOrders.indexOf(Math.max(...dowOrders));
+  const worstDow = dowOrders.indexOf(Math.min(...dowOrders.filter(v=>v>0)));
+  const peakHour = hourOrders.indexOf(Math.max(...hourOrders));
+
+  // Average daily orders
+  const avgDailyOrders = totalOrders / Math.max(dayKeys.length, 1);
+
+  return {
+    brand: brandName,
+    totalOrders, totalRevenue, avgTicket, avgRating,
+    byPlat, byDay, byWeek, weekKeys,
+    dayKeys, dailyRevs, dailyOrds,
+    dowNames, dowOrders, dowRev,
+    hourOrders, heatmap, womOrders,
+    itemArr, top15,
+    trend, r1, r2,
+    bestDow, worstDow, peakHour,
+    avgDailyOrders,
+    earliest, latest,
+    totalDays: dayKeys.length,
+  };
+}
+
+// ════════════════════════════════════════════════════════════════
+//  OPPORTUNITY DETECTOR
+// ════════════════════════════════════════════════════════════════
+function detectOpportunities(d) {
+  const opps = [];
+
+  // 1. Low-selling days opportunity
+  const bestName  = d.dowNames[d.bestDow];
+  const worstName = d.dowNames[d.worstDow];
+  const dowGap    = d.dowOrders[d.bestDow] > 0 ? ((d.dowOrders[d.bestDow]-d.dowOrders[d.worstDow])/d.dowOrders[d.bestDow]*100) : 0;
+  if (dowGap > 25) opps.push({
+    priority:'high', icon:'📅',
+    title:`${worstName} tiene ${dowGap.toFixed(0)}% menos pedidos que ${bestName}`,
+    desc:`Los ${worstName} son el día más débil de la semana. Hay margen para activar campañas de descuento o promociones específicas para ese día.`,
+    action:`Crear campaña "Promo ${worstName}" en Rappi/PedidosYa con 15-20% dto para el día de menor tráfico.`
+  });
+
+  // 2. Peak hour concentration
+  const peakPct = d.totalOrders > 0 ? (d.hourOrders[d.peakHour] / d.totalOrders * 100) : 0;
+  if (peakPct < 15 && d.totalDays > 7) opps.push({
+    priority:'med', icon:'⏰',
+    title:'Tráfico disperso — sin hora pico clara',
+    desc:'Los pedidos no se concentran en una ventana horaria específica. Definir y activar el horario pico con tiempo de preparación optimizado reduce cancelaciones.',
+    action:'Activar tiempo de preparación reducido en hora pico. Testear campaña lunch (12-2pm) y cena (7-9pm).'
+  });
+
+  // 3. Ticket optimization
+  if (d.avgTicket < 45) opps.push({
+    priority:'high', icon:'💰',
+    title:`Ticket promedio S/${d.avgTicket.toFixed(0)} — bajo para la categoría`,
+    desc:'El ticket promedio está por debajo del benchmark de crepería premium (S/48-55). Incorporar combos estratégicos y upselling automático puede aumentarlo.',
+    action:'Crear 3 combos con ítem principal + bebida + postre. Activar "Complementos sugeridos" en el perfil.'
+  });
+
+  // 4. Missing items strategy
+  if (d.itemArr.length > 0) {
+    const total = d.itemArr.reduce((s,i)=>s+i.orders,0);
+    const top3pct = d.itemArr.slice(0,3).reduce((s,i)=>s+i.orders,0) / (total||1);
+    if (top3pct > 0.6) opps.push({
+      priority:'high', icon:'🍽️',
+      title:`3 productos concentran el ${(top3pct*100).toFixed(0)}% de los pedidos`,
+      desc:'Alta dependencia de pocos SKUs es riesgo operativo. La carta necesita que más ítems sean descubiertos para distribuir el tráfico y aumentar el ticket.',
+      action:'Promover ítems en posiciones 4-8 del ranking con descuento de lanzamiento o destacarlos en el header del menú.'
+    });
+    
+    // Slow movers
+    const slowMovers = d.itemArr.filter(i => i.orders < d.avgDailyOrders * 0.3);
+    if (slowMovers.length > 3) opps.push({
+      priority:'med', icon:'🔻',
+      title:`${slowMovers.length} productos con menos de ${(d.avgDailyOrders*0.3).toFixed(0)} pedidos/día`,
+      desc:`Items como "${slowMovers.slice(0,2).map(i=>i.name).join('", "')}" tienen demanda muy baja. Simplificar la carta reduce tiempo de preparación y mejora conversión.`,
+      action:'Auditar los últimos 10 SKUs del ranking. Propuesta: eliminar 3-5 ítems de baja rotación y reforzar los top 5.'
+    });
+  }
+
+  // 5. Platform concentration
+  const platNames  = Object.keys(d.byPlat);
+  if (platNames.length === 1) opps.push({
+    priority:'high', icon:'🚀',
+    title:`Presencia en una sola plataforma (${platNames[0]})`,
+    desc:'Tener presencia en una sola app limita el alcance de clientes. Activar una segunda plataforma puede duplicar el volumen sin cambiar operaciones.',
+    action:`Setup y optimización en PedidosYa o Didi Food como segunda plataforma. ROI proyectado: +35-60% en pedidos mensuales.`
+  });
+
+  // 6. Trend alert
+  if (d.trend < -10) opps.push({
+    priority:'high', icon:'⚠️',
+    title:`Tendencia negativa: ventas cayeron ${Math.abs(d.trend).toFixed(0)}% en la segunda mitad del período`,
+    desc:'La segunda mitad del período analizado muestra una caída sostenida. Puede ser estacionalidad, competencia nueva o problemas de visibilidad en la plataforma.',
+    action:'Activar campaña de reactivación inmediata. Revisar si hay cambios recientes en el algoritmo de la plataforma o si un competidor nuevo entró al área.'
+  });
+
+  // 7. Rating opportunity
+  if (d.avgRating && d.avgRating < 4.5) opps.push({
+    priority:'high', icon:'⭐',
+    title:`Rating promedio ${d.avgRating.toFixed(1)} — por debajo del target (4.5+)`,
+    desc:'Un rating por debajo de 4.5 reduce la visibilidad orgánica en el algoritmo de las plataformas significativamente.',
+    action:'Implementar protocolo de respuesta a reseñas en 24h. Identificar las reseñas negativas recurrentes y resolver la causa raíz operativa.'
+  });
+
+  // 8. Weekend vs weekday
+  const weekdayOrds = d.dowOrders.slice(1,6).reduce((a,b)=>a+b,0) / 5;
+  const weekendOrds = (d.dowOrders[0] + d.dowOrders[6]) / 2;
+  if (weekendOrds > weekdayOrds * 1.5) opps.push({
+    priority:'med', icon:'📈',
+    title:'Fuerte concentración de pedidos en fines de semana',
+    desc:`Los fines de semana generan ${((weekendOrds/weekdayOrds-1)*100).toFixed(0)}% más pedidos que entre semana. Hay oportunidad de crecer entre semana.`,
+    action:'Campaña "Lunch Entre Semana" con descuento martes-jueves 12-2pm. Menú ejecutivo simplificado para delivery rápido.'
+  });
+
+  return opps.sort((a,b) => (a.priority==='high'?0:a.priority==='med'?1:2) - (b.priority==='high'?0:b.priority==='med'?1:2));
+}
+
+// ════════════════════════════════════════════════════════════════
+//  PLAN DE ACCIÓN GENERATOR
+// ════════════════════════════════════════════════════════════════
+function generatePlan(d, opps) {
+  const actions = [];
+
+  // Week 1: always — setup and quick wins
+  actions.push({
+    week: 'Semana 1', title: 'Optimización de perfil y menú digital',
+    desc: `Actualizar fotos principales, reordenar carta priorizando top 5 productos, activar descripciones con palabras clave de búsqueda. Revisar horarios de atención y tiempo de preparación.`,
+    impact: 'high', owner: 'Sazón'
+  });
+  actions.push({
+    week: 'Semana 1', title: 'Configurar primera campaña de visibilidad',
+    desc: `Activar campaña de descuento del ${d.trend < -5 ? '20' : '15'}% en la plataforma con mayor volumen (${Object.keys(d.byPlat)[0]}) para los días ${d.dowNames[d.worstDow]}-${d.dowNames[(d.worstDow+1)%7]}.`,
+    impact: 'high', owner: 'Sazón'
+  });
+
+  // Week 2: based on opportunities
+  if (opps.some(o => o.icon === '🍽️')) {
+    actions.push({
+      week: 'Semana 2', title: 'Creación de combos y carta dinámica',
+      desc: `Diseñar 3 combos estratégicos que suban el ticket promedio de S/${d.avgTicket.toFixed(0)} a S/${(d.avgTicket*1.2).toFixed(0)}+. Combo básico / medio / premium. Activar sección "Más pedidos" con los top 5 items.`,
+      impact: 'high', owner: 'Sazón + Cliente'
+    });
+  }
+  actions.push({
+    week: 'Semana 2', title: 'Implementar protocolo de reseñas',
+    desc: 'Responder el 100% de las reseñas de las últimas 4 semanas. Plantillas de respuesta para reseñas positivas y negativas. Configurar alertas para nuevas reseñas.',
+    impact: 'med', owner: 'Sazón'
+  });
+
+  // Week 3: based on slow items and pricing
+  actions.push({
+    week: 'Semana 3', title: 'Optimización de precios por elasticidad',
+    desc: `Análisis de elasticidad precio-demanda en los top 5 productos. Testear incremento S/2-5 en ítems más pedidos. Ajustar ítems de baja rotación para mejorar margen.`,
+    impact: 'med', owner: 'Sazón'
+  });
+  if (Object.keys(d.byPlat).length < 2) {
+    actions.push({
+      week: 'Semana 3', title: 'Setup en segunda plataforma',
+      desc: 'Configurar perfil en PedidosYa o Didi Food con menú optimizado. Activar con campaña de lanzamiento 20% dto primera semana.',
+      impact: 'high', owner: 'Sazón + Cliente'
+    });
+  }
+
+  // Week 4: review and scale
+  actions.push({
+    week: 'Semana 4', title: 'Análisis de resultados y ajuste de estrategia',
+    desc: `Reunión de revisión del mes 1. Comparar KPIs vs baseline del diagnóstico. Definir qué campañas escalar, qué ajustar y objetivos concretos para el mes 2.`,
+    impact: 'high', owner: 'Sazón + Cliente'
+  });
+  actions.push({
+    week: 'Semana 4', title: 'Propuesta de carta dinámica para fechas especiales',
+    desc: 'Identificar próximas fechas clave (Día de la madre, Fiestas Patrias, San Valentín, etc.) y preparar menús especiales con anticipación de 3 semanas.',
+    impact: 'med', owner: 'Sazón + Cliente'
+  });
+
+  return actions;
+}
+
+// ════════════════════════════════════════════════════════════════
+//  RENDER FUNCTIONS
+// ════════════════════════════════════════════════════════════════
+function fp(n) { return 'S/ ' + (n||0).toLocaleString('es-PE', {minimumFractionDigits:0, maximumFractionDigits:0}); }
+function fmtDate(d) { return d ? d.toLocaleDateString('es-PE', {day:'2-digit',month:'short',year:'numeric'}) : '—'; }
+
+function renderKPIs(d) {
+  const trend = d.trend >= 0
+    ? `<span class="kpi-delta delta-up">↑ ${d.trend.toFixed(1)}%</span>`
+    : `<span class="kpi-delta delta-down">↓ ${Math.abs(d.trend).toFixed(1)}%</span>`;
+  document.getElementById('kpiRow').innerHTML = `
+    <div class="kpi-card highlight">
+      <div class="kpi-lbl">Pedidos totales</div>
+      <div class="kpi-val">${d.totalOrders.toLocaleString()}</div>
+      <div class="kpi-note">${d.totalDays} días analizados</div>
+    </div>
+    <div class="kpi-card highlight">
+      <div class="kpi-lbl">Revenue total</div>
+      <div class="kpi-val" style="font-size:1.2rem">${fp(d.totalRevenue)}</div>
+      ${trend}
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-lbl">Ticket promedio</div>
+      <div class="kpi-val">${fp(d.avgTicket)}</div>
+      <div class="kpi-note">por pedido</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-lbl">Pedidos / día</div>
+      <div class="kpi-val">${d.avgDailyOrders.toFixed(1)}</div>
+      <div class="kpi-note">promedio diario</div>
+    </div>
+    <div class="kpi-card">
+      <div class="kpi-lbl">Rating promedio</div>
+      <div class="kpi-val">${d.avgRating ? d.avgRating.toFixed(1) + ' ⭐' : '—'}</div>
+      <div class="kpi-note">${d.avgRating ? (d.avgRating >= 4.5 ? '✅ Objetivo cumplido' : '⚠️ Bajo 4.5') : 'Sin datos'}</div>
+    </div>`;
+}
+
+function renderInsights(d) {
+  const platList = Object.entries(d.byPlat).map(([k,v]) =>
+    `<strong>${k}</strong>: ${v.orders} pedidos · ${fp(v.revenue)}`
+  ).join(' &nbsp;|&nbsp; ');
+  document.getElementById('insightGrid').innerHTML = `
+    <div class="insight-box">
+      <strong>Plataformas activas:</strong> ${platList || 'Sin datos de plataforma'}
+    </div>
+    <div class="insight-box">
+      <strong>Período analizado:</strong> ${fmtDate(d.earliest)} — ${fmtDate(d.latest)} · 
+      <strong>Mejor día:</strong> ${d.dowNames[d.bestDow]} (${d.dowOrders[d.bestDow]} pedidos) ·
+      <strong>Hora pico:</strong> ${d.peakHour}:00–${d.peakHour+1}:00h
+    </div>
+    <div class="insight-box">
+      <strong>Productos únicos detectados:</strong> ${d.itemArr.length} SKUs ·
+      <strong>Top producto:</strong> ${d.itemArr[0]?.name || '—'} (${d.itemArr[0]?.orders || 0} pedidos) ·
+      <strong>Tendencia:</strong> ${d.trend >= 0 ? '📈 Creciendo' : '📉 Cayendo'} ${Math.abs(d.trend).toFixed(1)}%
+    </div>
+    <div class="insight-box">
+      <strong>Revenue más alto:</strong> ${fp(Math.max(...d.dailyRevs))} en un día ·
+      <strong>Promedio semanal:</strong> ${fp(d.totalRevenue / Math.max(d.weekKeys.length, 1))} ·
+      <strong>Fin de semana vs semana:</strong> ${d.dowOrders[0]+d.dowOrders[6] > 0 ? (((d.dowOrders[0]+d.dowOrders[6])/2 / (d.dowOrders.slice(1,6).reduce((a,b)=>a+b,0)/5)).toFixed(1)+'x') : '—'}
+    </div>`;
+}
+
+function renderCharts(d) {
+  const colors = {
+    red:  'rgba(200,57,43',
+    gold: 'rgba(200,160,69',
+    dark: 'rgba(15,15,13',
+    blue: 'rgba(43,87,151',
+    green:'rgba(45,106,79',
+  };
+  const cc = (base, a) => `${base},${a})`;
+
+  // Daily sales
+  const cV = document.getElementById('chartVentas');
+  if (CHARTS.ventas) CHARTS.ventas.destroy();
+  CHARTS.ventas = new Chart(cV, {
+    type: 'line',
+    data: {
+      labels: d.dayKeys.map(k => k.slice(5)),
+      datasets: [{
+        label: 'Revenue diario (S/)',
+        data: d.dailyRevs,
+        borderColor: cc(colors.red,'1'),
+        backgroundColor: cc(colors.red,'.08'),
+        borderWidth: 2,
+        tension: 0.4,
+        fill: true,
+        pointRadius: d.dayKeys.length > 30 ? 0 : 3,
+      }]
+    },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+      scales:{ y:{ ticks:{callback:v=>'S/'+v.toLocaleString('es-PE')} } } }
+  });
+
+  // Platform pie
+  const cP = document.getElementById('chartPlat');
+  if (CHARTS.plat) CHARTS.plat.destroy();
+  CHARTS.plat = new Chart(cP, {
+    type: 'doughnut',
+    data: {
+      labels: Object.keys(d.byPlat),
+      datasets: [{
+        data: Object.values(d.byPlat).map(v => v.orders),
+        backgroundColor: [cc(colors.red,'.8'), cc(colors.gold,'.8'), cc(colors.blue,'.8'), cc(colors.green,'.8')],
+        borderWidth: 0,
+      }]
+    },
+    options: { responsive:true, maintainAspectRatio:false,
+      plugins:{ legend:{position:'bottom', labels:{font:{family:'DM Sans'},padding:12}} } }
+  });
+
+  // Ticket by week
+  const cT = document.getElementById('chartTicket');
+  const weekTickets = d.weekKeys.map(wk => {
+    const w = d.byWeek[wk];
+    return w.orders ? w.revenue / w.orders : 0;
+  });
+  if (CHARTS.ticket) CHARTS.ticket.destroy();
+  CHARTS.ticket = new Chart(cT, {
+    type: 'bar',
+    data: {
+      labels: d.weekKeys.map((_,i)=>`S${i+1}`),
+      datasets: [{
+        label: 'Ticket prom.',
+        data: weekTickets,
+        backgroundColor: cc(colors.gold,'.7'),
+        borderRadius: 2,
+      }]
+    },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}},
+      scales:{ y:{ ticks:{callback:v=>'S/'+v.toFixed(0)} } } }
+  });
+
+  // Day of week
+  const cD = document.getElementById('chartDias');
+  if (CHARTS.dias) CHARTS.dias.destroy();
+  CHARTS.dias = new Chart(cD, {
+    type: 'bar',
+    data: {
+      labels: d.dowNames,
+      datasets: [{
+        data: d.dowOrders,
+        backgroundColor: d.dowOrders.map((_,i) => i===d.bestDow ? cc(colors.red,'.9') : cc(colors.dark,'.25')),
+        borderRadius: 2,
+      }]
+    },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}} }
+  });
+
+  // Products chart
+  const cProd = document.getElementById('chartProducts');
+  if (CHARTS.products) CHARTS.products.destroy();
+  CHARTS.products = new Chart(cProd, {
+    type: 'bar',
+    data: {
+      labels: d.top15.map(p => p.name.length > 20 ? p.name.slice(0,18)+'…' : p.name),
+      datasets: [
+        { label:'Pedidos', data: d.top15.map(p=>p.orders), backgroundColor: cc(colors.red,'.7'), borderRadius:2, yAxisID:'y' },
+        { label:'Revenue (S/)', data: d.top15.map(p=>p.revenue), backgroundColor: cc(colors.gold,'.6'), borderRadius:2, yAxisID:'y1' }
+      ]
+    },
+    options: { responsive:true, maintainAspectRatio:false,
+      scales:{
+        y:{ type:'linear', position:'left', title:{display:true,text:'Pedidos'} },
+        y1:{ type:'linear', position:'right', grid:{drawOnChartArea:false}, title:{display:true,text:'Revenue S/'} }
+      } }
+  });
+
+  // Hours bar
+  const cH = document.getElementById('chartHoras');
+  const hourLabels = Array.from({length:24},(_,i)=>i+':00');
+  if (CHARTS.horas) CHARTS.horas.destroy();
+  CHARTS.horas = new Chart(cH, {
+    type: 'bar',
+    data: {
+      labels: hourLabels,
+      datasets: [{
+        data: d.hourOrders,
+        backgroundColor: d.hourOrders.map((_,i) => i===d.peakHour ? cc(colors.red,'.9') : cc(colors.dark,'.25')),
+        borderRadius:2,
+      }]
+    },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}} }
+  });
+
+  // Week of month
+  const cWom = document.getElementById('chartSemanas');
+  if (CHARTS.semanas) CHARTS.semanas.destroy();
+  CHARTS.semanas = new Chart(cWom, {
+    type: 'bar',
+    data: {
+      labels: ['Semana 1','Semana 2','Semana 3','Semana 4'],
+      datasets: [{
+        data: d.womOrders,
+        backgroundColor: [cc(colors.red,'.7'),cc(colors.gold,'.7'),cc(colors.green,'.7'),cc(colors.blue,'.7')],
+        borderRadius:2,
+      }]
+    },
+    options: { responsive:true, maintainAspectRatio:false, plugins:{legend:{display:false}} }
+  });
+}
+
+function renderHeatmap(d) {
+  const hm   = d.heatmap;
+  const maxV = Math.max(...hm.flat().filter(v=>v>0));
+  const days  = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const hours = [8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23];
+
+  let html = `<div class="heatmap-grid">`;
+  html += `<div></div>` + days.map(d=>`<div class="hm-day-label">${d}</div>`).join('');
+  hours.forEach(h => {
+    html += `<div class="hm-hour-label">${h}h</div>`;
+    for (let dow=0; dow<7; dow++) {
+      const v    = hm[h][dow];
+      const pct  = maxV > 0 ? v/maxV : 0;
+      const alpha = Math.max(0.08, pct * 0.9);
+      const bg   = pct > 0.7 ? `rgba(200,57,43,${alpha})` : pct > 0.4 ? `rgba(200,160,69,${alpha})` : `rgba(15,15,13,${Math.max(0.04,alpha)})`;
+      html += `<div class="hm-cell" style="background:${bg}" title="${v} pedidos ${days[dow]} ${h}h"></div>`;
+    }
+  });
+  html += `</div>`;
+  document.getElementById('heatmapContainer').innerHTML = html;
+}
+
+function renderProducts(d) {
+  const median = d.itemArr.length ? d.itemArr[Math.floor(d.itemArr.length/2)].orders : 0;
+  const topRev = d.itemArr.reduce((max,i) => i.revenue > max ? i.revenue : max, 0);
+  const medRev = topRev / 2;
+
+  const stars    = d.itemArr.filter(i => i.orders >= median && i.revenue >= medRev).slice(0,6);
+  const potential= d.itemArr.filter(i => i.orders >= median && i.revenue < medRev).slice(0,6);
+  const premium  = d.itemArr.filter(i => i.orders < median && i.revenue >= medRev).slice(0,6);
+  const weak     = d.itemArr.filter(i => i.orders < median && i.revenue < medRev).slice(0,6);
+
+  function quadHTML(items, label, color, hint, icon) {
+    return `<div class="matrix-quad">
+      <div class="mq-header">
+        <div class="mq-dot" style="background:${color}"></div>
+        <div><div class="mq-title">${icon} ${label}</div><div class="mq-sub">${hint}</div></div>
+      </div>
+      ${items.length ? items.map(i=>`
+        <div class="product-item">
+          <span class="pi-name">${i.name.length>25?i.name.slice(0,23)+'…':i.name}</span>
+          <span class="pi-orders">${i.orders} pedidos</span>
+          <span class="pi-rev">${fp(i.revenue)}</span>
+        </div>`).join('') : '<div style="font-size:.72rem;color:var(--muted);padding:8px 0">Sin datos suficientes</div>'}
+    </div>`;
+  }
+
+  document.getElementById('productMatrix').innerHTML =
+    quadHTML(stars,   'Estrellas',   '#C8392B', 'Alto volumen · Alto revenue', '⭐') +
+    quadHTML(potential,'Potencial',   '#C8A045', 'Alto volumen · Revenue a mejorar', '📈') +
+    quadHTML(premium, 'Premium',     '#2B5797', 'Bajo volumen · Alto revenue', '💎') +
+    quadHTML(weak,    'A revisar',   '#6B6560', 'Bajo volumen · Bajo revenue', '⚠️');
+}
+
+function renderOpportunities(opps) {
+  const icons = { high:'opp-icon high', med:'opp-icon med', low:'opp-icon low' };
+  const badges = { high:'priority-badge pb-high', med:'priority-badge pb-med', low:'priority-badge pb-low' };
+  const labels  = { high:'Impacto alto', med:'Impacto medio', low:'Impacto bajo' };
+  document.getElementById('oppList').innerHTML = opps.map(o => `
+    <div class="opp-item">
+      <div class="${icons[o.priority]}">${o.icon}</div>
+      <div class="opp-body">
+        <div class="opp-title">${o.title} <span class="${badges[o.priority]}">${labels[o.priority]}</span></div>
+        <div class="opp-desc">${o.desc}</div>
+        <span class="opp-action">→ ${o.action}</span>
+      </div>
+    </div>`).join('');
+}
+
+function renderPlan(actions) {
+  const imp = { high:'<span class="impact-badge ib-high">🟢 Alto</span>', med:'<span class="impact-badge ib-med">🟡 Medio</span>' };
+  const own = (o) => `<span class="owner-tag">${o}</span>`;
+  document.getElementById('planBody').innerHTML = actions.map(a => `
+    <tr>
+      <td><div class="action-week">${a.week}</div></td>
+      <td><div class="action-title">${a.title}</div></td>
+      <td><div class="action-desc">${a.desc}</div></td>
+      <td>${imp[a.impact]||imp.med}</td>
+      <td>${own(a.owner)}</td>
+    </tr>`).join('');
+}
+
+// ════════════════════════════════════════════════════════════════
+//  MAIN FLOW
+// ════════════════════════════════════════════════════════════════
+async function runAnalysis() {
+  if (!FILES.length) return;
+  const brand = document.getElementById('brandName').value.trim() || 'La Marca';
+
+  // Loading
+  document.getElementById('uploadScreen').style.display  = 'none';
+  document.getElementById('loadingScreen').style.display = 'flex';
+
+  try {
+    setLoadMsg('Leyendo archivos Excel...');
+    await sleep(300);
+
+    // Parse files
+    const parsed = await Promise.all(FILES.map(parseFile));
+
+    setLoadMsg('Normalizando datos...');
+    await sleep(300);
+
+    const { orders, items } = parseAllRows(parsed);
+
+    if (!orders.length) {
+      alert('No se encontraron pedidos en los archivos. Verifica que sean exports de Rappi o PedidosYa.');
+      document.getElementById('loadingScreen').style.display = 'none';
+      document.getElementById('uploadScreen').style.display  = 'flex';
+      return;
+    }
+
+    setLoadMsg(`Analizando ${orders.length} pedidos...`);
+    await sleep(400);
+
+    DATA = analyze(orders, items, brand);
+
+    setLoadMsg('Detectando oportunidades...');
+    await sleep(300);
+
+    const opps = detectOpportunities(DATA);
+    const plan  = generatePlan(DATA, opps);
+
+    setLoadMsg('Generando informe...');
+    await sleep(400);
+
+    // Show report
+    document.getElementById('loadingScreen').style.display = 'none';
+    document.getElementById('reportWrap').style.display    = 'block';
+
+    // Update nav
+    document.getElementById('brandTag').textContent   = brand;
+    document.getElementById('brandTag').style.display = 'inline-block';
+    document.getElementById('resetBtn').style.display = 'inline-block';
+    document.getElementById('exportBtn').style.display = 'inline-block';
+
+    // Update header
+    document.getElementById('reportClient').textContent = brand;
+    document.getElementById('reportPeriod').textContent =
+      `${fmtDate(DATA.earliest)} — ${fmtDate(DATA.latest)} · ${orders.length} pedidos analizados`;
+
+    // Render all sections
+    renderKPIs(DATA);
+    renderInsights(DATA);
+    setTimeout(() => {
+      renderCharts(DATA);
+      renderHeatmap(DATA);
+      renderProducts(DATA);
+      renderOpportunities(opps);
+      renderPlan(plan);
+    }, 100);
+
+  } catch(err) {
+    console.error(err);
+    alert('Error al procesar los archivos: ' + err.message + '\nAsegúrate de que sean Excel válidos.');
+    document.getElementById('loadingScreen').style.display = 'none';
+    document.getElementById('uploadScreen').style.display  = 'flex';
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+//  UTILITIES
+// ════════════════════════════════════════════════════════════════
+function sleep(ms) { return new Promise(r => setTimeout(r, ms)); }
+function setLoadMsg(msg) { document.getElementById('loadMsg').textContent = msg; }
+
+function showTab(id) {
+  document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(el => el.classList.remove('active'));
+  document.getElementById('tab-'+id).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+
+function resetTool() {
+  FILES = []; DATA = null;
+  document.getElementById('fileList').innerHTML  = '';
+  document.getElementById('analyzeBtn').disabled = true;
+  document.getElementById('brandName').value     = '';
+  document.getElementById('fileInput').value     = '';
+  document.getElementById('reportWrap').style.display     = 'none';
+  document.getElementById('uploadScreen').style.display   = 'flex';
+  document.getElementById('brandTag').style.display       = 'none';
+  document.getElementById('resetBtn').style.display       = 'none';
+  document.getElementById('exportBtn').style.display      = 'none';
+  document.querySelectorAll('.tab').forEach((t,i) => t.classList.toggle('active',i===0));
+  document.querySelectorAll('.tab-content').forEach((t,i) => t.classList.toggle('active',i===0));
+  Object.values(CHARTS).forEach(c => { try { c.destroy(); } catch(e){} });
+  CHARTS = {};
+}
+
+function exportReport() { window.print(); }
+
+function copyInsights() {
+  if (!DATA) return;
+  const d = DATA;
+  const text = [
+    `DIAGNÓSTICO DELIVERY — ${d.brand}`,
+    `Período: ${fmtDate(d.earliest)} — ${fmtDate(d.latest)}`,
+    ``,
+    `KPIs:`,
+    `• Pedidos totales: ${d.totalOrders}`,
+    `• Revenue total: ${fp(d.totalRevenue)}`,
+    `• Ticket promedio: ${fp(d.avgTicket)}`,
+    `• Pedidos/día: ${d.avgDailyOrders.toFixed(1)}`,
+    d.avgRating ? `• Rating: ${d.avgRating.toFixed(1)}⭐` : '',
+    ``,
+    `Plataformas:`,
+    ...Object.entries(d.byPlat).map(([k,v])=>`• ${k}: ${v.orders} pedidos · ${fp(v.revenue)}`),
+    ``,
+    `Top 5 productos:`,
+    ...d.itemArr.slice(0,5).map((p,i)=>`${i+1}. ${p.name} — ${p.orders} pedidos`),
+  ].filter(Boolean).join('\n');
+
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = event.currentTarget;
+    btn.textContent = '✅ Copiado';
+    setTimeout(() => btn.textContent = '📋 Copiar insights', 2000);
+  });
+}
+</script>
+</body>
+</html>
