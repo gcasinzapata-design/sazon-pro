@@ -6,9 +6,8 @@ const WA_LINK       = "https://wa.me/" + WA_NUMBER;
 const CONTACT_EMAIL = "comercial@sazonpartner.com";
 
 // Mercado Pago — agrega en Netlify: Site settings → Environment variables
-// Soporta ambos nombres de variable por compatihbhilidad
-const MP_STARTER = import.meta.env.VITE_MP_STARTER || import.meta.env.VITE_PAYLINK_BASICO || "";
-const MP_GROWTH  = import.meta.env.VITE_MP_GROWTH  || import.meta.env.VITE_PAYLINK_PRO    || "";
+// Soporta ambos nombres de variable por compatibilidad
+// Mercado Pago removido — planes son informativos
 
 // ── OPCION 1 (GRATIS): Google Gemini — console.cloud.google.com
 //    Crear proyecto → habilitar Gemini API → Credentials → Create API Key
@@ -32,19 +31,6 @@ const ANTHROPIC_KEY = import.meta.env.VITE_ANTHROPIC_KEY || "";
 //
 // OPCION B (este codigo): Crea un <a> en tiempo de ejecucion — el navegador
 //   lo abre directamente sin pasar por Netlify
-function openPayment(url) {
-  if (!url) return;
-  let full = url.trim();
-  if (!full.startsWith("http")) full = "https://" + full;
-  // Crear elemento <a> temporal — bypasea el link-expander del servidor
-  const a = document.createElement("a");
-  a.href = full;
-  a.target = "_blank";
-  a.rel = "noopener noreferrer";
-  document.body.appendChild(a);
-  a.click();
-  setTimeout(() => { try { document.body.removeChild(a); } catch{} }, 200);
-}
 
 // ─── CARLOS: SYSTEM PROMPT ───────────────────────────────────────────────────
 const CARLOS_SYSTEM = `Eres Carlos, Growth Executive del equipo de Sazón Growth Partner. Sazón ayuda a restaurantes a crecer sus ventas en plataformas de delivery (Rappi, PedidosYa, Didi Food, Glovo y más).
@@ -81,7 +67,7 @@ FLUJO NATURAL DE VENTAS:
 6. Cerrar → Cuando esten listos: "Para arrancar, completa el formulario en sazonpartner.com/#contacto y te contactamos en 24h."
 
 OBJECIONES COMUNES:
-- "muy caro" → calcula cuánto más van a ganar vs el costo. Ej: "Pagas S/2,890 para generar S/4,500 extra — eso es 155% de retorno"
+- "muy caro" → calcula cuánto más van a ganar vs el costo. Ej: "Pagas S/890 para generar S/2,352 extra — eso es 264% de retorno"
 - "voy a pensarlo" → "¿Qué te genera dudas? Te lo resuelvo ahora mismo"
 - "ya tenemos alguien" → "¿Están logrando +38% de crecimiento? Si no, algo se puede mejorar"
 - "no sé si funciona" → mencion resultados: restaurantes que crecieron 40-55%
@@ -165,8 +151,6 @@ async function callCarlosAPI(history) {
 // ─── CARLOS: MÁQUINA DE ESTADOS ─────────────────────────────────────────────
 // Extrae datos estructurados de toda la conversación
 function parseConvState(history) {
-  const msgs  = history.map(m => m.content);
-  const full  = msgs.join(" ").toLowerCase();
   const uMsgs = history.filter(m => m.role === "user").map(m => m.content.toLowerCase());
   const last  = uMsgs[uMsgs.length - 1] || "";
   const prev  = uMsgs[uMsgs.length - 2] || "";
@@ -236,7 +220,7 @@ function calcROI({ pedidos, ticket, plats = [] }) {
 // Máquina de estados: nunca repite la misma pregunta, avanza en el funnel
 function carlosFallback(history) {
   const s = parseConvState(history);
-  const { full, last, plats, pedidos, ticket, roiDicho, planDicho, pagoDicho, saludoDicho, nCarlos } = s;
+  const { uFull, last, plats, pedidos, ticket, roiDicho, planDicho, pagoDicho, saludoDicho, nCarlos } = s;
   const roi = calcROI({ pedidos, ticket, plats });
 
   // ── INTENTS DE ALTO VALOR: siempre primero ──────────────────────────────────
@@ -359,7 +343,6 @@ function CarlosMsg({ text }) {
   return <span>{text}</span>;
 }
 
-
 // ─── APP ─────────────────────────────────────────────────────────────────────
 export default function App() {
   const [scrolled,  setScrolled]  = useState(false);
@@ -375,7 +358,7 @@ export default function App() {
   const [showExit,  setShowExit]  = useState(false);
   const [form, setForm] = useState({
     nombre:"", restaurante:"", email:"", whatsapp:"",
-    plan:"Starter - S/2,890/mes", plataformas:"Solo Rappi",
+    plan:"Starter", plataformas:"Solo Rappi",
     pedidos:"100-300", ticket:"", mensaje:"",
   });
   const endRef   = useRef(null);
@@ -603,19 +586,19 @@ export default function App() {
     {
       name:"Starter", tag:"1 plataforma · hasta 300 pedidos/mes",
       price:"S/ 2,890", period:"/mes", fee:null,
-      badge:null, dark:false,
+      badge:null, dark:false, mpLink: null,
       fts:[{t:"Diagnostico inicial",ok:true},{t:"1 plataforma de delivery",ok:true},{t:"Optimizacion basica de menu",ok:true},{t:"Reporte mensual",ok:true},{t:"1 campaña mensual",ok:true},{t:"Growth Manager dedicado",ok:false},{t:"Setup en plataformas (marcas nuevas)",ok:false}],
     },
     {
       name:"Growth", tag:"Hasta 3 plataformas · escala rapida",
       price:"S/ 3,790", period:"/mes", fee:null,
-      badge:"Mas popular", dark:true,
+      badge:"Mas popular", dark:true, mpLink: null,
       fts:[{t:"Diagnostico completo",ok:true},{t:"Hasta 3 plataformas",ok:true},{t:"Optimizacion menu foto+copy+precio",ok:true},{t:"Growth Manager dedicado",ok:true},{t:"Setup en plataformas + entrada negociada",ok:true},{t:"Plan comercial mensual",ok:true},{t:"Hasta 3 campañas mensuales",ok:true}],
     },
     {
       name:"Pro", tag:"Cadenas · multi-local · dark kitchens",
       price:"A medida", period:"cotizacion", fee:null,
-      badge:null, dark:false,
+      badge:null, dark:false, mpLink: null,
       fts:[{t:"Todo Growth incluido",ok:true},{t:"Plataformas ilimitadas",ok:true},{t:"Dark kitchens y marcas virtuales",ok:true},{t:"Equipo dedicado exclusivo",ok:true},{t:"Campañas ilimitadas",ok:true},{t:"Integracion con POS y tech stack",ok:true},{t:"Reunion semanal de seguimiento",ok:true}],
     },
   ];
@@ -711,7 +694,7 @@ export default function App() {
   <section id="hero" className="g2" style={{minHeight:"100vh",display:"grid",gridTemplateColumns:"1fr 1fr",background:"#1A1A1A",overflow:"hidden"}}>
     <div className="hl" style={{display:"flex",flexDirection:"column",justifyContent:"center",padding:"clamp(100px,12vw,140px) clamp(20px,6vw,80px) 80px",zIndex:2}}>
       <p className="a1" style={{fontSize:".75rem",fontWeight:500,textTransform:"uppercase",letterSpacing:3,color:"#D4A547",marginBottom:28}}>Growth Partner para Restaurantes</p>
-      <h1 className="pf a2" style={{fontSize:"clamp(3rem,5vw,5.2rem)",lineHeight:1.05,color:"white"}}>Tu delivery,<br/>al <em style={{fontStyle:"italic",color:"#C8392B"}}>maximo</em><br/>rendimiento.</h1>
+      <h1 className="pf a2" style={{fontSize:"clamp(3rem,5vw,5.2rem)",lineHeight:1.05,color:"white"}}>Tu delivery,<br/>al <em style={{fontStyle:"italic",color:"#C8392B"}}>máximo</em><br/>rendimiento.</h1>
       <p className="a3" style={{marginTop:28,fontSize:"1.05rem",lineHeight:1.7,color:"rgba(255,255,255,.6)",maxWidth:420}}>Somos tu equipo especializado en hacer crecer tus ventas en Rappi, PedidosYa, Didi Food y mas. No somos consultores, somos tu partner real de crecimiento.</p>
       <div className="a4" style={{display:"flex",gap:16,alignItems:"center",marginTop:48,flexWrap:"wrap"}}>
         <button onClick={()=>goTo("contact")} style={{background:"#C8392B",color:"white",padding:"16px 36px",border:"none",borderRadius:2,fontSize:".9rem",fontWeight:500,letterSpacing:1,textTransform:"uppercase",cursor:"pointer",fontFamily:"DM Sans,sans-serif",transition:"background .2s, transform .15s",boxShadow:"0 8px 28px rgba(200,57,43,.35)"}} onMouseEnter={e=>{e.currentTarget.style.background="#9B2335";e.currentTarget.style.transform="translateY(-2px)";}} onMouseLeave={e=>{e.currentTarget.style.background="#C8392B";e.currentTarget.style.transform="none";}}>Agendar diagnostico gratuito</button>
@@ -1163,3 +1146,4 @@ export default function App() {
   </>);
 }
 
+export default App;
