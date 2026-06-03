@@ -1,0 +1,1106 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Sazón · Hub de Operaciones</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+<style>
+:root{
+  --red:#C8392B;--dark:#0F0F0D;--cream:#F5F0E8;--warm:#EDE4CE;
+  --gold:#C8A045;--green:#2D6A4F;--blue:#2B5797;--purple:#6B46C1;
+  --text:#1A1814;--muted:#6B6560;--line:rgba(26,24,20,.12);--bg:#E8E4DA;
+}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--text);min-height:100vh;display:flex;}
+
+/* ── SIDEBAR ── */
+.sidebar{width:220px;min-height:100vh;background:var(--dark);display:flex;flex-direction:column;flex-shrink:0;position:sticky;top:0;height:100vh;overflow-y:auto;}
+.sb-logo{padding:22px 20px 16px;border-bottom:1px solid rgba(255,255,255,.06);}
+.sb-wm{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:900;color:white;}
+.sb-wm span{color:var(--red);}
+.sb-sub{font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:3px;color:rgba(255,255,255,.25);margin-top:2px;}
+.sb-section{padding:14px 20px 6px;font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:2.5px;color:rgba(255,255,255,.2);}
+.sb-item{display:flex;align-items:center;gap:10px;padding:10px 16px;margin:1px 8px;border-radius:3px;cursor:pointer;transition:all .15s;color:rgba(255,255,255,.55);font-size:.78rem;font-weight:500;}
+.sb-item:hover{background:rgba(255,255,255,.06);color:white;}
+.sb-item.active{background:var(--red);color:white;}
+.sb-item .si-icon{width:22px;text-align:center;font-size:.9rem;flex-shrink:0;}
+.sb-brand{padding:12px 16px;margin:6px;background:rgba(200,57,43,.12);border-radius:3px;border:1px solid rgba(200,57,43,.2);}
+.sb-brand-lbl{font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:rgba(255,255,255,.3);margin-bottom:4px;}
+.sb-brand-name{font-size:.82rem;font-weight:600;color:white;display:flex;align-items:center;gap:6px;}
+.sb-brand-name input{background:transparent;border:none;color:white;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:600;width:100%;outline:none;}
+.sb-gemini{padding:10px 16px;margin:4px;background:rgba(255,255,255,.04);border-radius:3px;font-size:.68rem;color:rgba(255,255,255,.3);display:flex;align-items:center;gap:6px;}
+.sb-gemini input{background:transparent;border:none;color:rgba(255,255,255,.6);font-family:'DM Mono',monospace;font-size:.65rem;width:100%;outline:none;}
+.sb-bottom{margin-top:auto;padding:16px;}
+.sb-version{font-size:.6rem;color:rgba(255,255,255,.18);text-align:center;}
+
+/* ── MAIN ── */
+.main{flex:1;overflow-y:auto;min-height:100vh;}
+
+/* ── MODULE ── */
+.module{display:none;padding:32px;}
+.module.active{display:block;}
+
+/* ── MODULE HEADER ── */
+.mod-header{margin-bottom:28px;}
+.mod-title{font-family:'Playfair Display',serif;font-size:1.5rem;font-weight:900;margin-bottom:4px;}
+.mod-desc{font-size:.8rem;color:var(--muted);line-height:1.6;max-width:700px;}
+.mod-accent{width:40px;height:3px;background:linear-gradient(90deg,var(--red),var(--gold));border-radius:100px;margin:8px 0;}
+
+/* ── DASHBOARD CARDS ── */
+.home-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;margin-bottom:32px;}
+.home-card{background:var(--cream);border:1px solid var(--line);border-radius:3px;padding:20px;cursor:pointer;transition:all .2s;}
+.home-card:hover{border-color:var(--red);transform:translateY(-2px);box-shadow:0 4px 20px rgba(200,57,43,.12);}
+.hc-icon{font-size:1.8rem;margin-bottom:10px;}
+.hc-title{font-weight:700;font-size:.88rem;margin-bottom:4px;}
+.hc-desc{font-size:.73rem;color:var(--muted);line-height:1.5;}
+.hc-tag{display:inline-block;margin-top:8px;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;padding:2px 8px;border-radius:100px;background:rgba(200,57,43,.08);color:var(--red);}
+
+/* ── CONTROLS ── */
+.ctrl-row{display:flex;gap:10px;align-items:flex-end;flex-wrap:wrap;margin-bottom:20px;}
+.ctrl-group{display:flex;flex-direction:column;gap:4px;}
+.ctrl-lbl{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--muted);}
+input[type=text],input[type=number],textarea,select{padding:9px 12px;border:1px solid var(--line);border-radius:2px;font-family:'DM Sans',sans-serif;font-size:.82rem;background:white;color:var(--text);}
+input:focus,textarea:focus,select:focus{outline:none;border-color:var(--red);}
+textarea{resize:vertical;min-height:80px;}
+
+/* ── BUTTONS ── */
+.btn{padding:9px 20px;border:none;border-radius:2px;font-family:'DM Sans',sans-serif;font-size:.75rem;font-weight:600;cursor:pointer;text-transform:uppercase;letter-spacing:1px;transition:all .18s;}
+.btn-red{background:var(--red);color:white;} .btn-red:hover{background:#a82d22;}
+.btn-dark{background:var(--dark);color:white;} .btn-dark:hover{background:#2a2a28;}
+.btn-ghost{background:white;color:var(--text);border:1px solid var(--line);} .btn-ghost:hover{background:var(--warm);}
+.btn-sm{padding:6px 14px;font-size:.7rem;}
+.btn:disabled{background:var(--muted);cursor:default;}
+
+/* ── CARD ── */
+.card{background:var(--cream);border:1px solid var(--line);border-radius:3px;padding:20px;margin-bottom:16px;}
+.card-title{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:2.5px;color:var(--muted);margin-bottom:14px;}
+
+/* ── GRID LAYOUTS ── */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:16px;}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;}
+
+/* ── RESEÑAS ── */
+.review-item{background:white;border:1px solid var(--line);border-radius:3px;padding:16px 18px;margin-bottom:12px;}
+.ri-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:8px;}
+.ri-rating{font-size:.9rem;letter-spacing:2px;}
+.ri-platform{font-size:.65rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;padding:2px 8px;border-radius:100px;}
+.rp-rappi{background:rgba(255,105,0,.1);color:#FF6900;}
+.rp-peya{background:rgba(255,108,47,.1);color:#FF6C2F;}
+.ri-text{font-size:.78rem;color:var(--muted);line-height:1.6;margin-bottom:10px;font-style:italic;}
+.ri-response{background:rgba(200,57,43,.04);border:1px solid rgba(200,57,43,.15);border-radius:2px;padding:12px 14px;font-size:.78rem;line-height:1.7;position:relative;}
+.ri-response-lbl{font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--red);margin-bottom:5px;}
+.ri-response-text{font-size:.78rem;line-height:1.7;color:var(--text);}
+.ri-actions{display:flex;gap:8px;margin-top:8px;}
+.ri-spin{display:inline-block;width:14px;height:14px;border:2px solid rgba(200,57,43,.2);border-top-color:var(--red);border-radius:50%;animation:spin 1s linear infinite;}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* ── REPORTE ── */
+.kpi-mini-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:16px;}
+.kpi-mini{background:white;border:1px solid var(--line);border-radius:2px;padding:12px 14px;}
+.km-lbl{font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);margin-bottom:4px;}
+.km-val{font-family:'Playfair Display',serif;font-size:1.2rem;font-weight:900;margin-bottom:2px;}
+.km-delta{font-size:.7rem;font-weight:600;}
+.delta-up{color:var(--green);} .delta-down{color:var(--red);}
+
+/* ── CAMPAÑAS ── */
+.camp-card{background:white;border:1px solid var(--line);border-radius:3px;padding:16px 18px;margin-bottom:12px;border-left:3px solid var(--red);}
+.cc-header{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;}
+.cc-title{font-weight:700;font-size:.85rem;}
+.cc-badge{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;padding:2px 8px;border-radius:100px;background:rgba(200,57,43,.1);color:var(--red);}
+.cc-desc{font-size:.75rem;color:var(--muted);line-height:1.6;margin-bottom:10px;}
+.cc-params{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;}
+.cc-param{background:var(--warm);border-radius:2px;padding:8px 10px;}
+.cp-lbl{font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:var(--muted);margin-bottom:2px;}
+.cp-val{font-size:.8rem;font-weight:600;}
+
+/* ── MENÚ ── */
+.menu-item-row{display:grid;grid-template-columns:1fr 90px 90px 100px 110px auto;gap:8px;align-items:center;padding:8px 4px;border-bottom:1px solid var(--line);font-size:.78rem;}
+.menu-item-row.header{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);padding:6px 4px;}
+.menu-item-row input{padding:5px 8px;border:1px solid var(--line);border-radius:2px;font-size:.78rem;}
+.rec-badge{font-size:.62rem;padding:3px 8px;border-radius:100px;font-weight:700;display:inline-block;}
+.rb-up{background:rgba(45,106,79,.1);color:var(--green);}
+.rb-keep{background:rgba(200,160,69,.1);color:var(--gold);}
+.rb-down{background:rgba(200,57,43,.1);color:var(--red);}
+
+/* ── AI SPINNER ── */
+.ai-spinner{display:flex;align-items:center;gap:10px;padding:12px 16px;background:rgba(200,57,43,.06);border-radius:2px;font-size:.78rem;color:var(--muted);}
+
+/* ── OUTPUT BOX ── */
+.output-box{background:white;border:1px solid var(--line);border-radius:3px;padding:18px;font-size:.78rem;line-height:1.8;white-space:pre-wrap;min-height:120px;}
+
+/* PROGRESS */
+.progress-bar{height:4px;background:var(--line);border-radius:100px;overflow:hidden;margin-bottom:16px;}
+.pb-fill{height:100%;background:linear-gradient(90deg,var(--red),var(--gold));border-radius:100px;transition:width .5s;}
+
+/* STEP TIMELINE */
+.step-list{margin-bottom:20px;}
+.step-item{display:flex;gap:14px;padding:12px 0;border-bottom:1px solid var(--line);}
+.step-num{width:28px;height:28px;border-radius:50%;background:var(--red);color:white;display:flex;align-items:center;justify-content:center;font-size:.72rem;font-weight:700;flex-shrink:0;}
+.step-body{flex:1;}
+.step-title{font-weight:600;font-size:.82rem;margin-bottom:2px;}
+.step-desc{font-size:.73rem;color:var(--muted);line-height:1.6;}
+
+/* UPLOAD MINI */
+.mini-drop{border:2px dashed rgba(200,57,43,.2);border-radius:3px;padding:20px;text-align:center;cursor:pointer;transition:all .2s;background:rgba(200,57,43,.02);margin-bottom:16px;}
+.mini-drop:hover{border-color:var(--red);background:rgba(200,57,43,.04);}
+.mini-drop input{display:none;}
+.md-icon{font-size:1.5rem;margin-bottom:6px;}
+.md-text{font-size:.78rem;color:var(--muted);}
+.md-btn{display:inline-block;margin-top:8px;padding:6px 16px;background:var(--red);color:white;border:none;border-radius:2px;font-size:.72rem;font-weight:600;cursor:pointer;text-transform:uppercase;letter-spacing:1px;}
+
+/* CHIP */
+.chip{display:inline-flex;align-items:center;gap:6px;padding:4px 10px;background:white;border:1px solid var(--line);border-radius:100px;font-size:.7rem;font-weight:500;margin:3px;}
+.chip span{cursor:pointer;color:var(--muted);}
+
+/* SEPARATOR */
+.sep{height:1px;background:var(--line);margin:24px 0;}
+
+@media(max-width:900px){
+  .sidebar{display:none;}
+  .g2,.g3,.home-grid,.kpi-mini-grid,.cc-params{grid-template-columns:1fr;}
+  .menu-item-row{grid-template-columns:1fr 80px 80px auto;}
+}
+</style>
+</head>
+<body>
+
+<!-- ── SIDEBAR ── -->
+<div class="sidebar">
+  <div class="sb-logo">
+    <div class="sb-wm">Sazón<span>.</span></div>
+    <div class="sb-sub">Hub de Operaciones</div>
+  </div>
+
+  <div class="sb-brand">
+    <div class="sb-brand-lbl">Marca activa</div>
+    <div class="sb-brand-name"><span>🍽️</span><input type="text" id="globalBrand" placeholder="Nombre de la marca" value="Beso Francés"></div>
+  </div>
+
+  <div class="sb-section">Herramientas</div>
+  <div class="sb-item active" onclick="showMod('home')"><span class="si-icon">🏠</span> Inicio</div>
+  <div class="sb-item" onclick="showMod('analytics')"><span class="si-icon">📊</span> Análisis de datos</div>
+  <div class="sb-item" onclick="showMod('reviews')"><span class="si-icon">⭐</span> Gestión de reseñas</div>
+  <div class="sb-item" onclick="showMod('report')"><span class="si-icon">📄</span> Reporte mensual</div>
+  <div class="sb-item" onclick="showMod('campaigns')"><span class="si-icon">📣</span> Campañas</div>
+  <div class="sb-item" onclick="showMod('menu')"><span class="si-icon">🍽️</span> Optimizador de menú</div>
+  <div class="sb-item" onclick="showMod('plan')"><span class="si-icon">📋</span> Plan de acción</div>
+
+  <div class="sb-section">Config</div>
+  <div class="sb-gemini">
+    <span>🔑</span>
+    <input type="password" id="geminiKeyHub" placeholder="API Key (Gemini)">
+  </div>
+
+  <div class="sb-bottom">
+    <div class="sb-version">Sazón Hub v1.0 · Premium Food Brands SAC</div>
+  </div>
+</div>
+
+<!-- ── MAIN ── -->
+<div class="main">
+
+<!-- ════════ HOME ════════ -->
+<div class="module active" id="mod-home">
+  <div class="mod-header">
+    <div class="mod-title">Hub de operaciones</div>
+    <div class="mod-accent"></div>
+    <div class="mod-desc">Todas las herramientas de Sazón en un solo lugar. Selecciona una marca en el panel izquierdo y elige el módulo que necesitas.</div>
+  </div>
+
+  <div class="home-grid">
+    <div class="home-card" onclick="showMod('analytics')">
+      <div class="hc-icon">📊</div>
+      <div class="hc-title">Análisis de datos</div>
+      <div class="hc-desc">Sube los Excel de Rappi/PedidosYa y genera el diagnóstico completo: KPIs, tendencias, productos, heatmap.</div>
+      <span class="hc-tag">Diagnóstico M0</span>
+    </div>
+    <div class="home-card" onclick="showMod('reviews')">
+      <div class="hc-icon">⭐</div>
+      <div class="hc-title">Gestión de reseñas</div>
+      <div class="hc-desc">Pega las reseñas recibidas y el sistema genera respuestas personalizadas y en tono de marca con IA.</div>
+      <span class="hc-tag">IA generativa</span>
+    </div>
+    <div class="home-card" onclick="showMod('report')">
+      <div class="hc-icon">📄</div>
+      <div class="hc-title">Reporte mensual</div>
+      <div class="hc-desc">Genera el informe mensual con KPIs vs mes anterior, gráficos y comentarios narrativos automáticos.</div>
+      <span class="hc-tag">PDF automático</span>
+    </div>
+    <div class="home-card" onclick="showMod('campaigns')">
+      <div class="hc-icon">📣</div>
+      <div class="hc-title">Planificador de campañas</div>
+      <div class="hc-desc">Basado en los patrones detectados, sugiere qué campaña lanzar, cuándo, con qué descuento y qué productos.</div>
+      <span class="hc-tag">Recomendaciones IA</span>
+    </div>
+    <div class="home-card" onclick="showMod('menu')">
+      <div class="hc-icon">🍽️</div>
+      <div class="hc-title">Optimizador de menú</div>
+      <div class="hc-desc">Ingresa la carta actual con precios y ventas. El sistema sugiere qué ajustar, quitar o destacar.</div>
+      <span class="hc-tag">Precio + Descripción</span>
+    </div>
+    <div class="home-card" onclick="showMod('plan')">
+      <div class="hc-icon">📋</div>
+      <div class="hc-title">Plan de acción</div>
+      <div class="hc-desc">Genera el plan semanal/quincenal automáticamente con acciones concretas para presentar en cada reunión.</div>
+      <span class="hc-tag">M1–M3</span>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="card-title">Flujo operativo semanal</div>
+    <div class="step-list">
+      <div class="step-item"><div class="step-num">1</div><div class="step-body"><div class="step-title">Lunes — Descarga de datos</div><div class="step-desc">Cliente descarga Excel de Rappi Partners y PedidosYa Hub. Lo comparte por WhatsApp o email. Tiempo: 5 min.</div></div></div>
+      <div class="step-item"><div class="step-num">2</div><div class="step-body"><div class="step-title">Lunes — Análisis automático</div><div class="step-desc">Sube los archivos al módulo "Análisis de datos". El sistema genera KPIs, heatmap y oportunidades en 30 seg.</div></div></div>
+      <div class="step-item"><div class="step-num">3</div><div class="step-body"><div class="step-title">Martes — Ejecución de acciones</div><div class="step-desc">Implementa las acciones del plan: ajustes de campaña, respuestas a reseñas, cambios de menú. El sistema genera el contenido.</div></div></div>
+      <div class="step-item"><div class="step-num">4</div><div class="step-body"><div class="step-title">Jueves/Viernes — Reunión con cliente</div><div class="step-desc">Abre el módulo "Plan de acción" para la reunión. Presenta los resultados de la semana y los próximos pasos.</div></div></div>
+      <div class="step-item"><div class="step-num">5</div><div class="step-body"><div class="step-title">Día 1 del mes — Reporte mensual</div><div class="step-desc">Sube el Excel del mes completo al módulo "Reporte mensual". Genera el PDF y lo envía al cliente automáticamente.</div></div></div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ ANALYTICS (link to external tool) ════════ -->
+<div class="module" id="mod-analytics">
+  <div class="mod-header">
+    <div class="mod-title">Análisis de datos</div>
+    <div class="mod-accent"></div>
+    <div class="mod-desc">Motor completo de diagnóstico. Sube los Excel de Rappi y PedidosYa para generar el análisis automático.</div>
+  </div>
+  <div class="card" style="text-align:center;padding:40px">
+    <div style="font-size:3rem;margin-bottom:16px">📊</div>
+    <div style="font-weight:700;font-size:1rem;margin-bottom:8px">Abrir Motor de Análisis</div>
+    <div style="font-size:.8rem;color:var(--muted);margin-bottom:20px">El análisis completo está en una herramienta dedicada.<br>Incluye diagnóstico M0, matriz de productos, heatmap y plan de acción M1.</div>
+    <button class="btn btn-red" onclick="window.open('sazon-analytics.html','_blank')">🚀 Abrir Motor de Análisis →</button>
+  </div>
+</div>
+
+<!-- ════════ REVIEWS ════════ -->
+<div class="module" id="mod-reviews">
+  <div class="mod-header">
+    <div class="mod-title">Gestión de reseñas</div>
+    <div class="mod-accent"></div>
+    <div class="mod-desc">Pega las reseñas recibidas y el sistema genera respuestas personalizadas en tono de marca. Copia y pega directo en la plataforma.</div>
+  </div>
+
+  <div class="g2" style="margin-bottom:20px">
+    <div>
+      <div class="ctrl-group" style="margin-bottom:12px">
+        <label class="ctrl-lbl">Plataforma</label>
+        <select id="reviewPlatform"><option>Rappi</option><option>PedidosYa</option><option>Didi Food</option><option>Google</option></select>
+      </div>
+      <div class="ctrl-group" style="margin-bottom:12px">
+        <label class="ctrl-lbl">Tono de respuesta</label>
+        <select id="reviewTone">
+          <option value="cercano">Cercano y cálido (recomendado)</option>
+          <option value="formal">Formal y profesional</option>
+          <option value="divertido">Divertido y desenfadado</option>
+        </select>
+      </div>
+      <div class="ctrl-group">
+        <label class="ctrl-lbl">Nombre del restaurante en respuestas</label>
+        <input type="text" id="reviewBrand" placeholder="Beso Francés" value="Beso Francés">
+      </div>
+    </div>
+    <div>
+      <div class="ctrl-group">
+        <label class="ctrl-lbl">Agregar reseña manualmente</label>
+        <textarea id="newReviewText" placeholder="Pega aquí el texto de la reseña..." rows="4"></textarea>
+      </div>
+      <div class="ctrl-row" style="margin-top:8px">
+        <div class="ctrl-group">
+          <label class="ctrl-lbl">Estrellas</label>
+          <select id="newReviewStars"><option value="5">⭐⭐⭐⭐⭐ 5</option><option value="4">⭐⭐⭐⭐ 4</option><option value="3">⭐⭐⭐ 3</option><option value="2">⭐⭐ 2</option><option value="1">⭐ 1</option></select>
+        </div>
+        <div class="ctrl-group">
+          <label class="ctrl-lbl">Nombre cliente</label>
+          <input type="text" id="newReviewName" placeholder="Nombre (opcional)" style="width:140px">
+        </div>
+        <button class="btn btn-ghost btn-sm" style="align-self:flex-end" onclick="addReview()">+ Agregar</button>
+        <button class="btn btn-red btn-sm" style="align-self:flex-end" onclick="generateAllResponses()">🤖 Generar todas</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Quick add demo reviews -->
+  <div style="margin-bottom:16px">
+    <button class="btn btn-ghost btn-sm" onclick="loadDemoReviews()">Cargar reseñas de ejemplo</button>
+    <button class="btn btn-ghost btn-sm" onclick="clearReviews()" style="margin-left:6px">Limpiar todo</button>
+    <button class="btn btn-ghost btn-sm" onclick="copyAllResponses()" style="margin-left:6px">📋 Copiar todas las respuestas</button>
+  </div>
+
+  <div id="reviewsList"></div>
+</div>
+
+<!-- ════════ REPORT ════════ -->
+<div class="module" id="mod-report">
+  <div class="mod-header">
+    <div class="mod-title">Reporte mensual</div>
+    <div class="mod-accent"></div>
+    <div class="mod-desc">Sube los datos del mes actual y del mes anterior. El sistema genera el reporte completo con KPIs, comparativas y comentario narrativo.</div>
+  </div>
+
+  <div class="g2" style="margin-bottom:20px">
+    <div>
+      <label class="ctrl-lbl" style="display:block;margin-bottom:6px">Mes actual — Excel de Rappi/PedidosYa</label>
+      <div class="mini-drop" onclick="document.getElementById('fileActual').click()">
+        <input type="file" id="fileActual" accept=".xlsx,.xls,.csv" onchange="loadReportFile('actual',this)">
+        <div class="md-icon">📄</div>
+        <div class="md-text" id="fileActualLabel">Arrastra o selecciona el archivo del mes actual</div>
+        <div class="md-btn">Seleccionar</div>
+      </div>
+    </div>
+    <div>
+      <label class="ctrl-lbl" style="display:block;margin-bottom:6px">Mes anterior — (opcional, para comparativa)</label>
+      <div class="mini-drop" onclick="document.getElementById('fileAnterior').click()">
+        <input type="file" id="fileAnterior" accept=".xlsx,.xls,.csv" onchange="loadReportFile('anterior',this)">
+        <div class="md-icon">📄</div>
+        <div class="md-text" id="fileAnteriorLabel">Arrastra o selecciona el archivo del mes anterior</div>
+        <div class="md-btn">Seleccionar</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="ctrl-row" style="margin-bottom:24px">
+    <div class="ctrl-group">
+      <label class="ctrl-lbl">Mes del reporte</label>
+      <input type="text" id="reportMonth" placeholder="Ej: Mayo 2025" style="width:180px">
+    </div>
+    <div class="ctrl-group">
+      <label class="ctrl-lbl">Ejecutivo</label>
+      <input type="text" id="reportExec" value="Jean Pierre Sillau" style="width:180px">
+    </div>
+    <button class="btn btn-red" onclick="generateMonthlyReport()" id="genReportBtn" disabled>📄 Generar reporte</button>
+  </div>
+
+  <div id="reportOutput" style="display:none">
+    <div class="card">
+      <div class="card-title">KPIs del mes</div>
+      <div class="kpi-mini-grid" id="reportKPIs"></div>
+    </div>
+    <div class="card" style="margin-top:16px">
+      <div class="card-title">Comentario narrativo (generado por IA)</div>
+      <div class="ai-spinner" id="reportNarrSpinner" style="display:none"><div class="ri-spin"></div><span>Generando comentario con IA...</span></div>
+      <div class="output-box" id="reportNarr" contenteditable="true"></div>
+      <div style="margin-top:12px;display:flex;gap:8px">
+        <button class="btn btn-red btn-sm" onclick="window.print()">🖨 Imprimir / PDF</button>
+        <button class="btn btn-ghost btn-sm" onclick="copyReportNarr()">📋 Copiar texto</button>
+        <button class="btn btn-ghost btn-sm" onclick="generateNarrative()">🤖 Regenerar con IA</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ════════ CAMPAIGNS ════════ -->
+<div class="module" id="mod-campaigns">
+  <div class="mod-header">
+    <div class="mod-title">Planificador de campañas</div>
+    <div class="mod-accent"></div>
+    <div class="mod-desc">Ingresa los datos de la marca y el sistema genera recomendaciones de campaña específicas con parámetros listos para configurar en la plataforma.</div>
+  </div>
+
+  <div class="g2" style="margin-bottom:20px">
+    <div class="card">
+      <div class="card-title">Datos de la operación</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div class="ctrl-group"><label class="ctrl-lbl">Pedidos/mes (aprox)</label><input type="number" id="campPedidos" placeholder="200" value="180"></div>
+        <div class="ctrl-group"><label class="ctrl-lbl">Ticket promedio S/</label><input type="number" id="campTicket" placeholder="45" value="42"></div>
+        <div class="ctrl-group"><label class="ctrl-lbl">Mejor día</label><select id="campBestDay"><option>Viernes</option><option>Sábado</option><option>Domingo</option><option>Lunes</option><option>Martes</option><option>Miércoles</option><option>Jueves</option></select></div>
+        <div class="ctrl-group"><label class="ctrl-lbl">Peor día</label><select id="campWorstDay"><option>Martes</option><option>Lunes</option><option>Miércoles</option><option>Jueves</option><option>Viernes</option><option>Sábado</option><option>Domingo</option></select></div>
+        <div class="ctrl-group"><label class="ctrl-lbl">Plataforma principal</label><select id="campPlatform"><option>Rappi</option><option>PedidosYa</option><option>Didi Food</option></select></div>
+        <div class="ctrl-group"><label class="ctrl-lbl">Categoría</label><select id="campCateg"><option>Crepería / Café</option><option>Hamburguesería</option><option>Pizzería</option><option>Cevichería</option><option>Chifa</option><option>Casual</option><option>Healthy</option></select></div>
+      </div>
+      <div class="ctrl-group" style="margin-top:10px"><label class="ctrl-lbl">Objetivo del mes</label>
+        <select id="campGoal"><option value="volumen">Aumentar volumen de pedidos</option><option value="ticket">Subir ticket promedio</option><option value="nuevos">Captar nuevos usuarios</option><option value="rating">Mejorar rating</option></select>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Productos destacados (para campañas)</div>
+      <textarea id="campProducts" placeholder="Lista tus productos top, uno por línea:&#10;Crepe de Nutella&#10;Crepe salado de roast beef&#10;Jugo natural" rows="6" style="width:100%"></textarea>
+      <button class="btn btn-red" style="width:100%;margin-top:10px" onclick="generateCampaigns()">🚀 Generar campañas</button>
+    </div>
+  </div>
+
+  <div id="campaignsOutput"></div>
+</div>
+
+<!-- ════════ MENU ════════ -->
+<div class="module" id="mod-menu">
+  <div class="mod-header">
+    <div class="mod-title">Optimizador de menú digital</div>
+    <div class="mod-accent"></div>
+    <div class="mod-desc">Ingresa la carta actual con precios y ventas. El sistema clasifica cada ítem y sugiere ajustes de precio, descripción y visibilidad.</div>
+  </div>
+
+  <div class="ctrl-row" style="margin-bottom:16px">
+    <button class="btn btn-ghost btn-sm" onclick="addMenuRow()">+ Agregar ítem</button>
+    <button class="btn btn-ghost btn-sm" onclick="loadDemoMenu()">Cargar menú de ejemplo</button>
+    <button class="btn btn-red btn-sm" onclick="analyzeMenu()">🤖 Analizar con IA</button>
+    <button class="btn btn-ghost btn-sm" onclick="exportMenuCSV()">⬇ Exportar CSV</button>
+  </div>
+
+  <div class="card" style="padding:0;overflow:hidden">
+    <div class="menu-item-row header" style="padding:10px 16px;background:var(--dark);color:rgba(255,255,255,.7)">
+      <span>Producto</span><span>Precio S/</span><span>Ventas/mes</span><span>Foto</span><span>Recomendación</span><span></span>
+    </div>
+    <div id="menuItems" style="padding:8px 16px"></div>
+  </div>
+
+  <div id="menuInsights" style="margin-top:20px"></div>
+</div>
+
+<!-- ════════ PLAN ════════ -->
+<div class="module" id="mod-plan">
+  <div class="mod-header">
+    <div class="mod-title">Generador de plan de acción</div>
+    <div class="mod-accent"></div>
+    <div class="mod-desc">Genera el plan semanal o quincenal automáticamente para presentar en la reunión con el cliente.</div>
+  </div>
+
+  <div class="g2" style="margin-bottom:20px">
+    <div class="card">
+      <div class="card-title">Contexto de la reunión</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="ctrl-group"><label class="ctrl-lbl">Mes del plan</label><select id="planMonth"><option value="M1">Mes 1 — Semanal</option><option value="M2">Mes 2 — Quincenal</option><option value="M3">Mes 3 — Quincenal + cierre</option></select></div>
+        <div class="ctrl-group"><label class="ctrl-lbl">Semana / Reunión #</label><input type="number" id="planWeekNum" value="1" min="1" max="4" style="width:80px"></div>
+        <div class="ctrl-group"><label class="ctrl-lbl">Plataformas activas</label><input type="text" id="planPlats" value="Rappi, PedidosYa"></div>
+        <div class="ctrl-group"><label class="ctrl-lbl">KPI actual vs objetivo</label><textarea id="planKPIs" placeholder="Ej: Pedidos actuales: 180/mes → Objetivo: 220/mes&#10;Ticket actual: S/42 → Objetivo: S/50" rows="3"></textarea></div>
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">Resultados de la semana anterior</div>
+      <textarea id="planResults" placeholder="¿Qué se ejecutó la semana pasada?&#10;Ej: Activamos campaña 15% dto los martes → pedidos subieron 22%&#10;Respondimos 8 reseñas → rating subió de 4.2 a 4.4" rows="5" style="width:100%;margin-bottom:10px"></textarea>
+      <div class="ctrl-group"><label class="ctrl-lbl">Principales hallazgos</label>
+        <textarea id="planFindings" placeholder="Ej: Los viernes de noche son el pico de pedidos. El combo crepe+bebida se pide junto el 45% de las veces." rows="3" style="width:100%"></textarea>
+      </div>
+    </div>
+  </div>
+
+  <button class="btn btn-red" onclick="generatePlanDoc()" style="margin-bottom:20px">📋 Generar plan de la reunión</button>
+
+  <div id="planOutput" style="display:none">
+    <div class="card">
+      <div class="card-title">Plan generado — listo para presentar</div>
+      <div class="ai-spinner" id="planSpinner" style="display:none"><div class="ri-spin"></div><span>Generando plan...</span></div>
+      <div class="output-box" id="planText" contenteditable="true"></div>
+      <div style="margin-top:12px;display:flex;gap:8px">
+        <button class="btn btn-ghost btn-sm" onclick="copyPlan()">📋 Copiar</button>
+        <button class="btn btn-ghost btn-sm" onclick="window.print()">🖨 PDF</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+</div><!-- /main -->
+
+<script>
+// ════════════════════════════════════════════════════════════════
+//  NAVIGATION
+// ════════════════════════════════════════════════════════════════
+function showMod(id) {
+  document.querySelectorAll('.module').forEach(m => m.classList.remove('active'));
+  document.querySelectorAll('.sb-item').forEach(i => i.classList.remove('active'));
+  document.getElementById('mod-'+id).classList.add('active');
+  event.currentTarget.classList.add('active');
+}
+
+// ════════════════════════════════════════════════════════════════
+//  GEMINI API HELPER
+// ════════════════════════════════════════════════════════════════
+async function callGemini(prompt) {
+  const key = document.getElementById('geminiKeyHub').value.trim();
+  if (!key) return null;
+  try {
+    const r = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`, {
+      method: 'POST',
+      headers: {'Content-Type':'application/json'},
+      body: JSON.stringify({ contents: [{ parts: [{ text: prompt }] }] })
+    });
+    const d = await r.json();
+    return d.candidates?.[0]?.content?.parts?.[0]?.text || null;
+  } catch(e) { return null; }
+}
+
+// ════════════════════════════════════════════════════════════════
+//  REVIEWS MODULE
+// ════════════════════════════════════════════════════════════════
+let reviews = [];
+
+function addReview() {
+  const text  = document.getElementById('newReviewText').value.trim();
+  if (!text) return;
+  const stars = parseInt(document.getElementById('newReviewStars').value);
+  const name  = document.getElementById('newReviewName').value.trim() || 'Cliente';
+  const plat  = document.getElementById('reviewPlatform').value;
+  reviews.push({ id: Date.now(), text, stars, name, platform: plat, response: null, loading: false });
+  document.getElementById('newReviewText').value = '';
+  document.getElementById('newReviewName').value = '';
+  renderReviews();
+}
+
+function loadDemoReviews() {
+  reviews = [
+    { id:1, text:'Las crepes estaban deliciosas, llegaron calientitas y bien empacadas. El delivery fue rápido. Definitivamente volvería a pedir.', stars:5, name:'María G.', platform:'Rappi', response:null, loading:false },
+    { id:2, text:'Rico pero el tiempo de entrega fue demasiado largo, casi 1 hora. El empaque estaba un poco aplastado.', stars:3, name:'Carlos T.', platform:'PedidosYa', response:null, loading:false },
+    { id:3, text:'Me faltó un producto del pedido. Pedí 3 crepes y solo llegaron 2. Espero que lo resuelvan.', stars:2, name:'Ana M.', platform:'Rappi', response:null, loading:false },
+    { id:4, text:'Siempre pido aquí, nunca falla. El crepe de Nutella es un 10/10. Muy recomendado.', stars:5, name:'Diego F.', platform:'PedidosYa', response:null, loading:false },
+    { id:5, text:'La presentación podría mejorar para delivery, el crepe llegó un poco deshecho. El sabor sí estuvo bien.', stars:4, name:'Lucía P.', platform:'Rappi', response:null, loading:false },
+  ];
+  renderReviews();
+}
+
+function clearReviews() { reviews = []; renderReviews(); }
+
+function removeReview(id) {
+  reviews = reviews.filter(r => r.id !== id);
+  renderReviews();
+}
+
+function renderReviews() {
+  const el = document.getElementById('reviewsList');
+  if (!reviews.length) {
+    el.innerHTML = '<div style="text-align:center;padding:32px;color:var(--muted);font-size:.8rem">Sin reseñas. Agrega una manualmente o carga las de ejemplo.</div>';
+    return;
+  }
+  const platClass = { Rappi:'rp-rappi', PedidosYa:'rp-peya', 'Didi Food':'rp-rappi', Google:'rp-peya' };
+  el.innerHTML = reviews.map(r => `
+    <div class="review-item" id="rev-${r.id}">
+      <div class="ri-header">
+        <div>
+          <div class="ri-rating">${'⭐'.repeat(r.stars)}${'☆'.repeat(5-r.stars)}</div>
+          <div style="font-size:.72rem;color:var(--muted);margin-top:2px">${r.name}</div>
+        </div>
+        <div style="display:flex;align-items:center;gap:8px">
+          <span class="ri-platform ${platClass[r.platform]||'rp-rappi'}">${r.platform}</span>
+          <span style="cursor:pointer;color:var(--muted);font-size:.8rem" onclick="removeReview(${r.id})">✕</span>
+        </div>
+      </div>
+      <div class="ri-text">"${r.text}"</div>
+      ${r.loading ? `<div class="ai-spinner"><div class="ri-spin"></div><span>Generando respuesta con IA...</span></div>` :
+        r.response ? `
+          <div class="ri-response">
+            <div class="ri-response-lbl">Respuesta sugerida</div>
+            <div class="ri-response-text" id="resp-text-${r.id}" contenteditable="true">${r.response}</div>
+          </div>` : ''}
+      <div class="ri-actions">
+        ${!r.response && !r.loading ? `<button class="btn btn-red btn-sm" onclick="generateOneResponse(${r.id})">🤖 Generar respuesta</button>` : ''}
+        ${r.response ? `<button class="btn btn-ghost btn-sm" onclick="copyResponse(${r.id})">📋 Copiar</button>
+          <button class="btn btn-ghost btn-sm" onclick="generateOneResponse(${r.id})">↺ Regenerar</button>` : ''}
+      </div>
+    </div>`).join('');
+}
+
+async function generateOneResponse(id) {
+  const rev = reviews.find(r => r.id === id);
+  if (!rev) return;
+  rev.loading = true; renderReviews();
+  const brand = document.getElementById('reviewBrand').value || document.getElementById('globalBrand').value || 'el restaurante';
+  const tone  = document.getElementById('reviewTone').value;
+  const toneDesc = { cercano:'cercano, cálido y genuino', formal:'formal y profesional', divertido:'desenfadado y con personalidad' }[tone];
+  const prompt = `Eres el community manager de ${brand}. Genera una respuesta a esta reseña de ${rev.stars} estrellas en ${rev.platform}.
+
+Reseña de ${rev.name}: "${rev.text}"
+
+Reglas:
+- Tono ${toneDesc}
+- Máximo 3 líneas
+- Menciona el nombre del cliente al inicio
+- Si hay queja, ofrece solución concreta
+- Si es positiva, agradece con calidez y menciona algo específico
+- No uses frases genéricas ni corporativas
+- Firma como "${brand}"
+- No uses emojis excesivos
+- Solo devuelve el texto de la respuesta, sin comillas ni explicaciones`;
+
+  const response = await callGemini(prompt);
+  rev.loading = false;
+  rev.response = response || generateFallbackResponse(rev, brand);
+  renderReviews();
+}
+
+function generateFallbackResponse(rev, brand) {
+  const name = rev.name.split(' ')[0];
+  if (rev.stars >= 4) return `¡Gracias, ${name}! Nos alegra mucho que hayas disfrutado la experiencia. Te esperamos pronto en ${brand} 🙌`;
+  if (rev.stars === 3) return `Hola ${name}, gracias por tu honestidad. Tomamos nota de tu comentario para seguir mejorando. Si quieres, escríbenos directo para coordinar.`;
+  return `${name}, lamentamos mucho lo ocurrido. Esto no refleja nuestros estándares. Por favor escríbenos a nuestro WhatsApp para darte una solución inmediata. — ${brand}`;
+}
+
+async function generateAllResponses() {
+  const pending = reviews.filter(r => !r.response);
+  for (const rev of pending) {
+    await generateOneResponse(rev.id);
+    await new Promise(r => setTimeout(r, 300));
+  }
+}
+
+function copyResponse(id) {
+  const el = document.getElementById(`resp-text-${id}`);
+  if (!el) return;
+  navigator.clipboard.writeText(el.textContent).then(() => {
+    event.currentTarget.textContent = '✅';
+    setTimeout(() => event.currentTarget.textContent = '📋 Copiar', 1500);
+  });
+}
+
+function copyAllResponses() {
+  const text = reviews.filter(r=>r.response).map(r =>
+    `[${r.platform}] ${r.name} (${r.stars}⭐):\nReseña: "${r.text}"\nRespuesta: ${r.response}`
+  ).join('\n\n---\n\n');
+  if (!text) { alert('No hay respuestas generadas aún.'); return; }
+  navigator.clipboard.writeText(text);
+  event.currentTarget.textContent = '✅ Copiado';
+  setTimeout(() => event.currentTarget.textContent = '📋 Copiar todas las respuestas', 2000);
+}
+
+// ════════════════════════════════════════════════════════════════
+//  REPORT MODULE
+// ════════════════════════════════════════════════════════════════
+const reportData = { actual: null, anterior: null };
+
+function loadReportFile(type, input) {
+  const file = input.files[0];
+  if (!file) return;
+  document.getElementById(`file${type.charAt(0).toUpperCase()+type.slice(1)}Label`).textContent = `✅ ${file.name}`;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const wb = XLSX.read(e.target.result, {type:'binary',cellDates:true});
+      const rows = [];
+      wb.SheetNames.forEach(s => rows.push(...XLSX.utils.sheet_to_json(wb.Sheets[s],{raw:false,defval:''})));
+      reportData[type] = rows;
+      if (reportData.actual) document.getElementById('genReportBtn').disabled = false;
+    } catch(err) { alert('Error al leer el archivo: '+err.message); }
+  };
+  reader.readAsBinaryString(file);
+}
+
+function computeReportKPIs(rows) {
+  let orders=0, revenue=0, ratings=[];
+  rows.forEach(row => {
+    const keys = Object.keys(row).map(k=>k.toLowerCase());
+    const totalKey = Object.keys(row).find(k=>/total|monto|amount|gmv|venta/i.test(k));
+    const ratingKey = Object.keys(row).find(k=>/rating|calific|score/i.test(k));
+    const statusKey = Object.keys(row).find(k=>/estado|status/i.test(k));
+    if (statusKey && /cancel|rechaz/i.test(String(row[statusKey]))) return;
+    if (totalKey) { const v = parseFloat(String(row[totalKey]).replace(/[^0-9.]/g,'')); if(v>0){orders++;revenue+=v;} }
+    if (ratingKey) { const v = parseFloat(row[ratingKey]); if(v>0) ratings.push(v); }
+  });
+  return { orders, revenue, avgTicket: orders?revenue/orders:0, avgRating: ratings.length?ratings.reduce((a,b)=>a+b,0)/ratings.length:null };
+}
+
+function generateMonthlyReport() {
+  if (!reportData.actual) return;
+  const curr = computeReportKPIs(reportData.actual);
+  const prev  = reportData.anterior ? computeReportKPIs(reportData.anterior) : null;
+  const brand = document.getElementById('globalBrand').value || 'La Marca';
+  const month = document.getElementById('reportMonth').value || 'Este mes';
+
+  const delta = (curr, prev) => {
+    if (!prev || !prev) return '';
+    const pct = ((curr-prev)/prev*100);
+    return pct >= 0
+      ? `<span class="km-delta delta-up">↑ ${pct.toFixed(1)}%</span>`
+      : `<span class="km-delta delta-down">↓ ${Math.abs(pct).toFixed(1)}%</span>`;
+  };
+
+  const fp = n => 'S/ '+(n||0).toLocaleString('es-PE',{maximumFractionDigits:0});
+
+  document.getElementById('reportKPIs').innerHTML = `
+    <div class="kpi-mini"><div class="km-lbl">Pedidos</div><div class="km-val">${curr.orders}</div>${prev?delta(curr.orders,prev.orders):''}</div>
+    <div class="kpi-mini"><div class="km-lbl">Revenue</div><div class="km-val" style="font-size:1rem">${fp(curr.revenue)}</div>${prev?delta(curr.revenue,prev.revenue):''}</div>
+    <div class="kpi-mini"><div class="km-lbl">Ticket prom.</div><div class="km-val">${fp(curr.avgTicket)}</div>${prev?delta(curr.avgTicket,prev.avgTicket):''}</div>
+    <div class="kpi-mini"><div class="km-lbl">Rating</div><div class="km-val">${curr.avgRating?curr.avgRating.toFixed(1)+'⭐':'—'}</div></div>
+    <div class="kpi-mini"><div class="km-lbl">vs mes ant.</div><div class="km-val" style="font-size:1rem">${prev?delta(curr.orders,prev.orders):'Sin datos'}</div></div>`;
+
+  document.getElementById('reportOutput').style.display='block';
+
+  // Store for narrative
+  window._reportContext = { curr, prev, brand, month };
+  generateNarrative();
+}
+
+async function generateNarrative() {
+  const ctx = window._reportContext;
+  if (!ctx) return;
+  const { curr, prev, brand, month } = ctx;
+  const exec = document.getElementById('reportExec').value || 'Jean Pierre Sillau';
+  const fp = n => 'S/ '+(n||0).toLocaleString('es-PE',{maximumFractionDigits:0});
+
+  const prompt = `Eres el Growth Manager de ${brand}. Escribe el comentario narrativo del reporte mensual de ${month} en español.
+
+Datos del mes:
+- Pedidos: ${curr.orders}
+- Revenue total: ${fp(curr.revenue)}
+- Ticket promedio: ${fp(curr.avgTicket)}
+${curr.avgRating ? `- Rating promedio: ${curr.avgRating.toFixed(1)}` : ''}
+${prev ? `
+Vs mes anterior:
+- Pedidos: ${prev.orders} (${curr.orders>prev.orders?'crecimos':'bajamos'} ${Math.abs(((curr.orders-prev.orders)/prev.orders*100)).toFixed(1)}%)
+- Revenue: ${fp(prev.revenue)} → ${fp(curr.revenue)}` : ''}
+
+Formato del comentario:
+1. Resumen del mes en 2 líneas (qué pasó en términos generales)
+2. Puntos positivos (máximo 3 bullets)
+3. Puntos de atención (máximo 2 bullets)
+4. Próximos pasos para el mes siguiente (máximo 3 acciones concretas)
+
+Tono: profesional pero directo. Sin preambles. Máximo 200 palabras.
+Firmado por: ${exec} — Sazón Growth Partner`;
+
+  document.getElementById('reportNarrSpinner').style.display='flex';
+  document.getElementById('reportNarr').textContent='';
+
+  const resp = await callGemini(prompt);
+  document.getElementById('reportNarrSpinner').style.display='none';
+
+  if (resp) {
+    document.getElementById('reportNarr').textContent = resp;
+  } else {
+    const { curr:c, prev:p } = ctx;
+    const trend = p && c.orders > p.orders ? `crecimiento del ${((c.orders-p.orders)/p.orders*100).toFixed(1)}% en pedidos` : 'resultados del período';
+    document.getElementById('reportNarr').textContent =
+`Reporte ${month} — ${brand}
+
+Resumen: El mes cerró con ${c.orders} pedidos y ${fp(c.revenue)} en revenue (ticket promedio ${fp(c.avgTicket)}). ${p?`Comparado con el mes anterior, el volumen ${c.orders>=p.orders?'creció':'bajó'} ${Math.abs(((c.orders-p.orders)/p.orders*100)).toFixed(1)}%.`:''}
+
+✅ Positivos:
+• Revenue total: ${fp(c.revenue)}
+• Ticket promedio: ${fp(c.avgTicket)} por pedido
+${c.avgRating?`• Rating: ${c.avgRating.toFixed(1)}⭐`:''}
+
+⚠️ Puntos de atención:
+• ${c.avgTicket < 45 ? 'Ticket promedio por debajo del benchmark (S/45). Activar combos.' : 'Mantener consistencia en tiempo de entrega.'}
+• Revisar productos de baja rotación para optimizar carta.
+
+🎯 Próximos pasos:
+1. Activar campaña de descuento día de menor tráfico
+2. Actualizar fotos top 3 productos en plataforma
+3. Revisión de precios en ítems estrellas
+
+— ${exec} · Sazón Growth Partner`;
+  }
+}
+
+function copyReportNarr() {
+  navigator.clipboard.writeText(document.getElementById('reportNarr').textContent);
+  event.currentTarget.textContent='✅ Copiado';
+  setTimeout(()=>event.currentTarget.textContent='📋 Copiar texto',1800);
+}
+
+// ════════════════════════════════════════════════════════════════
+//  CAMPAIGNS MODULE
+// ════════════════════════════════════════════════════════════════
+async function generateCampaigns() {
+  const brand    = document.getElementById('globalBrand').value || 'La Marca';
+  const pedidos  = document.getElementById('campPedidos').value || 180;
+  const ticket   = document.getElementById('campTicket').value || 42;
+  const bestDay  = document.getElementById('campBestDay').value;
+  const worstDay = document.getElementById('campWorstDay').value;
+  const platform = document.getElementById('campPlatform').value;
+  const categ    = document.getElementById('campCateg').value;
+  const goal     = document.getElementById('campGoal').value;
+  const products = document.getElementById('campProducts').value;
+
+  const goalText = {
+    volumen: 'aumentar volumen de pedidos',
+    ticket: 'subir el ticket promedio',
+    nuevos: 'captar nuevos usuarios',
+    rating: 'mejorar el rating'
+  }[goal];
+
+  const output = document.getElementById('campaignsOutput');
+  output.innerHTML = '<div class="ai-spinner"><div class="ri-spin"></div><span>Generando estrategia de campañas...</span></div>';
+
+  const prompt = `Eres el Growth Manager de ${brand} (${categ}). Genera exactamente 4 campañas concretas para ${platform}.
+
+Datos:
+- ${pedidos} pedidos/mes · Ticket S/${ticket}
+- Mejor día: ${bestDay} · Peor día: ${worstDay}
+- Objetivo: ${goalText}
+${products ? `- Productos: ${products}` : ''}
+
+Para cada campaña devuelve un JSON array con esta estructura exacta (solo JSON, sin markdown):
+[{
+  "nombre": "nombre corto",
+  "tipo": "descuento|combo|2x1|gratis|visibilidad",
+  "objetivo": "qué problema resuelve",
+  "descuento": "ej: 20%",
+  "productos": "ej: crepe de Nutella + bebida",
+  "dias": "ej: Martes y Miércoles",
+  "hora": "ej: 12pm–3pm",
+  "duracion": "ej: 2 semanas",
+  "impacto_pedidos": "ej: +25%",
+  "como_activar": "pasos concretos para activarla en la plataforma"
+}]`;
+
+  const resp = await callGemini(prompt);
+  let campaigns = null;
+
+  if (resp) {
+    try {
+      const clean = resp.replace(/```json|```/g,'').trim();
+      campaigns = JSON.parse(clean);
+    } catch(e) { campaigns = null; }
+  }
+
+  if (!campaigns) campaigns = getFallbackCampaigns(worstDay, ticket, products);
+
+  const typeColors = { descuento:'var(--red)', combo:'var(--gold)', '2x1':'var(--green)', gratis:'var(--blue)', visibilidad:'var(--purple)' };
+
+  output.innerHTML = campaigns.map((c,i) => `
+    <div class="camp-card" style="border-left-color:${typeColors[c.tipo]||'var(--red)'}">
+      <div class="cc-header">
+        <div>
+          <div class="cc-title">${c.nombre}</div>
+          <div style="font-size:.7rem;color:var(--muted);margin-top:2px">${c.objetivo}</div>
+        </div>
+        <span class="cc-badge" style="background:${typeColors[c.tipo]||'var(--red)'}20;color:${typeColors[c.tipo]||'var(--red)'}">${c.tipo.toUpperCase()}</span>
+      </div>
+      <div class="cc-params">
+        <div class="cc-param"><div class="cp-lbl">Descuento/oferta</div><div class="cp-val">${c.descuento}</div></div>
+        <div class="cc-param"><div class="cp-lbl">Días activos</div><div class="cp-val">${c.dias}</div></div>
+        <div class="cc-param"><div class="cp-lbl">Horario</div><div class="cp-val">${c.hora}</div></div>
+        <div class="cc-param"><div class="cp-lbl">Productos</div><div class="cp-val">${c.productos}</div></div>
+        <div class="cc-param"><div class="cp-lbl">Duración</div><div class="cp-val">${c.duracion}</div></div>
+        <div class="cc-param"><div class="cp-lbl">Impacto estimado</div><div class="cp-val" style="color:var(--green)">${c.impacto_pedidos}</div></div>
+      </div>
+      <div style="margin-top:10px;padding:10px 12px;background:rgba(200,57,43,.04);border-radius:2px;font-size:.73rem;line-height:1.7">
+        <strong style="font-size:.6rem;text-transform:uppercase;letter-spacing:1.5px;color:var(--red)">Cómo activar</strong><br>${c.como_activar}
+      </div>
+    </div>`).join('');
+}
+
+function getFallbackCampaigns(worstDay, ticket, products) {
+  return [
+    { nombre:`Promo ${worstDay}`, tipo:'descuento', objetivo:'Activar día de menor tráfico',
+      descuento:'20% dto', productos:products.split('\n')[0]||'producto estrella', dias:worstDay,
+      hora:'12pm–3pm y 7pm–9pm', duracion:'3 semanas', impacto_pedidos:'+30–40%',
+      como_activar:`Rappi/PedidosYa → Gestión de tienda → Campañas → Nueva campaña → Descuento por producto → Seleccionar ítem → 20% → Solo ${worstDay}` },
+    { nombre:'Combo Completo', tipo:'combo', objetivo:'Subir ticket promedio',
+      descuento:`S/${Math.round(parseFloat(ticket)*0.9)} el combo`, productos:(products.split('\n').slice(0,2).join(' + '))||'principal + bebida',
+      dias:'Toda la semana', hora:'Todo el día', duracion:'1 mes', impacto_pedidos:'+15% ticket',
+      como_activar:'Menú → Combos → Nuevo combo → Seleccionar ítems → Precio especial → Activar.' },
+    { nombre:'Lanzamiento 2a plataforma', tipo:'visibilidad', objetivo:'Captar nuevos usuarios',
+      descuento:'25% dto primera orden', productos:'Todo el menú', dias:'Lun–Jue',
+      hora:'Todo el día', duracion:'2 semanas de lanzamiento', impacto_pedidos:'+50–80 pedidos',
+      como_activar:'Configurar perfil completo en PedidosYa → Activar descuento bienvenida → Pedir boost de visibilidad al account manager.' },
+    { nombre:'Happy Hour Crepes', tipo:'descuento', objetivo:'Crear pico en horario off-peak',
+      descuento:'15% dto', productos:'Toda la carta', dias:'Lun–Vie',
+      hora:'3pm–6pm', duracion:'1 mes', impacto_pedidos:'+20% pedidos tarde',
+      como_activar:'Campaña → Rango horario → 15:00 a 18:00 → Descuento 15% → Todos los productos.' },
+  ];
+}
+
+// ════════════════════════════════════════════════════════════════
+//  MENU MODULE
+// ════════════════════════════════════════════════════════════════
+let menuItems = [];
+let menuId = 0;
+
+function addMenuRow(name='',price='',sales='',photo=false) {
+  menuItems.push({ id: ++menuId, name, price: parseFloat(price)||0, sales: parseInt(sales)||0, photo, rec:null });
+  renderMenu();
+}
+
+function loadDemoMenu() {
+  menuItems = [];
+  const demo = [
+    ['Crepe de Nutella y fresa', 25, 145, true],
+    ['Crepe de roast beef y queso', 28, 98, true],
+    ['Crepe de jamón y queso', 22, 76, false],
+    ['Crepe de manjar y plátano', 22, 65, false],
+    ['Crepe de pollo y champiñones', 26, 58, true],
+    ['Jugo natural de naranja', 12, 89, true],
+    ['Café americano', 10, 102, false],
+    ['Crepe Brownie y helado', 30, 41, false],
+    ['Crepe de espinaca y salmón', 32, 18, false],
+    ['Agua mineral', 6, 55, false],
+    ['Limonada frozen', 14, 33, false],
+    ['Crepe básico mantequilla', 16, 12, false],
+  ];
+  demo.forEach(([n,p,s,ph]) => { menuItems.push({id:++menuId,name:n,price:p,sales:s,photo:ph,rec:null}); });
+  renderMenu();
+}
+
+function renderMenu() {
+  const avgSales = menuItems.reduce((s,i)=>s+i.sales,0) / (menuItems.length||1);
+  const avgPrice = menuItems.reduce((s,i)=>s+i.price,0) / (menuItems.length||1);
+  document.getElementById('menuItems').innerHTML = menuItems.map(item => {
+    const isHighSales = item.sales > avgSales;
+    const isHighPrice = item.price > avgPrice;
+    let rec = '—', recClass = '';
+    if (!item.sales) { rec='⚠️ Sin datos'; recClass='rb-down'; }
+    else if (isHighSales && isHighPrice) { rec='⭐ Estrella'; recClass='rb-keep'; }
+    else if (isHighSales && !isHighPrice) { rec='↑ Subir precio'; recClass='rb-up'; }
+    else if (!isHighSales && isHighPrice) { rec='💎 Premium'; recClass='rb-keep'; }
+    else if (item.sales < avgSales * 0.3) { rec='🗑 Revisar'; recClass='rb-down'; }
+    else { rec='Mantener'; recClass='rb-keep'; }
+    return `<div class="menu-item-row">
+      <input type="text" value="${item.name}" onchange="updateMenuItem(${item.id},'name',this.value)" style="width:100%">
+      <input type="number" value="${item.price}" onchange="updateMenuItem(${item.id},'price',this.value)" style="width:80px">
+      <input type="number" value="${item.sales}" onchange="updateMenuItem(${item.id},'sales',this.value)" style="width:80px">
+      <select onchange="updateMenuItem(${item.id},'photo',this.value==='true')">
+        <option value="true" ${item.photo?'selected':''}>✅ Sí</option>
+        <option value="false" ${!item.photo?'selected':''}>❌ No</option>
+      </select>
+      <span class="rec-badge ${recClass}">${rec}</span>
+      <span style="cursor:pointer;color:var(--muted);font-size:.8rem;padding:0 4px" onclick="removeMenuItem(${item.id})">✕</span>
+    </div>`;
+  }).join('');
+}
+
+function updateMenuItem(id, field, val) {
+  const item = menuItems.find(i => i.id === id);
+  if (item) item[field] = val;
+}
+function removeMenuItem(id) { menuItems = menuItems.filter(i=>i.id!==id); renderMenu(); }
+
+async function analyzeMenu() {
+  if (!menuItems.length) { alert('Agrega ítems al menú primero.'); return; }
+  const brand = document.getElementById('globalBrand').value || 'La Marca';
+  const menuList = menuItems.map(i=>`- ${i.name}: S/${i.price}, ${i.sales} ventas/mes, foto: ${i.photo?'sí':'no'}`).join('\n');
+
+  const prompt = `Eres el consultor de menú de ${brand} para delivery. Analiza estos productos y da 5 recomendaciones específicas:
+
+${menuList}
+
+Devuelve solo un array JSON (sin markdown) con 5 objetos:
+[{ "tipo": "precio|foto|eliminar|combo|destacar", "producto": "nombre del producto", "accion": "qué hacer exactamente", "razon": "por qué", "impacto": "efecto estimado" }]`;
+
+  document.getElementById('menuInsights').innerHTML = '<div class="ai-spinner"><div class="ri-spin"></div><span>Analizando menú con IA...</span></div>';
+
+  const resp = await callGemini(prompt);
+  let recs = null;
+  if (resp) { try { recs = JSON.parse(resp.replace(/```json|```/g,'').trim()); } catch(e){} }
+
+  if (!recs) {
+    const avgSales = menuItems.reduce((s,i)=>s+i.sales,0)/menuItems.length;
+    const noPhoto = menuItems.filter(i=>!i.photo && i.sales>avgSales*0.5).slice(0,2);
+    const lowSales = menuItems.sort((a,b)=>a.sales-b.sales).slice(0,2);
+    recs = [
+      { tipo:'foto', producto: noPhoto[0]?.name||menuItems[0]?.name, accion:'Agregar foto profesional urgente', razon:'Ítems con foto convierten 3x más en delivery', impacto:'+30-50% conversión' },
+      { tipo:'eliminar', producto: lowSales[0]?.name, accion:'Evaluar eliminar o rediseñar', razon:'Menos de 30% del promedio de ventas. Ocupa espacio en carta sin aportar', impacto:'Simplifica carta y mejora tiempo de decisión' },
+      { tipo:'destacar', producto: menuItems.sort((a,b)=>b.sales-a.sales)[0]?.name, accion:'Mover a primera posición + activar "Más pedido"', razon:'Es el bestseller. La visibilidad aumenta su conversión aún más', impacto:'+15-20% pedidos del ítem' },
+      { tipo:'precio', producto: menuItems.sort((a,b)=>b.sales-a.sales)[1]?.name, accion:'Subir precio S/2-3', razon:'Alta demanda indica elasticidad. El cliente ya lo valora', impacto:`+S/${Math.round(menuItems.sort((a,b)=>b.sales-a.sales)[1]?.sales*2.5||200)} adicionales/mes` },
+      { tipo:'combo', producto:`${menuItems[0]?.name} + ${menuItems.find(i=>i.price<15)?.name||'bebida'}`, accion:'Crear combo con precio especial', razon:'Sube ticket promedio y facilita la decisión', impacto:'+15% ticket promedio' },
+    ].filter(r=>r.producto);
+  }
+
+  const typeIcon = { precio:'💰', foto:'📸', eliminar:'🗑', combo:'🤝', destacar:'⭐' };
+  document.getElementById('menuInsights').innerHTML = `
+    <div class="card">
+      <div class="card-title">Recomendaciones de la IA para ${brand}</div>
+      ${recs.map(r=>`
+        <div class="opp-item">
+          <div class="opp-icon med">${typeIcon[r.tipo]||'💡'}</div>
+          <div class="opp-body">
+            <div class="opp-title">${r.producto} <span class="priority-badge pb-med">${r.tipo.toUpperCase()}</span></div>
+            <div class="opp-desc"><strong>Acción:</strong> ${r.accion}<br><strong>Por qué:</strong> ${r.razon}</div>
+            <span class="opp-action">→ Impacto estimado: ${r.impacto}</span>
+          </div>
+        </div>`).join('')}
+    </div>`;
+}
+
+function exportMenuCSV() {
+  const rows = [['Producto','Precio S/','Ventas/mes','Foto','Recomendación']];
+  const avgSales = menuItems.reduce((s,i)=>s+i.sales,0)/(menuItems.length||1);
+  menuItems.forEach(i=>{
+    let rec='Mantener';
+    if(i.sales<avgSales*0.3) rec='Revisar/Eliminar';
+    else if(i.sales>avgSales&&i.price<20) rec='Subir precio';
+    else if(i.sales>avgSales*1.5) rec='Estrella - destacar';
+    rows.push([i.name,i.price,i.sales,i.photo?'Sí':'No',rec]);
+  });
+  const csv = rows.map(r=>r.map(c=>`"${c}"`).join(',')).join('\n');
+  const blob = new Blob(['\ufeff'+csv],{type:'text/csv;charset=utf-8'});
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a'); a.href=url; a.download='menu-sazon.csv'; a.click();
+}
+
+// ════════════════════════════════════════════════════════════════
+//  PLAN MODULE
+// ════════════════════════════════════════════════════════════════
+async function generatePlanDoc() {
+  const brand    = document.getElementById('globalBrand').value || 'La Marca';
+  const month    = document.getElementById('planMonth').value;
+  const weekNum  = document.getElementById('planWeekNum').value;
+  const plats    = document.getElementById('planPlats').value;
+  const kpis     = document.getElementById('planKPIs').value;
+  const results  = document.getElementById('planResults').value;
+  const findings = document.getElementById('planFindings').value;
+  const exec     = 'Jean Pierre Sillau';
+  const monthName = { M1:'Mes 1 (semanal)', M2:'Mes 2 (quincenal)', M3:'Mes 3 (quincenal + cierre)' }[month];
+
+  document.getElementById('planOutput').style.display='block';
+  document.getElementById('planSpinner').style.display='flex';
+  document.getElementById('planText').textContent='';
+
+  const prompt = `Eres ${exec}, Growth Manager de ${brand} en Sazón Growth Partner.
+Genera el plan de ${monthName}, reunión/semana #${weekNum}.
+
+Plataformas: ${plats}
+KPIs actuales vs objetivo: ${kpis||'Sin datos aún'}
+Resultados semana anterior: ${results||'Primera reunión'}
+Hallazgos principales: ${findings||'Pendiente de análisis'}
+
+Formato requerido:
+1. RESUMEN DE LA REUNIÓN (2-3 líneas)
+2. RESULTADOS vs SEMANA ANTERIOR (bullets con datos si hay)
+3. ACCIONES DE ESTA SEMANA (3-5 acciones concretas, cada una con: QUÉ / CÓMO / QUIÉN / CUÁNDO)
+4. MÉTRICAS A MONITOREAR (2-3 KPIs específicos con targets)
+5. PRÓXIMA REUNIÓN (fecha sugerida y agenda preliminar)
+
+Máximo 300 palabras. Directo y accionable. Sin preambles.`;
+
+  const resp = await callGemini(prompt);
+  document.getElementById('planSpinner').style.display='none';
+
+  if (resp) {
+    document.getElementById('planText').textContent = resp;
+  } else {
+    document.getElementById('planText').textContent =
+`REUNIÓN ${monthName.toUpperCase()} #${weekNum} — ${brand}
+Fecha: ${new Date().toLocaleDateString('es-PE',{day:'2-digit',month:'long',year:'numeric'})}
+Growth Executive: ${exec} · Sazón Growth Partner
+Plataformas: ${plats}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+1. OBJETIVO DE ESTA REUNIÓN
+${weekNum==1 ? 'Kickoff del plan. Alinear expectativas, revisar el diagnóstico M0 y definir las primeras acciones.' : 'Revisar resultados de la semana, ajustar estrategia y definir próximas acciones.'}
+
+${results ? `2. RESULTADOS VS SEMANA ANTERIOR\n${results.split('\n').map(l=>'• '+l).join('\n')}` : ''}
+
+${findings ? `3. HALLAZGOS PRINCIPALES\n${findings.split('\n').map(l=>'• '+l).join('\n')}` : ''}
+
+4. ACCIONES PARA ESTA SEMANA
+□ Implementar campaña de descuento día de menor tráfico
+□ Actualizar fotos de top 3 productos en ${plats.split(',')[0]}
+□ Revisar y responder todas las reseñas pendientes
+□ Ajustar descripción del producto estrella
+□ Revisar métricas a mitad de semana
+
+5. KPIs A MONITOREAR
+• Pedidos diarios (target: ${kpis ? kpis.split('→')[1]?.trim().split('\n')[0]||'+10% semana anterior' : 'crecer vs semana pasada'})
+• Ticket promedio (mantener o mejorar)
+• Rating plataforma (target: 4.5+)
+
+6. PRÓXIMA REUNIÓN
+${weekNum < 4 ? `Semana #${parseInt(weekNum)+1} — misma hora. Agenda: revisión de campañas + optimización de menú.` : 'Reunión de cierre del mes. Presentación de reporte mensual y propuesta mes siguiente.'}
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+— ${exec} · Sazón Growth Partner`;
+  }
+}
+
+function copyPlan() {
+  navigator.clipboard.writeText(document.getElementById('planText').textContent);
+  event.currentTarget.textContent='✅ Copiado';
+  setTimeout(()=>event.currentTarget.textContent='📋 Copiar',1800);
+}
+</script>
+</body>
+</html>
