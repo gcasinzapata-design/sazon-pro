@@ -10,9 +10,14 @@
 // ── EMAILJS CONFIG ────────────────────────────────────────────
 // emailjs.com → Account → Public Key
 // Reemplaza los 3 valores con los tuyos de emailjs.com
-const EMAILJS_PUBLIC_KEY  = "TU_PUBLIC_KEY_AQUI";  // Account → API Keys
-const EMAILJS_SERVICE_ID  = "service_sazon";        // Email Services → Service ID
-const EMAILJS_TEMPLATE_ID = "template_sazon_otp";   // Email Templates → Template ID
+// ─── EMAILJS: reemplaza los 3 valores con los tuyos de emailjs.com ───────────
+// 1. emailjs.com → Account → API Keys → Public Key
+// 2. emailjs.com → Email Services → Service ID (conecta tu Gmail)
+// 3. emailjs.com → Email Templates → Template ID
+// Template necesita variables: {{to_email}}, {{code}}, {{admin_name}}
+const EMAILJS_PUBLIC_KEY  = "TU_PUBLIC_KEY_AQUI";   // ← reemplaza
+const EMAILJS_SERVICE_ID  = "TU_SERVICE_ID_AQUI";   // ← reemplaza (ej: service_abc123)
+const EMAILJS_TEMPLATE_ID = "TU_TEMPLATE_ID_AQUI";  // ← reemplaza (ej: template_xyz789)
 (function(){
   if(typeof emailjs !== "undefined" && EMAILJS_PUBLIC_KEY !== "TU_PUBLIC_KEY_AQUI"){
     emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
@@ -172,16 +177,37 @@ tr:hover td{background:rgba(255,255,255,.02);}
     </div>
 
     <div id="step2" style="display:none;">
-      <div class="code-box" id="cbox">
-        <p style="font-size:.75rem;color:rgba(238,234,224,.5);margin-bottom:10px">Tu código de acceso es:</p>
-        <div class="code-val" id="cval" style="font-size:2.4rem;letter-spacing:.5em;color:#c8a045;font-weight:900">------</div>
-        <div class="code-note" style="margin-top:8px;font-size:.72rem;color:rgba(238,234,224,.4)">Ingresa este código abajo para acceder</div>
+      <div class="code-box" id="cbox" style="text-align:center;padding:20px 0">
+        <div id="email-sending-spinner" style="display:none">
+          <div style="font-size:1.8rem;margin-bottom:8px">📨</div>
+          <p style="font-size:.85rem;color:rgba(238,234,224,.7);margin-bottom:4px">Enviando código...</p>
+        </div>
+        <div id="email-sent-ok" style="display:none">
+          <div style="font-size:2rem;margin-bottom:8px">✉️</div>
+          <p style="font-size:.85rem;font-weight:600;color:#c8a045;margin-bottom:4px" id="email-sent-msg">Código enviado a tu email</p>
+          <p style="font-size:.72rem;color:rgba(238,234,224,.4)">Revisa tu bandeja de entrada · Válido por 5 minutos</p>
+        </div>
+        <div id="email-sent-err" style="display:none">
+          <div style="font-size:1.8rem;margin-bottom:8px">⚠️</div>
+          <p style="font-size:.82rem;color:#f87171;font-weight:600;margin-bottom:6px" id="email-err-msg">No se pudo enviar el código</p>
+          <p style="font-size:.72rem;color:rgba(238,234,224,.35);line-height:1.6">
+            Configura las 3 constantes de EmailJS en el archivo admin/index.html:<br>
+            <code style="color:#c8a045;font-size:.7rem">EMAILJS_PUBLIC_KEY</code> · 
+            <code style="color:#c8a045;font-size:.7rem">EMAILJS_SERVICE_ID</code> · 
+            <code style="color:#c8a045;font-size:.7rem">EMAILJS_TEMPLATE_ID</code>
+          </p>
+        </div>
       </div>
       <div class="lf">
         <label>Codigo de 6 digitos</label>
         <input type="text" id="ci" placeholder="000000" maxlength="6" style="letter-spacing:.3em;font-size:1.2rem;text-align:center;" oninput="this.value=this.value.replace(/\D/g,'')"/>
       </div>
       <button class="lbtn" onclick="verify()">Ingresar</button>
+      <div style="text-align:center;margin-top:12px">
+        <button onclick="back()" style="background:none;border:none;color:rgba(238,234,224,.35);font-size:.72rem;cursor:pointer;font-family:DM Sans,sans-serif;text-decoration:underline">
+          Volver / reenviar código
+        </button>
+      </div>
       <button onclick="back()" style="width:100%;margin-top:8px;background:none;border:none;color:var(--muted);font-size:.8rem;cursor:pointer;padding:8px;">← Volver</button>
       <div id="msg2" class="lmsg"></div>
     </div>
@@ -1424,88 +1450,67 @@ function sendCode() {
       return;
     }
 
+    // Generate code internally — NEVER show it on screen
     code = String(Math.floor(100000 + Math.random() * 900000));
 
+    // Show step2
     var s1 = document.getElementById("step1");
     var s2 = document.getElementById("step2");
-    var cv = document.getElementById("cval");
-    var noteEl = s2 ? s2.querySelector(".code-note") : null;
-
     if (s1) s1.style.display = "none";
     if (s2) s2.style.display = "block";
-    if (cv) {
-      cv.textContent = code;
-      cv.style.fontSize = "2.6rem";
-      cv.style.fontWeight = "900";
-      cv.style.color = "#D4A547";
-      cv.style.letterSpacing = "0.3em";
-      // Code is BLURRED by default for security
-      cv.style.filter = "blur(8px)";
-      cv.style.cursor = "pointer";
-      cv.title = "Click para revelar el código";
-      cv.onclick = function() {
-        cv.style.filter = "";
-        cv.style.cursor = "default";
-        cv.onclick = null;
-        var noteEl = document.querySelector(".code-note");
-        if (noteEl) noteEl.textContent = "Ingresa este código abajo para acceder";
-      };
-    }
-    // Update note to explain blur
-    var noteEl = document.querySelector(".code-note");
-    if (noteEl) noteEl.textContent = "Haz click en el código para revelarlo";
-    // Fallback: also show in page title briefly and in a visible div
-    document.title = "Código: " + code;
-    var fallbackEl = document.getElementById("code-fallback");
-    if (fallbackEl) {
-      fallbackEl.textContent = "Tu código: " + code;
-      fallbackEl.style.display = "block";
-    }
     if (msgEl) msgEl.textContent = "";
-    if (noteEl) noteEl.textContent = "Ingresa este codigo en el campo de abajo";
-    // Asegurarse que el codigo sea siempre visible
-    if (cv) {
-      cv.style.userSelect = "all";
-      cv.title = "Haz clic para copiar";
-      cv.style.cursor = "pointer";
-      cv.onclick = function() {
-        navigator.clipboard.writeText(code).then(function() {
-          var orig = cv.style.color;
-          cv.style.color = "#22c55e";
-          setTimeout(function(){ cv.style.color = orig; }, 800);
-        });
-      };
+
+    // Show spinner
+    var showEl = function(id) {
+      ["email-sending-spinner","email-sent-ok","email-sent-err"].forEach(function(x) {
+        var el = document.getElementById(x);
+        if (el) el.style.display = x === id ? "block" : "none";
+      });
+    };
+    showEl("email-sending-spinner");
+
+    // Check EmailJS is configured
+    if (typeof emailjs === "undefined"
+        || typeof EMAILJS_PUBLIC_KEY === "undefined"
+        || EMAILJS_PUBLIC_KEY === "TU_PUBLIC_KEY_AQUI"
+        || !EMAILJS_SERVICE_ID || EMAILJS_SERVICE_ID === "service_sazon_CHANGE_ME"
+        || !EMAILJS_TEMPLATE_ID) {
+      showEl("email-sent-err");
+      var errEl = document.getElementById("email-err-msg");
+      if (errEl) errEl.textContent = "EmailJS no configurado. Agrega tus credenciales en el archivo admin.";
+      return;
     }
 
-    // Auto-expire en 5 minutos
-    setTimeout(function() {
-      code = "";
-      if (cv) { cv.textContent = "EXPIRADO"; cv.style.color = "#f87171"; }
-    }, 5 * 60 * 1000);
+    // Send via EmailJS — code goes to email only
+    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+      to_email:   ADMIN_EMAIL,
+      code:       code,
+      admin_name: "Admin"
+    }).then(function() {
+      showEl("email-sent-ok");
+      var okEl = document.getElementById("email-sent-msg");
+      if (okEl) okEl.textContent = "Código enviado a " + ADMIN_EMAIL;
 
-    // EmailJS: intentar enviar si esta configurado
-    // Por ahora el codigo siempre se muestra en pantalla
-    try {
-      if (typeof emailjs !== "undefined"
-          && typeof EMAILJS_PUBLIC_KEY !== "undefined"
-          && EMAILJS_PUBLIC_KEY !== "TU_PUBLIC_KEY_AQUI") {
-        emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
-          to_email: ADMIN_EMAIL,
-          code: code,
-          admin_name: "Admin Sazon"
-        }).then(function() {
-          if (noteEl) noteEl.textContent = "Codigo enviado a " + ADMIN_EMAIL + " y visible arriba.";
-        }).catch(function(e) {
-          console.warn("EmailJS send error:", e);
-        });
-      }
-    } catch(ejsErr) {
-      console.warn("EmailJS no disponible:", ejsErr);
-    }
+      // Auto-expire in 5 min
+      setTimeout(function() {
+        code = "";
+        var okEl2 = document.getElementById("email-sent-msg");
+        if (okEl2) okEl2.textContent = "Código expirado — vuelve a solicitar acceso";
+        var errEl2 = document.getElementById("email-sent-err");
+        if (errEl2) errEl2.style.display = "block";
+        var okDiv = document.getElementById("email-sent-ok");
+        if (okDiv) okDiv.style.display = "none";
+      }, 5 * 60 * 1000);
+
+    }).catch(function(err) {
+      console.error("EmailJS error:", err);
+      showEl("email-sent-err");
+      var errEl = document.getElementById("email-err-msg");
+      if (errEl) errEl.textContent = "Error al enviar el email. Verifica tu configuración de EmailJS.";
+    });
 
   } catch(err) {
-    console.error("sendCode ERROR:", err);
-    alert("Error en sendCode: " + err.message);
+    console.error("sendCode error:", err);
   }
 }
 
