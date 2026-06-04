@@ -5,25 +5,7 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Sazón · Admin</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;0,900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono&display=swap" rel="stylesheet">
-<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-<script>
-// ── EMAILJS CONFIG ────────────────────────────────────────────
-// emailjs.com → Account → Public Key
-// Reemplaza los 3 valores con los tuyos de emailjs.com
-// ─── EMAILJS: reemplaza los 3 valores con los tuyos de emailjs.com ───────────
-// 1. emailjs.com → Account → API Keys → Public Key
-// 2. emailjs.com → Email Services → Service ID (conecta tu Gmail)
-// 3. emailjs.com → Email Templates → Template ID
-// Template necesita variables: {{to_email}}, {{code}}, {{admin_name}}
-const EMAILJS_PUBLIC_KEY  = "TU_PUBLIC_KEY_AQUI";   // ← reemplaza
-const EMAILJS_SERVICE_ID  = "TU_SERVICE_ID_AQUI";   // ← reemplaza (ej: service_abc123)
-const EMAILJS_TEMPLATE_ID = "TU_TEMPLATE_ID_AQUI";  // ← reemplaza (ej: template_xyz789)
-(function(){
-  if(typeof emailjs !== "undefined" && EMAILJS_PUBLIC_KEY !== "TU_PUBLIC_KEY_AQUI"){
-    emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
-  }
-})();
-</script>
+
 <style>
 :root{--red:#C8392B;--rd:#9B2335;--gold:#D4A547;--green:#22c55e;--blue:#3b82f6;
   --bg:#0a0a0a;--bg2:#111;--bg3:#1a1a1a;--bg4:#222;--bg5:#2a2a2a;
@@ -1450,63 +1432,56 @@ function sendCode() {
       return;
     }
 
-    // Generate code internally — NEVER show it on screen
+    // Generate code — NEVER shown on screen
     code = String(Math.floor(100000 + Math.random() * 900000));
 
-    // Show step2
+    // Show step2 with spinner
     var s1 = document.getElementById("step1");
     var s2 = document.getElementById("step2");
     if (s1) s1.style.display = "none";
     if (s2) s2.style.display = "block";
     if (msgEl) msgEl.textContent = "";
 
-    // Show spinner
-    var showEl = function(id) {
+    var showState = function(id) {
       ["email-sending-spinner","email-sent-ok","email-sent-err"].forEach(function(x) {
         var el = document.getElementById(x);
         if (el) el.style.display = x === id ? "block" : "none";
       });
     };
-    showEl("email-sending-spinner");
+    showState("email-sending-spinner");
 
-    // Check EmailJS is configured
-    if (typeof emailjs === "undefined"
-        || typeof EMAILJS_PUBLIC_KEY === "undefined"
-        || EMAILJS_PUBLIC_KEY === "TU_PUBLIC_KEY_AQUI"
-        || !EMAILJS_SERVICE_ID || EMAILJS_SERVICE_ID === "service_sazon_CHANGE_ME"
-        || !EMAILJS_TEMPLATE_ID) {
-      showEl("email-sent-err");
+    // Call Netlify Function — code goes to email only
+    fetch("/.netlify/functions/send-otp", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ code: code, to_email: ADMIN_EMAIL })
+    })
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      if (data.success) {
+        showState("email-sent-ok");
+        var okEl = document.getElementById("email-sent-msg");
+        if (okEl) okEl.textContent = "Código enviado a " + ADMIN_EMAIL;
+
+        // Auto-expire 5 min
+        setTimeout(function() {
+          code = "";
+          showState("email-sent-err");
+          var errEl = document.getElementById("email-err-msg");
+          if (errEl) errEl.textContent = "Código expirado — solicita uno nuevo";
+        }, 5 * 60 * 1000);
+
+      } else {
+        showState("email-sent-err");
+        var errEl = document.getElementById("email-err-msg");
+        if (errEl) errEl.textContent = data.error || "Error al enviar el email";
+      }
+    })
+    .catch(function(err) {
+      console.error("send-otp error:", err);
+      showState("email-sent-err");
       var errEl = document.getElementById("email-err-msg");
-      if (errEl) errEl.textContent = "EmailJS no configurado. Agrega tus credenciales en el archivo admin.";
-      return;
-    }
-
-    // Send via EmailJS — code goes to email only
-    emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
-      to_email:   ADMIN_EMAIL,
-      code:       code,
-      admin_name: "Admin"
-    }).then(function() {
-      showEl("email-sent-ok");
-      var okEl = document.getElementById("email-sent-msg");
-      if (okEl) okEl.textContent = "Código enviado a " + ADMIN_EMAIL;
-
-      // Auto-expire in 5 min
-      setTimeout(function() {
-        code = "";
-        var okEl2 = document.getElementById("email-sent-msg");
-        if (okEl2) okEl2.textContent = "Código expirado — vuelve a solicitar acceso";
-        var errEl2 = document.getElementById("email-sent-err");
-        if (errEl2) errEl2.style.display = "block";
-        var okDiv = document.getElementById("email-sent-ok");
-        if (okDiv) okDiv.style.display = "none";
-      }, 5 * 60 * 1000);
-
-    }).catch(function(err) {
-      console.error("EmailJS error:", err);
-      showEl("email-sent-err");
-      var errEl = document.getElementById("email-err-msg");
-      if (errEl) errEl.textContent = "Error al enviar el email. Verifica tu configuración de EmailJS.";
+      if (errEl) errEl.textContent = "Error de conexión. Verifica que el sitio esté desplegado en Netlify.";
     });
 
   } catch(err) {
