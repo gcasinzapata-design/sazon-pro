@@ -1,8 +1,0 @@
-{
-  "name": "send-otp",
-  "version": "1.0.0",
-  "description": "Sends OTP code via Gmail for Sazon admin",
-  "dependencies": {
-    "nodemailer": "^6.9.0"
-  }
-}
