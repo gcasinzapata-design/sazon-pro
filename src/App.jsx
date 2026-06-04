@@ -74,7 +74,15 @@ OBJECIONES COMUNES:
 
 CUANDO EL CHAT NO SEA SOBRE VENTAS:
 - Si preguntan por el email de contacto: ${CONTACT_EMAIL}
-- Si preguntan algo que no puedes responder: "Déjame consultarlo con el equipo y te confirmo"`;
+- Si preguntan algo que no puedes responder: "Déjame consultarlo con el equipo y te confirmo"
+
+CASOS ESPECIALES — manéjalos así:
+- Número solo ("3000", "45"): interpreta por contexto. Si preguntaste pedidos → son pedidos. Si ticket → es ticket.
+- Volúmenes altos (>1000/mes): "Con ese volumen el impacto va a ser enorme" + calcula el ROI real.
+- Cadena/multi-local: recomendar Plan Pro y formulario para cotización.
+- "hola", "buenas", "hey": responder con calidez y preguntar plataformas.
+- NUNCA repitas la misma pregunta. Si tienes pedidos, pide ticket. Si tienes ambos, calcula ROI.
+- Cuando tengas pedidos Y ticket → calcula y muestra el ROI en ese mismo mensaje.`;
 
 // ─── CARLOS: GEMINI API (GRATIS) ────────────────────────────────────────────
 // google.com/aistudio → Get API Key → sin tarjeta, 1500 requests/dia gratis
@@ -156,13 +164,13 @@ function parseConvState(history) {
   const prev  = uMsgs[uMsgs.length - 2] || "";
 
   // Pedidos: acepta "200 pedidos", "hacemos 200 al mes", "unas 200 ordenes"
-  const pedRx = /(?:hacemos|tenemos|recibimos|unas?|como|entre|aproximadamente)?\s*(\d{2,4})\s*(?:pedidos?|ordenes?|ventas?|al\s*mes|por\s*mes|mensuales?)/;
-  const pedM  = (full.match(pedRx) || full.match(/(\d{3,4})\s*(?:mes|orden|pedid)/));
+  const pedRx = /(?:hacemos|tenemos|recibimos|manejamos|unas?|como|entre|aproximadamente|aprox\.?)?\s*(\d{2,5})\s*(?:pedidos?|ordenes?|ventas?|al\s*mes|por\s*mes|mensuales?)?/;
+  const pedM  = (uFull.match(pedRx) || uFull.match(/(\d{2,5})\s*(?:mes|orden|pedid)/));
   const pedidos = pedM ? parseInt(pedM[1]) : null;
 
   // Ticket: acepta "ticket de 45", "gasta 45 soles", "promedio 45", "cobra 45"
   const tickRx = /(?:ticket\s*(?:de|es|promedio)?|gasta\s*(?:unos?)?|promedio\s*(?:de)?|cobra\s*(?:unos?)?|s\/\s*)(\d{2,3})(?:\s*soles?)?/;
-  const tickM  = full.match(tickRx);
+  const tickM  = uFull.match(tickRx);
   const ticket = tickM ? parseInt(tickM[1]) : null;
 
   // Plataformas — user msgs only, with negation detection
@@ -170,7 +178,7 @@ function parseConvState(history) {
   const lastCA = (history.filter(m=>m.role==="assistant").slice(-1)[0]?.content||"").toLowerCase();
   const askingPed  = /pedidos|cuantos|ordenes|volumen/.test(lastCA) && !/ticket|promedio|gasta/.test(lastCA);
   const askingTick = /ticket|promedio|gasta.*cada|cuanto.*gasta/.test(lastCA);
-  const soloNum = last.match(/^(?:aprox\.?\s*)?(\d{2,4})(?:\s*(?:al\s*mes|pedidos?)?)?$/);
+  const soloNum = last.match(/^(?:aprox\.?\s*|como\s*|unos?\s*)?(\d{2,5})(?:\s*(?:al\s*mes|por\s*mes|pedidos?|ordenes?))?$/i);
   if (!pedidos && soloNum && askingPed) pedidos = parseInt(soloNum[1]);
   const tmRx2 = /(\d{2,3})\s*soles?\b/; const tmRx3 = /[sS]\/(\d{2,3})\b/;
   const tmM2  = !ticket ? (uFull.match(tmRx2)||uFull.match(tmRx3)) : null;
@@ -223,118 +231,70 @@ function carlosFallback(history) {
   const { uFull, last, plats, pedidos, ticket, roiDicho, planDicho, pagoDicho, saludoDicho, nCarlos } = s;
   const roi = calcROI({ pedidos, ticket, plats });
 
-  // ── INTENTS DE ALTO VALOR: siempre primero ──────────────────────────────────
+  // ── INTENTS ───────────────────────────────────────────────────────────────
+  const l = last.toLowerCase();
 
-  // Cierre / pago
-  if (/quiero\s*(iniciar|empezar|contratar|pagar)|listo\s*para|me\s*animo|arrancamos|activ[ae]|cuanto\s*cuesta\s*para\s*empe/.test(last)) {
+  if (/quiero\s*(empezar|arrancar|contratar|activar)|vamos|arrancamos|me\s*interesa|como\s*(arrancamos|empezamos)/i.test(last)) {
     if (roi) {
-            return `Para activar el plan ${roi.plan}: visita sazonpartner.com/#contacto y te contactamos en 24h.`;
+      const desc = roi.plan === "Growth" ? "hasta 3 plataformas" : "1 plataforma";
+      return `Perfecto! El plan ${roi.plan} (${desc}, S/${roi.costo.toLocaleString()}/mes) proyecta S/${roi.mensual.toLocaleString()} adicionales al mes. Para arrancar: sazonpartner.com/#contacto — te contactamos en menos de 24h.`;
     }
-    return "Para recomendarte el plan exacto necesito dos datos rápidos: ¿cuántos pedidos recibes por mes y cuál es el ticket promedio? Con eso armamos todo.";
+    return "Para arrancar, completa el formulario en sazonpartner.com/#contacto — nuestro equipo te contacta en menos de 24h.";
   }
 
-  // Objeción de precio
-  if (/caro|costoso|mucho\s*(dinero|plata)|no\s*(tengo|puedo|cuento\s*con)\s*(ese\s*)?presupuesto|fuera\s*de\s*(mi\s*)?presupuesto/.test(last)) {
-    if (roi) {
-      return `Entiendo. Pero mirá los números fríos: pagás S/${roi.costo.toLocaleString()}/mes para generar S/${roi.mensual.toLocaleString()} extra. Eso es ${roi.roi_pct}% de retorno mensual. La mayoría de nuestros clientes recupera la inversión en menos de ${roi.payback_dias} días. ¿Qué monto sí te parece razonable para crecer?`;
-    }
-    return `Entiendo la duda. Nuestro modelo funciona solo si el cliente crece — por eso nuestro fee incluye un % del crecimiento que generamos. Dime tus pedidos actuales y te muestro exactamente cuánto ganarías vs cuánto pagas.`;
+  if (/caro|costoso|precio|cuanto\s*(cuesta|sale|cobran)/i.test(last)) {
+    if (roi) return `Pagas S/${roi.costo.toLocaleString()}/mes para generar S/${roi.mensual.toLocaleString()} extra. Eso es ${roi.roi_pct}% de retorno — recuperas la inversión en ${roi.payback_dias} días.`;
+    return "Antes del precio, déjame calcular cuánto puedes ganar. ¿Cuántos pedidos manejan por mes?";
   }
 
-  // Duda / pensar
-  if (/tengo\s*que\s*pens|lo\s*pienso|dame\s*tiempo|después\s*te|voy\s*a\s*ver|no\s*sé|no\s*estoy\s*seguro|dudas?/.test(last)) {
-    if (roi) {
-      return `Claro, tómate el tiempo que necesitas. Solo para que tengas el número claro: con tu operación proyectamos S/${roi.mensual.toLocaleString()} extras al mes. Cada semana que pasa sin optimizar es dinero que se queda sobre la mesa. ¿Qué específicamente te genera dudas?`;
-    }
-    return "¿Qué es lo que más te genera dudas? Cuéntame y lo resolvemos ahora — no hay ningún compromiso en preguntar.";
+  if (/pienso|pensandolo|despues|luego|no\s*se\b|no\s*sé\b|duda/i.test(last)) {
+    if (roi) return `Cada semana son S/${Math.round(roi.mensual/4).toLocaleString()} que no estás generando. ¿Qué te genera dudas?`;
+    return "¿Qué te genera dudas? Cuéntame y te lo resuelvo.";
   }
 
-  // "Ya tengo alguien / ya estamos gestionados"
-  if (/ya\s*(tenemos|tengo|estamos)\s*(alguien|un\s*(equipo|partner|agencia))|ya\s*(nos|me)\s*(gestionan|manejan|administran)/.test(last)) {
-    return "Interesante. ¿Están creciendo más de 30% en pedidos por trimestre? Si no, algo hay por mejorar. Cuéntame cuántos pedidos manejan y te digo honestamente si podemos agregar valor o no.";
+  if (/ya\s*tenemos|tenemos\s*(agencia|alguien)|nos\s*(manejan|llevan)/i.test(last)) {
+    return "¿Están creciendo más de 20% por trimestre? Si no, algo se puede mejorar. ¿Qué resultados están viendo?";
   }
 
-  // Preguntan por resultados / garantía
-  if (/resultado|garantia|funciona\s*de\s*verdad|caso\s*de\s*éxito|comprobado|ejemplo/.test(last)) {
-    return `Mr Smash pasó de 80 a 340 pedidos diarios en 3 meses. D'Tinto y Bife subió el ticket promedio 28% con solo optimización de menú. El promedio de nuestros 16+ clientes activos es +38% en ventas en los primeros 90 días. ¿Cuál es tu situación actual?`;
+  if (/que\s*(incluye|hace|es\s*sazon)|como\s*funciona|en\s*que\s*consiste/i.test(last)) {
+    return "Gestionamos tu perfil, menú digital, campañas y reseñas en las apps de delivery. Tú solo cocinas — nuestro equipo se encarga del crecimiento y te manda un reporte mensual con todos los números.";
   }
 
-  // Preguntan qué incluye / cómo funciona
-  if (/que\s*(incluye|tiene|trae)|como\s*(funciona|trabajan|es\s*el\s*proceso)|que\s*(hacen|ofrecen|servicios)/.test(last)) {
-    return "Nuestro equipo se encarga de todo: gestionamos tus plataformas de delivery, optimizamos fotos, precios y descripciones de tu menú, ejecutamos campañas pagadas y te mandamos un reporte mensual con todos los números. Tú solo cocinas. ¿En qué plataformas estás actualmente?";
+  // ── FLUJO DE DATOS ─────────────────────────────────────────────────────────
+
+  if (pedidos && ticket && roi && !roiDicho) {
+    const desc = roi.plan === "Growth" ? "hasta 3 plataformas" : "1 plataforma";
+    const intro = pedidos >= 1000
+      ? `Con ${pedidos.toLocaleString()} pedidos al mes`
+      : `Con ${pedidos.toLocaleString()} pedidos a S/${ticket} de ticket`;
+    return `${intro}, proyectamos S/${roi.mensual.toLocaleString()} adicionales por mes. Plan ${roi.plan} (${desc}, S/${roi.costo.toLocaleString()}/mes) — ${roi.roi_pct}% ROI mensual. ¿Arrancamos?`;
   }
 
-  // Preguntan sobre planes / precios
-  if (/precio|plan|cuanto\s*(cobran|cuesta)|tarifa|mensualidad/.test(last)) {
-    if (pedidos && ticket && roi) {
-      return `Para tu operación (${pedidos} pedidos, S/${ticket} ticket) recomendamos el plan ${roi.plan} a S/${roi.costo.toLocaleString()}/mes. Proyectamos S/${roi.mensual.toLocaleString()} extra mensual — eso es ${roi.roi_pct}% de retorno. ¿Arrancamos?`;
-    }
-    return "Tenemos Starter a S/2,890/mes (1 plataforma) y Growth a S/3,790/mes (hasta 3 plataformas + Growth Manager dedicado). Pero para recomendarte el correcto necesito entender tu operación. ¿Cuántos pedidos reciben por mes?";
+  if (pedidos && ticket && roiDicho && !pagoDicho) {
+    return "Para activar el plan, completa el formulario en sazonpartner.com/#contacto — te contactamos en menos de 24h.";
   }
 
-  // Multi-local / cadenas
-  if (/cadena|varios\s*locales?|franquicia|multi\s*local|dark\s*kitchen|varias\s*marcas?/.test(last)) {
-    return "Para operaciones multi-local tenemos el plan Pro a medida. ¿Cuántos locales tienen y en qué plataformas están? Con eso te armo una propuesta específica.";
-  }
-
-  // No están en delivery aún
-  if (/no\s*(estoy|estamos|tengo|tenemos)|recién\s*(voy|vamos|estamos)|quiero\s*(entrar|empezar\s*en)\s*delivery|desde\s*cero/.test(last)) {
-    return "Perfecto timing para arrancar bien desde el principio. Hacemos el setup completo en Rappi y PedidosYa — perfil, menú optimizado, primera campaña. Todo incluido en el Starter a S/2,890/mes. ¿Qué tipo de restaurante tienen?";
-  }
-
-  // ── FLUJO DE RECOLECCIÓN DE DATOS ──────────────────────────────────────────
-
-  // Tenemos ROI → empujar al cierre (solo si no lo dijimos ya)
-  if (pedidos && ticket && roi && !pagoDicho) {
-    if (!roiDicho) {
-      return `Perfecto! Con ${pedidos} pedidos a S/${ticket} de ticket, nuestro equipo proyecta S/${roi.mensual.toLocaleString()} adicionales por mes para tu restaurante. El plan ${roi.plan} (S/${roi.costo.toLocaleString()}/mes) te da un retorno del ${roi.roi_pct}% mensual. ¿Lo activamos esta semana?`;
-    }
-    if (roiDicho && !planDicho) {
-            return `Para activar el plan ${roi.plan}: visita sazonpartner.com/#contacto y te contactamos en 24h.`;
-    }
-    if (planDicho && !pagoDicho) {
-            return `Para activar el plan ${roi.plan}: visita sazonpartner.com/#contacto y te contactamos en 24h.`;
-    }
-  }
-
-  // Tenemos pedidos, falta ticket
   if (pedidos && !ticket) {
-    const variantes = [
-      `${pedidos} pedidos al mes — buen volumen. Para calcular tu ROI exacto, ¿cuál es el ticket promedio? (cuánto gasta en promedio cada cliente por pedido)`,
-      `Bien, ${pedidos} pedidos. Solo me falta un dato: ¿cuánto gasta en promedio cada cliente? ¿S/30, S/45, S/60?`,
-    ];
-    return variantes[nCarlos % variantes.length];
+    return `${pedidos.toLocaleString()} pedidos, perfecto. ¿Y cuál es el ticket promedio? ¿Cuánto gasta un cliente por pedido?`;
   }
 
-  // Tenemos plataformas, falta pedidos
-  if (plats.length > 0 && !pedidos) {
-    return `Bien, ${plats.join(" y ")}! Para calcularte el ROI exacto: ¿cuántos pedidos reciben por mes aproximadamente en total?`;
-  }
-
-  // Tenemos ticket, falta pedidos
   if (ticket && !pedidos) {
-    return `S/${ticket} de ticket promedio, bien. ¿Y cuántos pedidos reciben por mes aproximadamente?`;
+    return `S/${ticket} de ticket, anotado. ¿Y cuántos pedidos reciben por mes en ${plats.length ? plats.join(" y ") : "la plataforma"}?`;
   }
 
-  // ── SALUDO INICIAL ──────────────────────────────────────────────────────────
-  if (!saludoDicho || /^(hola|buenas|buenos|hi|hey|buen\s*dia|buenas\s*tardes|saludos)\b/.test(last)) {
-    const horas = new Date().getHours();
-    const saludo = horas < 12 ? "Buenos días" : horas < 19 ? "Buenas tardes" : "Buenas noches";
-    return `${saludo}! Soy Carlos del equipo de Sazón. Ayudamos a restaurantes a crecer en Rappi, PedidosYa, Didi y más. ¿En qué plataformas están activos actualmente?`;
+  if (plats.length > 0 && !pedidos) {
+    const yaPreg = history.filter(m=>m.role==="assistant").some(m=>/pedidos|cuantos|volumen/i.test(m.content));
+    if (yaPreg) return "¿Manejan más de 300 pedidos al mes, o están por debajo de eso?";
+    return `Bien, ${plats.join(" y ")}! ¿Cuántos pedidos reciben por mes en total?`;
   }
 
-  // ── PREGUNTA INICIAL (primera interacción sin contexto) ────────────────────
-  if (nCarlos === 0 || (!pedidos && !ticket && plats.length === 0)) {
-    return "Para entender tu situación: ¿en qué plataformas de delivery están activos y cuántos pedidos manejan por mes aproximadamente?";
+  if (!saludoDicho || nCarlos === 0) {
+    const h2 = new Date().getHours();
+    const sal = h2 < 12 ? "Buenos días" : h2 < 19 ? "Buenas tardes" : "Buenas noches";
+    return `${sal}! Soy Carlos de Sazón. Ayudamos a restaurantes a crecer en Rappi, PedidosYa, Didi y más. ¿En qué plataformas están activos actualmente?`;
   }
 
-  // ── FALLBACK CONTEXTUAL (evita loops) ───────────────────────────────────────
-  const contextuales = [
-    "Cuéntame más sobre tu operación — ¿cuántos pedidos al mes y en qué plataformas?",
-    "Para ayudarte mejor necesito dos datos: pedidos mensuales y ticket promedio. ¿Me los pasas?",
-    `¿Qué es lo que más frena el crecimiento de tu delivery hoy?`,
-  ];
-  return contextuales[nCarlos % contextuales.length];
+  return "¿En qué plataformas de delivery están activos y cuántos pedidos manejan por mes?";
 }
 
 // ─── CARLOS: RENDER DE MENSAJE (convierte tokens a botones) ───────────────────
