@@ -1456,9 +1456,13 @@ function sendCode() {
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ code: code, to_email: ADMIN_EMAIL })
     })
-    .then(function(r) { return r.json(); })
-    .then(function(data) {
-      if (data.success) {
+    .then(function(r) {
+      return r.json().then(function(data) {
+        return { ok: r.ok, status: r.status, data: data };
+      });
+    })
+    .then(function(result) {
+      if (result.ok && result.data.success) {
         showState("email-sent-ok");
         var okEl = document.getElementById("email-sent-msg");
         if (okEl) okEl.textContent = "Código enviado a " + ADMIN_EMAIL;
@@ -1474,14 +1478,16 @@ function sendCode() {
       } else {
         showState("email-sent-err");
         var errEl = document.getElementById("email-err-msg");
-        if (errEl) errEl.textContent = data.error || "Error al enviar el email";
+        var msg = (result.data && result.data.error) || ("HTTP " + result.status);
+        if (errEl) errEl.textContent = msg;
+        console.error("send-otp server error:", msg);
       }
     })
     .catch(function(err) {
       console.error("send-otp error:", err);
       showState("email-sent-err");
       var errEl = document.getElementById("email-err-msg");
-      if (errEl) errEl.textContent = "Error de conexión. Verifica que el sitio esté desplegado en Netlify.";
+      if (errEl) errEl.textContent = "Error: " + (err.message || "conexión fallida");
     });
 
   } catch(err) {
