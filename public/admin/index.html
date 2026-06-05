@@ -137,6 +137,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
 @keyframes spin{to{transform:rotate(360deg)}}
 .spin{animation:spin 1s linear infinite;display:inline-block;}
 </style>
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 </head>
 <body>
 
@@ -842,6 +843,18 @@ Selecciona un cliente para generar el mensaje.</div>
 </style>
 
 <script>
+// ── EMAILJS CONFIG ─────────────────────────────────────────────────────────
+// Estos valores vienen de emailjs.com:
+const EMAILJS_PUBLIC_KEY  = "";  // Account → API Keys → Public Key
+const EMAILJS_SERVICE_ID  = "";  // Email Services → Service ID
+const EMAILJS_TEMPLATE_ID = "";  // Email Templates → Template ID
+(function() {
+  if (typeof emailjs !== "undefined" && EMAILJS_PUBLIC_KEY) {
+    emailjs.init({ publicKey: EMAILJS_PUBLIC_KEY });
+  }
+})();
+</script>
+<script>
 // ─── NEGOCIACION DE COMISIONES ─────────────────────────────────────────────
 const NEG_CONTACTS = {
   rappi: {
@@ -1418,81 +1431,72 @@ const ADMIN_EMAIL = "gc.asin.zapata@gmail.com";
 let code = "";
 
 function sendCode() {
-  try {
-    var emEl  = document.getElementById("lemail");
-    var em    = emEl ? emEl.value.trim().toLowerCase() : "";
-    var msgEl = document.getElementById("lmsg1");
+  var emEl  = document.getElementById("lemail");
+  var em    = emEl ? emEl.value.trim().toLowerCase() : "";
+  var msgEl = document.getElementById("lmsg1");
 
-    if (!em) {
-      if (msgEl) { msgEl.textContent = "Ingresa tu email."; msgEl.style.color = "#f87171"; }
-      return;
+  if (!em) {
+    if (msgEl) { msgEl.textContent = "Ingresa tu email."; msgEl.style.color = "#f87171"; }
+    return;
+  }
+  if (em !== ADMIN_EMAIL) {
+    if (msgEl) { msgEl.textContent = "Email no autorizado."; msgEl.style.color = "#f87171"; }
+    return;
+  }
+
+  // Check EmailJS is configured
+  if (!EMAILJS_PUBLIC_KEY || !EMAILJS_SERVICE_ID || !EMAILJS_TEMPLATE_ID) {
+    if (msgEl) {
+      msgEl.style.color = "#f87171";
+      msgEl.textContent = "Configura EMAILJS_PUBLIC_KEY, SERVICE_ID y TEMPLATE_ID en el admin HTML.";
     }
-    if (em !== ADMIN_EMAIL) {
-      if (msgEl) { msgEl.textContent = "Email no autorizado."; msgEl.style.color = "#f87171"; }
-      return;
-    }
+    return;
+  }
 
-    // Generate code — NEVER shown on screen
-    code = String(Math.floor(100000 + Math.random() * 900000));
+  // Generate code — NEVER shown on screen
+  code = String(Math.floor(100000 + Math.random() * 900000));
 
-    // Show step2 with spinner
-    var s1 = document.getElementById("step1");
-    var s2 = document.getElementById("step2");
-    if (s1) s1.style.display = "none";
-    if (s2) s2.style.display = "block";
-    if (msgEl) msgEl.textContent = "";
+  // Show step2
+  var s1 = document.getElementById("step1");
+  var s2 = document.getElementById("step2");
+  if (s1) s1.style.display = "none";
+  if (s2) s2.style.display = "block";
+  if (msgEl) msgEl.textContent = "";
 
-    var showState = function(id) {
-      ["email-sending-spinner","email-sent-ok","email-sent-err"].forEach(function(x) {
-        var el = document.getElementById(x);
-        if (el) el.style.display = x === id ? "block" : "none";
-      });
-    };
-    showState("email-sending-spinner");
+  var showState = function(id) {
+    ["email-sending-spinner","email-sent-ok","email-sent-err"].forEach(function(x) {
+      var el = document.getElementById(x);
+      if (el) el.style.display = x === id ? "block" : "none";
+    });
+  };
+  showState("email-sending-spinner");
 
-    // Call Netlify Function — code goes to email only
-    fetch("/.netlify/functions/send-otp", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ code: code, to_email: ADMIN_EMAIL })
-    })
-    .then(function(r) {
-      return r.json().then(function(data) {
-        return { ok: r.ok, status: r.status, data: data };
-      });
-    })
-    .then(function(result) {
-      if (result.ok && result.data.success) {
-        showState("email-sent-ok");
-        var okEl = document.getElementById("email-sent-msg");
-        if (okEl) okEl.textContent = "Código enviado a " + ADMIN_EMAIL;
+  // Send via EmailJS SDK (browser-side — most reliable)
+  emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, {
+    to_email:   ADMIN_EMAIL,
+    code:       code,
+    admin_name: "Admin"
+  })
+  .then(function() {
+    showState("email-sent-ok");
+    var okEl = document.getElementById("email-sent-msg");
+    if (okEl) okEl.textContent = "Código enviado a " + ADMIN_EMAIL;
 
-        // Auto-expire 5 min
-        setTimeout(function() {
-          code = "";
-          showState("email-sent-err");
-          var errEl = document.getElementById("email-err-msg");
-          if (errEl) errEl.textContent = "Código expirado — solicita uno nuevo";
-        }, 5 * 60 * 1000);
-
-      } else {
-        showState("email-sent-err");
-        var errEl = document.getElementById("email-err-msg");
-        var msg = (result.data && result.data.error) || ("HTTP " + result.status);
-        if (errEl) errEl.textContent = msg;
-        console.error("send-otp server error:", msg);
-      }
-    })
-    .catch(function(err) {
-      console.error("send-otp error:", err);
+    // Auto-expire 5 min
+    setTimeout(function() {
+      code = "";
       showState("email-sent-err");
       var errEl = document.getElementById("email-err-msg");
-      if (errEl) errEl.textContent = "Error: " + (err.message || "conexión fallida");
-    });
-
-  } catch(err) {
-    console.error("sendCode error:", err);
-  }
+      if (errEl) errEl.textContent = "Código expirado — solicita uno nuevo";
+    }, 5 * 60 * 1000);
+  })
+  .catch(function(err) {
+    console.error("EmailJS error:", err);
+    showState("email-sent-err");
+    var errEl = document.getElementById("email-err-msg");
+    var msg = typeof err === "string" ? err : (err.text || err.message || JSON.stringify(err));
+    if (errEl) errEl.textContent = "EmailJS error: " + msg;
+  });
 }
 
 
