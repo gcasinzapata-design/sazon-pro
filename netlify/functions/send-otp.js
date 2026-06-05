@@ -1,11 +1,20 @@
-// send-otp.js — Netlify Serverless Function
-// Sends OTP code via EmailJS REST API (no npm packages needed)
-// Env vars required in Netlify:
-//   EMAILJS_PUBLIC_KEY   — Account → API Keys
-//   EMAILJS_SERVICE_ID   — Email Services → Service ID
-//   EMAILJS_TEMPLATE_ID  — Email Templates → Template ID
+// send-otp.js — Netlify Serverless Function (ESM)
+// Uses EmailJS REST API — no npm packages needed
+// Env vars in Netlify: EMAILJS_PUBLIC_KEY, EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID
 
-exports.handler = async function(event) {
+export const handler = async (event) => {
+  if (event.httpMethod === "OPTIONS") {
+    return {
+      statusCode: 200,
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Headers": "Content-Type",
+        "Access-Control-Allow-Methods": "POST, OPTIONS"
+      },
+      body: ""
+    };
+  }
+
   if (event.httpMethod !== "POST") {
     return { statusCode: 405, body: "Method not allowed" };
   }
@@ -16,14 +25,15 @@ exports.handler = async function(event) {
   };
 
   try {
-    const { code, to_email } = JSON.parse(event.body || "{}");
+    const body = JSON.parse(event.body || "{}");
+    const { code, to_email } = body;
 
     if (!code || !to_email) {
       return { statusCode: 400, headers,
         body: JSON.stringify({ error: "Missing code or email" }) };
     }
 
-    const ADMIN_EMAIL   = process.env.ADMIN_EMAIL    || "gc.asin.zapata@gmail.com";
+    const ADMIN_EMAIL   = process.env.ADMIN_EMAIL     || "gc.asin.zapata@gmail.com";
     const PUBLIC_KEY    = process.env.EMAILJS_PUBLIC_KEY;
     const SERVICE_ID    = process.env.EMAILJS_SERVICE_ID;
     const TEMPLATE_ID   = process.env.EMAILJS_TEMPLATE_ID;
@@ -31,7 +41,7 @@ exports.handler = async function(event) {
     if (!PUBLIC_KEY || !SERVICE_ID || !TEMPLATE_ID) {
       return { statusCode: 500, headers,
         body: JSON.stringify({
-          error: "Faltan variables de entorno en Netlify: EMAILJS_PUBLIC_KEY, EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID"
+          error: "Variables de entorno faltantes en Netlify. Agrega: EMAILJS_PUBLIC_KEY, EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID"
         })
       };
     }
@@ -41,10 +51,10 @@ exports.handler = async function(event) {
         body: JSON.stringify({ error: "Email no autorizado" }) };
     }
 
-    // Call EmailJS REST API — no npm needed
-    const response = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
+    // Call EmailJS REST API
+    const ejsRes = await fetch("https://api.emailjs.com/api/v1.0/email/send", {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "application/json", "origin": "http://localhost" },
       body: JSON.stringify({
         service_id:  SERVICE_ID,
         template_id: TEMPLATE_ID,
@@ -57,18 +67,18 @@ exports.handler = async function(event) {
       })
     });
 
-    if (response.ok) {
+    const ejsText = await ejsRes.text();
+
+    if (ejsRes.ok) {
       return { statusCode: 200, headers,
         body: JSON.stringify({ success: true }) };
     } else {
-      const errText = await response.text();
-      console.error("EmailJS error:", errText);
       return { statusCode: 500, headers,
-        body: JSON.stringify({ error: "EmailJS error: " + errText }) };
+        body: JSON.stringify({ error: "EmailJS: " + ejsText }) };
     }
 
   } catch (err) {
-    console.error("Function error:", err);
+    console.error("send-otp error:", err.message);
     return { statusCode: 500, headers,
       body: JSON.stringify({ error: err.message }) };
   }
