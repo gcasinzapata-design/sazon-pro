@@ -5,6 +5,8 @@
 [functions]
   directory = "netlify/functions"
   node_bundler = "esbuild"
+  included_files = []
+  node_bundler = "esbuild"
 
 # ── Rutas estáticas — DEBEN ir ANTES del catch-all del SPA ──────────────────
 # El orden importa: Netlify aplica la primera regla que coincide
