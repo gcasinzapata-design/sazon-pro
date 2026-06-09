@@ -1,0 +1,1468 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1.0">
+<title>Sazón · Growth Engine</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
+<style>
+:root{--r:#C8392B;--d:#0F0F0D;--c:#F5F0E8;--w:#EDE4CE;--g:#C8A045;--gr:#2D6A4F;--t:#1A1814;--m:#6B6560;--l:rgba(26,24,20,.1);--bg:#E8E4DA;}
+*{box-sizing:border-box;margin:0;padding:0;}
+body{background:var(--bg);font-family:'DM Sans',sans-serif;color:var(--t);font-size:14px;}
+/* NAV */
+nav{background:var(--d);padding:11px 24px;display:flex;align-items:center;justify-content:space-between;position:sticky;top:0;z-index:100;}
+.logo{font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:900;color:#fff;}.logo span{color:var(--r);}
+.nav-r{display:flex;align-items:center;gap:8px;}
+.nb{padding:6px 14px;border:none;border-radius:2px;font-family:'DM Sans',sans-serif;font-size:.7rem;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:.8px;}
+.nb-ghost{background:rgba(255,255,255,.07);color:rgba(255,255,255,.6);}
+.nb-ghost:hover{background:rgba(255,255,255,.12);}
+.nb-red{background:var(--r);color:#fff;} .nb-red:hover{background:#a82d22;}
+.nav-brand{font-size:.7rem;font-weight:600;padding:3px 10px;background:rgba(200,57,43,.15);color:var(--r);border-radius:100px;}
+/* UPLOAD SCREEN */
+.up-wrap{min-height:calc(100vh - 46px);display:flex;align-items:center;justify-content:center;padding:28px 20px;}
+.up-card{background:var(--c);border:1px solid var(--l);border-radius:4px;width:100%;max-width:680px;overflow:hidden;}
+.up-head{background:var(--d);padding:24px 30px;}
+.up-h{font-family:'Playfair Display',serif;font-size:1.25rem;font-weight:900;color:#fff;margin-bottom:4px;}
+.up-sub{font-size:.74rem;color:rgba(255,255,255,.35);line-height:1.5;}
+.up-body{padding:26px 30px;}
+.lbl{font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--m);margin-bottom:5px;display:block;}
+.inp{width:100%;padding:8px 11px;border:1px solid var(--l);border-radius:2px;font-family:'DM Sans',sans-serif;font-size:.85rem;background:#fff;color:var(--t);margin-bottom:14px;}
+.inp:focus{outline:none;border-color:var(--r);}
+.drop{border:2px dashed rgba(200,57,43,.22);border-radius:3px;padding:26px 18px;text-align:center;cursor:pointer;transition:all .2s;background:rgba(200,57,43,.02);}
+.drop:hover,.drop.on{border-color:var(--r);background:rgba(200,57,43,.05);}
+input[type=file]{display:none;}
+.pick{display:inline-block;margin-top:10px;padding:7px 18px;background:var(--r);color:#fff;border:none;border-radius:2px;font-family:'DM Sans',sans-serif;font-size:.72rem;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:.8px;}
+.fi{display:flex;align-items:center;gap:9px;padding:7px 11px;background:#fff;border:1px solid var(--l);border-radius:2px;margin-top:6px;font-size:.75rem;}
+.fi-name{flex:1;font-weight:500;word-break:break-all;}
+.ptag{font-size:.6rem;font-weight:700;text-transform:uppercase;padding:2px 7px;border-radius:100px;white-space:nowrap;}
+.pr{background:rgba(255,105,0,.1);color:#FF6900;}.pp{background:rgba(0,100,200,.1);color:#0064C8;}.pu{background:rgba(107,101,96,.1);color:var(--m);}
+.pg{display:grid;grid-template-columns:1fr 1fr;gap:9px;margin-top:14px;}
+.pgc{background:#fff;border:1px solid var(--l);border-radius:2px;padding:11px 13px;}
+.pg-n{font-weight:700;font-size:.78rem;margin-bottom:3px;}
+.pg-h{font-size:.67rem;color:var(--m);line-height:1.5;}
+.pg-h code{background:var(--w);padding:1px 4px;border-radius:2px;font-family:'DM Mono',monospace;font-size:.63rem;}
+.an-btn{width:100%;padding:12px;background:var(--r);color:#fff;border:none;border-radius:2px;font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:1.2px;margin-top:14px;}
+.an-btn:hover{background:#a82d22;} .an-btn:disabled{background:var(--m);cursor:default;}
+/* LOADING */
+.ld{min-height:calc(100vh - 46px);display:none;align-items:center;justify-content:center;flex-direction:column;gap:12px;}
+.spin{width:42px;height:42px;border:3px solid var(--l);border-top-color:var(--r);border-radius:50%;animation:sp 1s linear infinite;}
+@keyframes sp{to{transform:rotate(360deg)}}
+/* REPORT */
+.rpt{display:none;}
+.ab{height:3px;background:linear-gradient(90deg,var(--r),var(--g));}
+/* Sidebar + content layout */
+.rpt-layout{display:flex;min-height:calc(100vh - 49px);}
+.sidebar{width:200px;background:var(--d);padding:16px 0;flex-shrink:0;position:sticky;top:46px;height:calc(100vh - 46px);overflow-y:auto;}
+.sb-sec{padding:10px 16px 4px;font-size:.55rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:rgba(255,255,255,.2);}
+.sb-item{display:flex;align-items:center;gap:8px;padding:8px 16px;cursor:pointer;color:rgba(255,255,255,.5);font-size:.76rem;font-weight:500;border-left:2px solid transparent;transition:all .15s;}
+.sb-item:hover{color:#fff;background:rgba(255,255,255,.04);}
+.sb-item.active{color:#fff;background:rgba(200,57,43,.15);border-left-color:var(--r);}
+.sb-ico{font-size:.9rem;width:18px;text-align:center;flex-shrink:0;}
+.main-content{flex:1;overflow-x:hidden;}
+/* Panels */
+.panel{display:none;padding:24px;}
+.panel.active{display:block;}
+/* Section header */
+.sh{display:flex;align-items:flex-start;gap:12px;margin-bottom:20px;padding-bottom:14px;border-bottom:1px solid var(--l);}
+.sh-ico{width:38px;height:38px;border-radius:50%;background:rgba(200,57,43,.1);display:flex;align-items:center;justify-content:center;font-size:1.1rem;flex-shrink:0;}
+.sh-title{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:900;}
+.sh-sub{font-size:.73rem;color:var(--m);margin-top:2px;line-height:1.5;}
+/* Grid layouts */
+.g2{display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:16px;}
+.g3{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin-bottom:16px;}
+.g4{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:16px;}
+/* Cards */
+.card{background:var(--c);border:1px solid var(--l);border-radius:3px;padding:16px 18px;margin-bottom:14px;}
+.card-t{font-size:.6rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--m);margin-bottom:12px;}
+/* KPI cards */
+.kpi{background:var(--c);border:1px solid var(--l);border-radius:3px;padding:14px 16px;}
+.kpi.hl{border-left:3px solid var(--r);}
+.kpi.gl{border-left:3px solid var(--gr);}
+.kpi.yl{border-left:3px solid var(--g);}
+.kpi-l{font-size:.57rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;color:var(--m);margin-bottom:5px;}
+.kpi-v{font-family:'Playfair Display',serif;font-size:1.35rem;font-weight:900;line-height:1;margin-bottom:2px;}
+.kpi-n{font-size:.67rem;color:var(--m);}
+.up{color:var(--gr);font-weight:600;} .dn{color:var(--r);font-weight:600;}
+/* BCG matrix */
+.bcg{display:grid;grid-template-columns:1fr 1fr;gap:0;border:1px solid var(--l);border-radius:3px;overflow:hidden;margin-bottom:16px;}
+.bcg-q{padding:16px 18px;border:1px solid var(--l);}
+.bcg-q.star{background:rgba(200,57,43,.04);}
+.bcg-q.cash{background:rgba(200,160,69,.04);}
+.bcg-q.question{background:rgba(43,87,151,.04);}
+.bcg-q.dog{background:rgba(107,101,96,.04);}
+.bcg-label{font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:2px;margin-bottom:10px;display:flex;align-items:center;gap:6px;}
+.bcg-item{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid var(--l);font-size:.75rem;}
+.bcg-item:last-child{border-bottom:none;}
+.bcg-bar{height:4px;border-radius:100px;margin-top:2px;}
+/* Combo cards */
+.combo-card{background:#fff;border:1px solid var(--l);border-radius:3px;padding:16px 18px;margin-bottom:12px;position:relative;}
+.combo-tag{position:absolute;top:12px;right:12px;font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;padding:2px 8px;border-radius:100px;}
+.ct-new{background:rgba(200,57,43,.1);color:var(--r);}
+.ct-opt{background:rgba(200,160,69,.1);color:var(--g);}
+.ct-exc{background:rgba(45,106,79,.08);color:var(--gr);}
+.combo-name{font-family:'Playfair Display',serif;font-size:.95rem;font-weight:700;margin-bottom:4px;}
+.combo-items{font-size:.74rem;color:var(--m);margin-bottom:8px;}
+.combo-prices{display:flex;gap:16px;align-items:center;margin-bottom:8px;}
+.cp-orig{font-size:.72rem;color:var(--m);text-decoration:line-through;}
+.cp-new{font-family:'Playfair Display',serif;font-size:1.05rem;font-weight:700;color:var(--r);}
+.cp-save{font-size:.68rem;background:rgba(200,57,43,.08);color:var(--r);padding:2px 8px;border-radius:100px;font-weight:600;}
+.combo-why{font-size:.72rem;color:var(--m);line-height:1.6;padding:8px;background:var(--w);border-radius:2px;}
+/* Promotion calendar */
+.promo-grid{display:grid;grid-template-columns:80px repeat(7,1fr);gap:2px;font-size:.65rem;margin-bottom:16px;}
+.ph{text-align:center;font-weight:700;color:var(--m);padding:4px 2px;font-size:.6rem;text-transform:uppercase;}
+.pl{display:flex;align-items:center;justify-content:flex-end;padding-right:5px;color:var(--m);font-size:.62rem;font-family:'DM Mono',monospace;}
+.pc{padding:4px 3px;border-radius:2px;text-align:center;font-size:.58rem;cursor:default;min-height:26px;display:flex;align-items:center;justify-content:center;line-height:1.2;}
+.pc:hover{transform:scale(1.05);z-index:1;position:relative;}
+.p-dead{background:rgba(200,57,43,.08);color:var(--r);font-weight:600;}
+.p-peak{background:rgba(200,160,69,.12);color:#8a6000;font-weight:600;}
+.p-ok{background:rgba(45,106,79,.07);color:var(--gr);}
+.p-off{background:rgba(107,101,96,.05);color:var(--m);}
+/* Promo rec cards */
+.promo-rec{background:#fff;border:1px solid var(--l);border-radius:3px;padding:14px 16px;margin-bottom:10px;display:flex;gap:12px;}
+.promo-icon{width:36px;height:36px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:1rem;flex-shrink:0;}
+.pi-ao{background:rgba(200,57,43,.1);}
+.pi-dy{background:rgba(200,160,69,.1);}
+.pi-hr{background:rgba(45,106,79,.08);}
+.pi-ev{background:rgba(43,87,151,.08);}
+.pr-title{font-weight:700;font-size:.82rem;margin-bottom:2px;}
+.pr-detail{font-size:.73rem;color:var(--m);line-height:1.6;margin-bottom:6px;}
+.pr-tag{font-size:.6rem;font-weight:700;padding:2px 8px;border-radius:100px;margin-right:4px;}
+.tag-ao{background:rgba(200,57,43,.1);color:var(--r);}
+.tag-roi{background:rgba(45,106,79,.08);color:var(--gr);}
+.tag-ef{background:rgba(200,160,69,.1);color:var(--g);}
+/* Strategy cards */
+.strat-card{background:#fff;border:1px solid var(--l);border-radius:3px;padding:16px 18px;margin-bottom:12px;}
+.strat-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.strat-ico{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:.9rem;flex-shrink:0;}
+.strat-title{font-weight:700;font-size:.88rem;}
+.strat-kpi{font-size:.7rem;color:var(--m);}
+.action-item{display:flex;gap:10px;padding:8px 0;border-bottom:1px solid var(--l);}
+.action-item:last-child{border-bottom:none;}
+.ai-num{width:22px;height:22px;border-radius:50%;background:var(--r);color:#fff;display:flex;align-items:center;justify-content:center;font-size:.65rem;font-weight:700;flex-shrink:0;margin-top:1px;}
+.ai-body{flex:1;}
+.ai-title{font-weight:600;font-size:.8rem;margin-bottom:2px;}
+.ai-desc{font-size:.72rem;color:var(--m);line-height:1.6;}
+.ai-tags{margin-top:4px;display:flex;gap:5px;flex-wrap:wrap;}
+.tag{font-size:.58rem;font-weight:700;padding:2px 7px;border-radius:100px;}
+.t-hi{background:rgba(200,57,43,.1);color:var(--r);}
+.t-med{background:rgba(200,160,69,.1);color:var(--g);}
+.t-lo{background:rgba(45,106,79,.08);color:var(--gr);}
+.t-own{background:rgba(43,87,151,.08);color:#2B5797;}
+.t-ef{background:rgba(107,101,96,.08);color:var(--m);}
+/* Roadmap */
+.roadmap-month{margin-bottom:24px;}
+.rm-header{display:flex;align-items:center;gap:10px;margin-bottom:12px;}
+.rm-dot{width:12px;height:12px;border-radius:50%;}
+.rm-title{font-family:'Playfair Display',serif;font-size:.95rem;font-weight:700;}
+.rm-sub{font-size:.72rem;color:var(--m);}
+.rm-table{width:100%;border-collapse:collapse;font-size:.75rem;}
+.rm-table thead tr{background:var(--d);color:#fff;}
+.rm-table thead th{padding:8px 12px;text-align:left;font-size:.57rem;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;}
+.rm-table tbody tr{border-bottom:1px solid var(--l);}
+.rm-table tbody tr:hover{background:rgba(200,57,43,.02);}
+.rm-table tbody td{padding:10px 12px;vertical-align:top;}
+.pri{display:inline-flex;align-items:center;gap:2px;font-size:.6rem;font-weight:700;padding:2px 7px;border-radius:100px;}
+.p1{background:rgba(200,57,43,.1);color:var(--r);}
+.p2{background:rgba(200,160,69,.1);color:var(--g);}
+.p3{background:rgba(45,106,79,.08);color:var(--gr);}
+.imp-tag{font-size:.68rem;font-family:'DM Mono',monospace;font-weight:600;color:var(--gr);}
+/* Financial */
+.fin-bar{height:24px;border-radius:2px;display:flex;align-items:center;padding:0 10px;font-size:.7rem;font-weight:600;color:#fff;margin-bottom:3px;}
+.waterfall{margin-bottom:16px;}
+/* Insight box */
+.insight{background:#fff;border:1px solid var(--l);border-left:3px solid var(--r);border-radius:0 2px 2px 0;padding:12px 15px;font-size:.76rem;line-height:1.7;margin-bottom:10px;}
+.insight strong{color:var(--r);}
+/* AI Summary */
+.ai-box{background:#fff;border:1px solid var(--l);border-radius:3px;padding:20px;font-size:.8rem;line-height:1.8;white-space:pre-wrap;min-height:100px;}
+.ai-loading{display:flex;align-items:center;gap:10px;padding:12px 16px;background:rgba(200,57,43,.04);border-radius:2px;font-size:.76rem;color:var(--m);}
+/* Export bar */
+.export-bar{background:var(--d);padding:10px 24px;display:flex;gap:8px;align-items:center;}
+.eb-l{font-size:.6rem;color:rgba(255,255,255,.3);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-right:4px;}
+/* Responsive */
+@media(max-width:960px){.sidebar{display:none;}.g2,.g3,.g4,.pg{grid-template-columns:1fr;}}
+@media print{nav,.export-bar,.sidebar,.an-btn,.nb{display:none!important;}.rpt-layout{display:block;}.panel{display:block!important;page-break-before:always;}}
+</style>
+</head>
+<body>
+
+<nav>
+  <div><div class="logo">Sazón<span>.</span> <span style="font-size:.65rem;font-weight:500;color:rgba(255,255,255,.3);font-family:'DM Sans',sans-serif;letter-spacing:2px;text-transform:uppercase">Growth Engine</span></div></div>
+  <div class="nav-r">
+    <div class="nav-brand" id="nb" style="display:none"></div>
+    <button class="nb nb-ghost" id="resetBtn" style="display:none" onclick="resetAll()">← Nueva marca</button>
+    <button class="nb nb-red" id="exportBtn" style="display:none" onclick="window.print()">⬇ Exportar PDF</button>
+  </div>
+</nav>
+
+<!-- UPLOAD -->
+<div class="up-wrap" id="upWrap">
+  <div class="up-card">
+    <div class="up-head">
+      <div class="up-h">Growth Engine — Análisis 360°</div>
+      <div class="up-sub">Motor de análisis profundo: pricing, combos, promociones, adquisición, desarrollo de ticket y retención.<br>Sube los reportes de Rappi y/o PedidosYa para generar el plan de crecimiento completo.</div>
+    </div>
+    <div class="up-body">
+      <label class="lbl">Nombre de la marca</label>
+      <input type="text" id="brandInp" class="inp" placeholder="Ej: Beso Francés">
+      <label class="lbl">Precio promedio de ítem principal (S/) — para estimaciones de pricing</label>
+      <input type="number" id="avgItemPrice" class="inp" placeholder="Ej: 32" style="width:120px;display:inline-block;margin-right:10px">
+      <label class="lbl" style="margin-top:10px">API Key Gemini <span style="font-weight:400;color:var(--m)">(opcional — para narrativa estratégica con IA)</span></label>
+      <input type="text" id="geminiKey" class="inp" placeholder="AIza..." style="font-family:'DM Mono',monospace;font-size:.8rem">
+      <div class="drop" id="dz">
+        <input type="file" id="fi" multiple accept=".xlsx,.xls,.csv">
+        <div style="font-size:1.8rem;margin-bottom:7px">📊</div>
+        <div style="font-weight:600;font-size:.86rem;margin-bottom:3px">Arrastra los reportes aquí</div>
+        <div style="font-size:.71rem;color:var(--m)">Rappi: <strong>Historial → Órdenes → Exportar Excel</strong> &nbsp;·&nbsp; PedidosYa: <strong>Finanzas → Reportes → Descargar</strong></div>
+        <button class="pick" onclick="document.getElementById('fi').click()">Seleccionar archivos</button>
+      </div>
+      <div id="fileList"></div>
+      <div class="pg">
+        <div class="pgc"><div class="pg-n" style="color:#FF6900">🟠 Rappi Partners</div><div class="pg-h">Historial → <code>Órdenes</code> → Exportar Excel<br>Columnas: Orden, Fecha, Total, Estado</div></div>
+        <div class="pgc"><div class="pg-n" style="color:#0064C8">🔵 PedidosYa Hub</div><div class="pg-h">Finanzas → <code>Reportes</code> → Descargar<br>Incluye ítems, comisiones y reclamos</div></div>
+      </div>
+      <button class="an-btn" id="anBtn" disabled onclick="run()">Generar análisis 360° →</button>
+    </div>
+  </div>
+</div>
+
+<!-- LOADING -->
+<div class="ld" id="ldWrap">
+  <div class="spin"></div>
+  <div style="font-size:.8rem;color:var(--m)" id="ldTxt">Procesando datos...</div>
+</div>
+
+<!-- REPORT -->
+<div class="rpt" id="rptWrap">
+  <div class="ab"></div>
+  <div class="rpt-layout">
+
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div class="sb-sec">Análisis</div>
+      <div class="sb-item active" onclick="showPanel('dashboard',this)"><span class="sb-ico">📊</span>Dashboard</div>
+      <div class="sb-item" onclick="showPanel('menu',this)"><span class="sb-ico">🍽️</span>Menú & Pricing</div>
+      <div class="sb-item" onclick="showPanel('combos',this)"><span class="sb-ico">🎯</span>Combos & Carta</div>
+      <div class="sb-item" onclick="showPanel('promos',this)"><span class="sb-ico">📣</span>Promociones</div>
+      <div class="sb-sec">Estrategia</div>
+      <div class="sb-item" onclick="showPanel('acquisition',this)"><span class="sb-ico">🚀</span>Adquisición</div>
+      <div class="sb-item" onclick="showPanel('ticket',this)"><span class="sb-ico">💰</span>Desarrollo de ticket</div>
+      <div class="sb-item" onclick="showPanel('retention',this)"><span class="sb-ico">🔁</span>Retención</div>
+      <div class="sb-sec">Operaciones</div>
+      <div class="sb-item" onclick="showPanel('financial',this)"><span class="sb-ico">💸</span>Financiero</div>
+      <div class="sb-item" onclick="showPanel('patterns',this)"><span class="sb-ico">⏰</span>Patrones</div>
+      <div class="sb-sec">Plan</div>
+      <div class="sb-item" onclick="showPanel('roadmap',this)"><span class="sb-ico">📋</span>Roadmap 90 días</div>
+      <div class="sb-item" onclick="showPanel('ai',this)"><span class="sb-ico">🤖</span>Narrativa IA</div>
+    </div>
+
+    <!-- CONTENT -->
+    <div class="main-content">
+
+      <!-- DASHBOARD -->
+      <div class="panel active" id="p-dashboard">
+        <div class="sh"><div class="sh-ico">📊</div><div><div class="sh-title">Dashboard ejecutivo</div><div class="sh-sub">KPIs principales y alertas inmediatas del período analizado</div></div></div>
+        <div class="g4" id="kpiRow"></div>
+        <div class="g2">
+          <div class="card"><div class="card-t">Revenue diario (S/)</div><div style="height:180px;position:relative"><canvas id="cRev"></canvas></div></div>
+          <div class="card"><div class="card-t">Estado de pedidos</div><div id="statusList"></div></div>
+        </div>
+        <div class="g2">
+          <div class="card"><div class="card-t">Distribución de ticket (S/)</div><div style="height:160px;position:relative"><canvas id="cTickDist"></canvas></div></div>
+          <div class="card"><div class="card-t">Pedidos por día de la semana</div><div style="height:160px;position:relative"><canvas id="cDow"></canvas></div></div>
+        </div>
+        <div id="alertsBox"></div>
+      </div>
+
+      <!-- MENU & PRICING -->
+      <div class="panel" id="p-menu">
+        <div class="sh"><div class="sh-ico">🍽️</div><div><div class="sh-title">Ingeniería de menú & Pricing</div><div class="sh-sub">Clasificación BCG de productos, análisis de precios y recomendaciones de visibilidad</div></div></div>
+        <div class="insight" id="menuInsight"></div>
+        <div class="card"><div class="card-t">Matriz BCG de productos — Volumen × Revenue</div><div class="bcg" id="bcgMatrix"></div></div>
+        <div class="g2">
+          <div class="card"><div class="card-t">Top productos por pedidos</div><div style="height:200px;position:relative"><canvas id="cItems"></canvas></div></div>
+          <div class="card"><div class="card-t">Revenue estimado por producto</div><div style="height:200px;position:relative"><canvas id="cItemsRev"></canvas></div></div>
+        </div>
+        <div class="card" id="pricingRecs"><div class="card-t">Recomendaciones de precio</div></div>
+        <div class="card" id="menuOrder"><div class="card-t">Orden recomendado de menú</div></div>
+      </div>
+
+      <!-- COMBOS -->
+      <div class="panel" id="p-combos">
+        <div class="sh"><div class="sh-ico">🎯</div><div><div class="sh-title">Estrategia de combos & carta dinámica</div><div class="sh-sub">Combos sugeridos basados en co-ocurrencia real + optimización de precios</div></div></div>
+        <div class="insight" id="combosInsight"></div>
+        <div id="combosList"></div>
+        <div class="card" id="dynamicMenu"><div class="card-t">Estructura recomendada de carta</div></div>
+        <div class="card" id="modifiers"><div class="card-t">Recomendaciones de modificadores/opciones</div></div>
+      </div>
+
+      <!-- PROMOTIONS -->
+      <div class="panel" id="p-promos">
+        <div class="sh"><div class="sh-ico">📣</div><div><div class="sh-title">Estrategia de promociones</div><div class="sh-sub">Always-on, por día, por hora y por evento — con parámetros específicos de activación</div></div></div>
+        <div class="insight" id="promoInsight"></div>
+        <div class="card"><div class="card-t">Mapa de oportunidades — Hora × Día (pedidos reales)</div><div id="promoHeatmap" style="padding:6px 0;overflow-x:auto"></div></div>
+        <div id="promoRecs"></div>
+      </div>
+
+      <!-- ACQUISITION -->
+      <div class="panel" id="p-acquisition">
+        <div class="sh"><div class="sh-ico">🚀</div><div><div class="sh-title">Estrategia de adquisición de usuarios</div><div class="sh-sub">Cómo atraer nuevos clientes desde las plataformas de delivery</div></div></div>
+        <div id="acquisitionContent"></div>
+      </div>
+
+      <!-- TICKET DEVELOPMENT -->
+      <div class="panel" id="p-ticket">
+        <div class="sh"><div class="sh-ico">💰</div><div><div class="sh-title">Desarrollo de ticket promedio</div><div class="sh-sub">De S/X actual hacia S/X+Y — acciones concretas y cuánto impactan</div></div></div>
+        <div id="ticketContent"></div>
+      </div>
+
+      <!-- RETENTION -->
+      <div class="panel" id="p-retention">
+        <div class="sh"><div class="sh-ico">🔁</div><div><div class="sh-title">Retención & Recompra</div><div class="sh-sub">Estrategias para aumentar la frecuencia y reactivar usuarios inactivos</div></div></div>
+        <div id="retentionContent"></div>
+      </div>
+
+      <!-- FINANCIAL -->
+      <div class="panel" id="p-financial">
+        <div class="sh"><div class="sh-ico">💸</div><div><div class="sh-title">Análisis financiero de plataforma</div><div class="sh-sub">Estructura de comisiones, impacto real en margen y estrategia de mitigación</div></div></div>
+        <div id="financialContent"></div>
+      </div>
+
+      <!-- PATTERNS -->
+      <div class="panel" id="p-patterns">
+        <div class="sh"><div class="sh-ico">⏰</div><div><div class="sh-title">Patrones de demanda</div><div class="sh-sub">Heatmap completo, peak hours y ventanas a potenciar</div></div></div>
+        <div class="card"><div class="card-t">Heatmap — Intensidad de pedidos por hora y día</div><div id="hmWrap" style="padding:6px 0"></div></div>
+        <div class="g2">
+          <div class="card"><div class="card-t">Peak hours — promedio de pedidos</div><div style="height:180px;position:relative"><canvas id="cHours"></canvas></div></div>
+          <div class="card"><div class="card-t">Revenue por semana del período</div><div style="height:180px;position:relative"><canvas id="cWeekly"></canvas></div></div>
+        </div>
+        <div class="card" id="hoursRecs"><div class="card-t">Ventanas a potenciar — acciones por horario</div></div>
+      </div>
+
+      <!-- ROADMAP -->
+      <div class="panel" id="p-roadmap">
+        <div class="sh"><div class="sh-ico">📋</div><div><div class="sh-title">Roadmap de 90 días — Plan de acción</div><div class="sh-sub">Acciones específicas priorizadas por impacto y esfuerzo — M0, M1, M2, M3</div></div></div>
+        <div id="roadmapContent"></div>
+      </div>
+
+      <!-- AI NARRATIVE -->
+      <div class="panel" id="p-ai">
+        <div class="sh"><div class="sh-ico">🤖</div><div><div class="sh-title">Narrativa estratégica — IA</div><div class="sh-sub">Análisis generado por Gemini AI basado en todos los datos del período</div></div></div>
+        <div id="aiContent">
+          <div style="font-size:.78rem;color:var(--m);padding:16px;background:#fff;border:1px solid var(--l);border-radius:3px">
+            Agrega tu API Key de Gemini en la pantalla de carga para generar la narrativa estratégica completa con IA.
+          </div>
+        </div>
+      </div>
+
+      <div class="export-bar">
+        <span class="eb-l">Exportar</span>
+        <button class="nb nb-ghost" onclick="window.print()">🖨 PDF</button>
+        <button class="nb nb-ghost" onclick="copyInsights()">📋 Copiar accionables</button>
+      </div>
+    </div><!-- /main-content -->
+  </div><!-- /rpt-layout -->
+</div><!-- /rpt -->
+
+<script>
+'use strict';
+// ════════════════════════════════════════════════════════════════
+//  GLOBALS
+// ════════════════════════════════════════════════════════════════
+let FILES=[], CHARTS={}, D=null;
+
+// ════════════════════════════════════════════════════════════════
+//  FILE HANDLING
+// ════════════════════════════════════════════════════════════════
+const dz=document.getElementById('dz'), fi=document.getElementById('fi');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('on');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('on'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('on');addFiles([...e.dataTransfer.files]);});
+fi.addEventListener('change',e=>addFiles([...e.target.files]));
+
+function addFiles(list){list.forEach(f=>{if(!FILES.find(x=>x.name===f.name))FILES.push(f);});renderFiles();document.getElementById('anBtn').disabled=FILES.length===0;}
+function removeFile(i){FILES.splice(i,1);renderFiles();document.getElementById('anBtn').disabled=FILES.length===0;}
+function plat(name){const n=name.toLowerCase();return /rappi/.test(n)?'rappi':/pedidosya|peya|orderdetail/.test(n)?'peya':/didi/.test(n)?'didi':'unk';}
+function renderFiles(){
+  const el=document.getElementById('fileList');
+  if(!FILES.length){el.innerHTML='';return;}
+  el.innerHTML=FILES.map((f,i)=>`<div class="fi">
+    <span>📄</span><span class="fi-name">${f.name}</span>
+    <span class="ptag ${plat(f.name)==='rappi'?'pr':plat(f.name)==='peya'?'pp':'pu'}">${{rappi:'Rappi',peya:'PedidosYa',didi:'Didi',unk:'Plataforma'}[plat(f.name)]}</span>
+    <span style="font-size:.68rem;color:var(--m)">${(f.size/1024).toFixed(0)}KB</span>
+    <span style="cursor:pointer;color:var(--m)" onclick="removeFile(${i})">✕</span>
+  </div>`).join('');
+}
+
+// ── Rappi Financial Report parser ("Detalle" sheet) ──────────────────────────
+function parseRappiFinancial(rows, p) {
+  // Find header row (has "Venta Bruta")
+  const hi = rows.findIndex(r => r.some(v => /^venta bruta$/i.test(String(v||''))));
+  if (hi < 0) return [];
+  const h = rows[hi].map(v => String(v||'').toLowerCase().trim());
+  const ci = {
+    fecha:    h.findIndex(v => /fecha de creaci.n/.test(v)),
+    orden:    h.findIndex(v => /^id de la .rden$/.test(v)),
+    tienda:   h.findIndex(v => /nombre de la tienda/.test(v)),
+    metodo:   h.findIndex(v => /m.todo de pago/.test(v)),
+    estado:   h.findIndex(v => /estado de la .rden/.test(v)),
+    prep:     h.findIndex(v => /tiempo de preparaci.n/.test(v)),
+    prime:    h.findIndex(v => /^prime/.test(v)),
+    venta_b:  h.findIndex(v => /^venta bruta$/.test(v)),
+    base:     h.findIndex(v => /ventas base por uso/.test(v)),
+    com_plat: h.findIndex(v => /uso y alquiler de plataforma rappi$/.test(v)),
+  };
+  const g = (r, k) => ci[k] >= 0 && r[ci[k]] != null ? parseFloat(String(r[ci[k]]).replace(/[^0-9.\-]/g,'')) || 0 : 0;
+  const gs = (r, k) => ci[k] >= 0 ? String(r[ci[k]] || '') : '';
+
+  // Rappi date format: "sáb. 09 may. 2026, 2:45:54 p. m."
+  const MONTHS = {ene:1,feb:2,mar:3,abr:4,may:5,jun:6,jul:7,ago:8,sep:9,oct:10,nov:11,dic:12};
+  function parseRappiDate(s) {
+    if (!s) return null;
+    const m = s.match(/(\d{1,2})\s+(\w{3})[\.\s]+(\d{4}),\s*(\d{1,2}):(\d{2})/);
+    if (!m) return null;
+    const mo = MONTHS[m[2].toLowerCase().slice(0,3)];
+    if (!mo) return null;
+    let h = parseInt(m[4]);
+    if (/p[\.\s]+m/i.test(s) && h < 12) h += 12;
+    try { return new Date(parseInt(m[3]), mo-1, parseInt(m[1]), h, parseInt(m[5])); } catch(e) { return null; }
+  }
+
+  return rows.slice(hi+1).filter(r => r.some(v => v)).map(row => {
+    const estado = gs(row, 'estado').toLowerCase();
+    const cancelled = /canceled|cancelad/.test(estado);
+    const vb = g(row, 'venta_b');
+    const comPlat = Math.abs(g(row, 'com_plat'));
+    const base = g(row, 'base');
+    // Net = base - commission (approx, since transfers show 0 pending_review)
+    const net = base > 0 ? base - comPlat : vb - comPlat;
+    return {
+      id:         gs(row, 'orden'),
+      date:       parseRappiDate(gs(row, 'fecha')),
+      total:      vb,
+      cancelled,
+      sucursal:   gs(row, 'tienda') || 'Principal',
+      metodo:     gs(row, 'metodo') || 'Online',
+      items:      '',
+      platform:   p || 'rappi',
+      estado:     gs(row, 'estado'),
+      comision:   comPlat,
+      ingreso:    net,
+      reclamo:    '',
+      motivoReclamo: '',
+      prepTime:   g(row, 'prep'),
+      isPrime:    /true/i.test(gs(row, 'prime')),
+      _format:    'rappi_fin',
+    };
+  }).filter(o => o.total > 0 || o.cancelled);
+}
+
+// ── PedidosYa Earnings Summary parser ────────────────────────────────────────
+function parsePeyaSummary(rows) {
+  // Find header row
+  const hi = rows.findIndex(r => r.some(v => /período abarcado/i.test(String(v||''))));
+  if (hi < 0) return null;
+  const h = rows[hi].map(v => String(v||'').toLowerCase().trim());
+  const data = rows[hi+1];
+  if (!data) return null;
+  const g = k => { const i = h.findIndex(v=>v.includes(k)); return i>=0 ? parseFloat(String(data[i]||'').replace(/[^0-9.\-]/g,''))||0 : 0; };
+  const gs = k => { const i = h.findIndex(v=>v.includes(k)); return i>=0 ? String(data[i]||'') : ''; };
+  return {
+    _isPeyaSummary: true,
+    period:     gs('período abarcado'),
+    orders:     Math.round(g('cantidad de órdenes')),
+    payTotal:   g('pago total'),
+    ventasNetas:g('ventas netas'),
+    commission: Math.abs(g('servicio por ventas')),
+    adSpend:    Math.abs(g('publicidad')),
+    credit:     Math.abs(g('crédito de pedidos')),
+    descPeya:   g('descuento otorgado por ped') || g('descuento financiado'),
+  };
+}
+
+// ════════════════════════════════════════════════════════════════
+//  PARSING ENGINE
+// ════════════════════════════════════════════════════════════════
+async function readBin(file){return new Promise((r,j)=>{const rd=new FileReader();rd.onload=e=>r(e.target.result);rd.onerror=j;rd.readAsBinaryString(file);});}
+
+function sheetToRows(wb){
+  const rows=[];
+  wb.SheetNames.forEach(sn=>{
+    const ws=wb.Sheets[sn];
+    rows.push(...XLSX.utils.sheet_to_json(ws,{raw:false,defval:'',header:1}));
+  });
+  return rows;
+}
+
+function parseDate(s){
+  if(!s||!s.trim())return null;
+  let d=new Date(s.trim());
+  if(!isNaN(d))return d;
+  const m=s.trim().match(/^(\d{1,2})[\/\-](\d{1,2})[\/\-](\d{4})(?:\s+(\d{1,2}):(\d{2}))?/);
+  if(m){d=new Date(`${m[3]}-${m[2].padStart(2,'0')}-${m[1].padStart(2,'0')}T${m[4]||'00'}:${m[5]||'00'}:00`);if(!isNaN(d))return d;}
+  return null;
+}
+
+function parseNum(s){return parseFloat(String(s||'').replace(/[^0-9.,]/g,'').replace(',','.'))||0;}
+
+function detectFmt(rows){
+  const flat=rows.slice(0,4).flat().map(v=>String(v||'').toLowerCase());
+  if(flat.some(v=>/nro de pedido|total parcial|art.culos/.test(v)))return 'peya';
+  if(flat.some(v=>/venta bruta|uso y alquiler|id de la .rden/.test(v)))return 'rappi_fin';
+  if(flat.some(v=>/período abarcado|ventas netas|servicio por ventas/.test(v)))return 'peya_summary';
+  return 'rappi';
+}
+
+function parseRappi(rows,p){
+  const hi=rows.findIndex(r=>r.some(v=>/^orden$/i.test(String(v||''))));
+  if(hi<0)return[];
+  const h=rows[hi].map(v=>String(v||'').toLowerCase().trim());
+  const ci={orden:h.findIndex(v=>/^orden$/.test(v)),fecha:h.findIndex(v=>/fecha|date/.test(v)),
+    total:h.findIndex(v=>/^total$|^monto$/.test(v)),estado:h.findIndex(v=>/estado|status/.test(v)),
+    sucursal:h.findIndex(v=>/sucursal|branch/.test(v)),metodo:h.findIndex(v=>/m.todo|pago|payment/.test(v))};
+  return rows.slice(hi+1).filter(r=>r.some(v=>v)).map(r=>({
+    id:String(r[ci.orden]||''),date:parseDate(String(r[ci.fecha]||'')),
+    total:parseNum(r[ci.total]),cancelled:/cancel|rechaz/i.test(String(r[ci.estado]||'')),
+    sucursal:String(r[ci.sucursal]||'Principal'),metodo:String(r[ci.metodo]||'Online'),
+    items:'',platform:p,estado:String(r[ci.estado]||''),comision:0,ingreso:0,reclamo:''
+  })).filter(o=>o.total>0||!o.cancelled);
+}
+
+function parsePeya(rows,p){
+  const hi=rows.findIndex(r=>r.some(v=>/nro de pedido/i.test(String(v||''))));
+  if(hi<0)return[];
+  const h=rows[hi].map(v=>String(v||'').toLowerCase().trim());
+  const ci={sucursal:h.findIndex(v=>/nombre del local/.test(v)),orden:h.findIndex(v=>/nro de pedido/.test(v)),
+    metodo:h.findIndex(v=>/forma de pago/.test(v)),estado:h.findIndex(v=>/estado del pedido/.test(v)),
+    fecha:h.findIndex(v=>/fecha del pedido/.test(v)),total:h.findIndex(v=>/total parcial/.test(v)),
+    comision:h.findIndex(v=>/^comisi.n$/.test(v)),ingreso:h.findIndex(v=>/ingreso estimado/.test(v)),
+    items:h.findIndex(v=>/art.culos/.test(v)),reclamo:h.findIndex(v=>/tiene reclamos/.test(v)),
+    motivo:h.findIndex(v=>/motivo del reclamo/.test(v))};
+  const g=(r,i)=>i>=0&&i<r.length?r[i]:'';
+  return rows.slice(hi+1).filter(r=>r.some(v=>v)).map(r=>({
+    id:String(g(r,ci.orden)),date:parseDate(String(g(r,ci.fecha))),
+    total:parseNum(g(r,ci.total)),cancelled:/cancel|rechaz/i.test(String(g(r,ci.estado))),
+    sucursal:String(g(r,ci.sucursal)||'Principal'),metodo:String(g(r,ci.metodo)||'Online'),
+    items:String(g(r,ci.items)),platform:p,estado:String(g(r,ci.estado)),
+    comision:parseNum(g(r,ci.comision)),ingreso:parseNum(g(r,ci.ingreso)),
+    reclamo:String(g(r,ci.reclamo)),motivoReclamo:String(g(r,ci.motivo))
+  }));
+}
+
+async function parseAllFiles(files){
+  const all=[];
+  for(const file of files){
+    try{
+      const bin=await readBin(file);
+      let rows;
+      try{
+        const wb=XLSX.read(bin,{type:'binary',cellDates:true,WTF:false,bookVBA:false});
+        rows=sheetToRows(wb);
+      }catch(e){
+        try{
+          const u8=new Uint8Array(bin.length);
+          for(let i=0;i<bin.length;i++)u8[i]=bin.charCodeAt(i);
+          const wb=XLSX.read(u8,{type:'array',cellDates:true,WTF:false});
+          rows=sheetToRows(wb);
+        }catch(e2){rows=[];}
+      }
+      if(!rows||rows.length<2)continue;
+      const fmt=detectFmt(rows), pl=plat(file.name);
+      if(fmt==='peya_summary'){
+        const summary=parsePeyaSummary(rows);
+        if(summary) all._peyaSummary=(all._peyaSummary||[]).concat(summary);
+        continue;
+      }
+      const orders=fmt==='rappi_fin'?parseRappiFinancial(rows,pl||'rappi'):
+                   fmt==='peya'?parsePeya(rows,pl||'peya'):
+                   parseRappi(rows,pl||'rappi');
+      all.push(...orders);
+    }catch(err){console.error(file.name,err);alert(`Error: ${file.name}\n${err.message}`);}
+  }
+  return all;
+}
+
+// ════════════════════════════════════════════════════════════════
+//  ITEM PARSER & CO-OCCURRENCE ENGINE
+// ════════════════════════════════════════════════════════════════
+function parseItems(orders){
+  const map={};
+  orders.filter(o=>!o.cancelled&&o.items).forEach(o=>{
+    const parts=o.items.split(',').map(s=>s.trim()).filter(Boolean);
+    const totalQty=parts.reduce((s,p)=>{const m=p.match(/^(\d+)/);return s+(m?+m[1]:1);},0)||1;
+    parts.forEach(part=>{
+      const m=part.match(/^(\d+)\s+(.+)$/);
+      if(!m)return;
+      const qty=+m[1];
+      // Clean name: remove bracket content and trailing bracket artifacts
+      let name=m[2].replace(/\[.*?\]/g,'').replace(/\]$/,'').replace(/^\[/,'').trim();
+      if(!name||name.length<2||name.length>60)return;
+      if(!map[name])map[name]={name,orders:0,qty:0,revenue:0};
+      map[name].orders++;
+      map[name].qty+=qty;
+      map[name].revenue+=o.total*(qty/totalQty);
+    });
+  });
+  return Object.values(map).sort((a,b)=>b.orders-a.orders);
+}
+
+function buildCoOccurrence(orders){
+  const matrix={};
+  orders.filter(o=>!o.cancelled&&o.items).forEach(o=>{
+    const parts=o.items.split(',').map(s=>s.trim()).filter(Boolean);
+    const names=[];
+    parts.forEach(p=>{
+      const m=p.match(/^(\d+)\s+(.+)$/);
+      if(!m)return;
+      const name=m[2].replace(/\[.*?\]/g,'').replace(/\]$/,'').trim();
+      if(name&&name.length>1)names.push(name);
+    });
+    for(let i=0;i<names.length;i++)
+      for(let j=i+1;j<names.length;j++){
+        const k=[names[i],names[j]].sort().join('||');
+        matrix[k]=(matrix[k]||0)+1;
+      }
+  });
+  return Object.entries(matrix).map(([k,v])=>{const[a,b]=k.split('||');return{a,b,count:v};}).sort((x,y)=>y.count-x.count);
+}
+
+// ════════════════════════════════════════════════════════════════
+//  FULL ANALYSIS ENGINE
+// ════════════════════════════════════════════════════════════════
+function analyze(allOrders,brand){
+  const avgItemPriceInput=parseFloat(document.getElementById('avgItemPrice').value)||0;
+  const orders=allOrders.filter(o=>!o.cancelled&&o.total>0);
+  const total_n=allOrders.length, done_n=orders.length;
+  const canc_n=allOrders.filter(o=>o.cancelled).length;
+  const canc_pct=total_n>0?canc_n/total_n*100:0;
+  const revenue=orders.reduce((s,o)=>s+o.total,0);
+  const avgTicket=done_n>0?revenue/done_n:0;
+
+  // Financials (PedidosYa)
+  const hasFinancials=orders.some(o=>o.comision>0);
+  const totalComision=orders.reduce((s,o)=>s+(o.comision||0),0);
+  const totalIngreso=orders.reduce((s,o)=>s+(o.ingreso||0),0);
+  const comPct=revenue>0?totalComision/revenue*100:0;
+  const netPct=revenue>0?totalIngreso/revenue*100:0;
+  const otherDedPct=100-netPct-comPct;
+
+  // Status
+  const byStatus={};
+  allOrders.forEach(o=>{const s=o.estado||(o.cancelled?'Cancelado':'Entregado');byStatus[s]=(byStatus[s]||0)+1;});
+
+  // Reclamos
+  const reclamos=allOrders.filter(o=>o.reclamo&&/s[ií]/i.test(o.reclamo));
+  const reclamosPct=done_n>0?reclamos.length/done_n*100:0;
+  const motivosReclamo={};
+  reclamos.forEach(o=>{const m=o.motivoReclamo||'Sin especificar';motivosReclamo[m]=(motivosReclamo[m]||0)+1;});
+
+  // Dates
+  const withDate=orders.filter(o=>o.date);
+  withDate.sort((a,b)=>a.date-b.date);
+  const earliest=withDate[0]?.date, latest=withDate[withDate.length-1]?.date;
+
+  // Daily
+  const byDay={};
+  withDate.forEach(o=>{const d=o.date.toISOString().split('T')[0];if(!byDay[d])byDay[d]={orders:0,revenue:0};byDay[d].orders++;byDay[d].revenue+=o.total;});
+  const days=Object.keys(byDay).sort();
+  const dailyRevs=days.map(d=>byDay[d].revenue);
+  const dailyOrds=days.map(d=>byDay[d].orders);
+
+  // Weekly
+  const byWeek={};
+  withDate.forEach(o=>{const wd=new Date(o.date);wd.setDate(wd.getDate()-wd.getDay());const wk=wd.toISOString().split('T')[0];if(!byWeek[wk])byWeek[wk]={orders:0,revenue:0};byWeek[wk].orders++;byWeek[wk].revenue+=o.total;});
+  const weeks=Object.keys(byWeek).sort();
+
+  // DOW
+  const dowO=new Array(7).fill(0),dowR=new Array(7).fill(0);
+  withDate.forEach(o=>{dowO[o.date.getDay()]++;dowR[o.date.getDay()]+=o.total;});
+  const bestDow=dowO.indexOf(Math.max(...dowO));
+  const worstDow=dowO.indexOf(Math.min(...dowO.filter(v=>v>0)));
+
+  // Hours
+  const hourO=new Array(24).fill(0);
+  withDate.forEach(o=>hourO[o.date.getHours()]++);
+  const peakHour=hourO.indexOf(Math.max(...hourO));
+  // Dead zones: hours below 20% of peak
+  const peakVal=Math.max(...hourO);
+  const deadHours=hourO.map((v,i)=>({h:i,v,pct:peakVal>0?v/peakVal:0})).filter(x=>x.h>=9&&x.h<=23&&x.pct<0.2&&x.v<3);
+
+  // Heatmap
+  const hm=Array.from({length:24},()=>new Array(7).fill(0));
+  withDate.forEach(o=>hm[o.date.getHours()][o.date.getDay()]++);
+
+  // Ticket distribution
+  const bands=[{lo:0,hi:30,lbl:'< S/30'},{lo:30,hi:50,lbl:'S/30–50'},{lo:50,hi:80,lbl:'S/50–80'},{lo:80,hi:120,lbl:'S/80–120'},{lo:120,hi:9999,lbl:'S/120+'}];
+  const ticketDist=bands.map(b=>({...b,count:orders.filter(o=>o.total>=b.lo&&o.total<b.hi).length}));
+
+  // Platform
+  const byPlat={};
+  allOrders.forEach(o=>{byPlat[o.platform]=(byPlat[o.platform]||0)+1;});
+
+  // Sucursal
+  const bySucursal={};
+  orders.forEach(o=>{const s=o.sucursal||'Principal';if(!bySucursal[s])bySucursal[s]={orders:0,revenue:0};bySucursal[s].orders++;bySucursal[s].revenue+=o.total;});
+
+  // Metodo pago
+  const byMetodo={};
+  orders.forEach(o=>{const m=o.metodo||'N/A';byMetodo[m]=(byMetodo[m]||0)+1;});
+
+  // Trend
+  const half=Math.floor(dailyRevs.length/2);
+  const avg1=half>0?dailyRevs.slice(0,half).reduce((a,b)=>a+b,0)/half:0;
+  const avg2=dailyRevs.length-half>0?dailyRevs.slice(half).reduce((a,b)=>a+b,0)/(dailyRevs.length-half):0;
+  const trendPct=avg1>0?(avg2-avg1)/avg1*100:0;
+
+  // Items & co-occurrence
+  const hasItems=orders.some(o=>o.items&&o.items.trim());
+  const items=hasItems?parseItems(orders):[];
+  const coOccurrence=hasItems?buildCoOccurrence(orders):[];
+  const avgItemsPerOrder=hasItems&&items.length>0?items.reduce((s,i)=>s+i.qty,0)/done_n:0;
+
+  // Unique customers (by name/id if available)
+  const repeatRate=0; // can't reliably calculate without customer IDs
+
+  // Prep time analysis (Rappi financial reports)
+  const prepTimes = orders.filter(o=>o.prepTime>0).map(o=>o.prepTime);
+  const avgPrepTime = prepTimes.length ? prepTimes.reduce((a,b)=>a+b,0)/prepTimes.length : null;
+  const primeOrders = orders.filter(o=>o.isPrime).length;
+  const primePct = done_n > 0 ? primeOrders/done_n*100 : 0;
+  // PeyaSummary data (if loaded)
+  const peyaSummary = allOrders._peyaSummary?.[0] || null;
+
+  return {
+    brand,done_n,total_n,canc_n,canc_pct,revenue,avgTicket,
+    hasFinancials,totalComision,totalIngreso,comPct,netPct,otherDedPct,
+    avgPrepTime,primeOrders,primePct,peyaSummary,
+    byStatus,reclamos:reclamos.length,reclamosPct,motivosReclamo,
+    earliest,latest,days,dailyRevs,dailyOrds,byWeek,weeks,
+    dowO,dowR,bestDow,worstDow,hourO,peakHour,deadHours,hm,
+    ticketDist,byPlat,bySucursal,byMetodo,
+    trendPct,avg1,avg2,totalDays:days.length,
+    avgDailyOrds:done_n/Math.max(days.length,1),
+    items,hasItems,coOccurrence,avgItemsPerOrder,
+    avgItemPriceInput,
+  };
+}
+
+// ════════════════════════════════════════════════════════════════
+//  STRATEGY GENERATORS
+// ════════════════════════════════════════════════════════════════
+function genCombos(d){
+  const combos=[];
+  const DOW=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+
+  // Data-driven combos from co-occurrence
+  if(d.coOccurrence.length>0){
+    d.coOccurrence.slice(0,5).forEach((pair,i)=>{
+      const itemA=d.items.find(it=>it.name===pair.a)||{name:pair.a,revenue:0,orders:0};
+      const itemB=d.items.find(it=>it.name===pair.b)||{name:pair.b,revenue:0,orders:0};
+      const avgA=itemA.orders>0?itemA.revenue/itemA.orders:d.avgItemPriceInput||25;
+      const avgB=itemB.orders>0?itemB.revenue/itemB.orders:(d.avgItemPriceInput||25)*0.4;
+      const sumPrice=avgA+avgB;
+      const comboPrice=Math.round(sumPrice*0.88);
+      const saving=Math.round(sumPrice-comboPrice);
+      combos.push({
+        name:`Combo ${pair.a.split(' ')[0]} + ${pair.b.split(' ').slice(0,2).join(' ')}`,
+        items:[pair.a,pair.b],type:'data',tag:'ct-new',tagTxt:'Basado en datos',
+        originalPrice:sumPrice,comboPrice,saving,coCount:pair.count,
+        why:`Detectado en ${pair.count} pedidos reales (${(pair.count/d.done_n*100).toFixed(0)}% de órdenes). Combinar reduce fricción de decisión y sube el ticket promedio.`
+      });
+    });
+  }
+
+  // Structural combos (always recommend regardless of data)
+  const mainItems=d.items.filter(it=>!/(fries|papas|cola|bebida|jugo|agua|milk|shake|helado)/i.test(it.name)).slice(0,3);
+  const sideItems=d.items.filter(it=>/(fries|papas|cola|bebida|jugo|agua)/i.test(it.name)).slice(0,2);
+
+  if(mainItems.length>0&&sideItems.length>0){
+    const main=mainItems[0], side=sideItems[0];
+    const pMain=main.orders>0?main.revenue/main.orders:d.avgItemPriceInput||30;
+    const pSide=side.orders>0?side.revenue/side.orders:10;
+    const combo=Math.round((pMain+pSide)*0.90);
+    if(!combos.find(c=>c.items.includes(main.name)&&c.items.includes(side.name)))
+      combos.push({name:'Combo Clásico',items:[main.name,side.name],type:'structural',tag:'ct-opt',tagTxt:'Recomendado',
+        originalPrice:pMain+pSide,comboPrice:combo,saving:Math.round(pMain+pSide-combo),
+        why:'Combo entrada básica — ítem principal + acompañamiento. Objetivo: capturar órdenes de un solo ítem y subirlas al siguiente nivel de ticket.'});
+  }
+
+  // Premium combo (group order opportunity)
+  if(mainItems.length>=2){
+    const p1=mainItems[0].orders>0?mainItems[0].revenue/mainItems[0].orders:d.avgItemPriceInput||30;
+    const p2=mainItems[1].orders>0?mainItems[1].revenue/mainItems[1].orders:d.avgItemPriceInput||28;
+    const side2=sideItems[0]?sideItems[0].orders>0?sideItems[0].revenue/sideItems[0].orders:10:10;
+    const sum=p1+p2+(side2*2);
+    const combo=Math.round(sum*0.87);
+    combos.push({name:'Combo Para 2',items:[mainItems[0].name,mainItems[1].name,'2x '+((sideItems[0]?.name)||'Bebida')],type:'structural',tag:'ct-exc',tagTxt:'Alto impacto',
+      originalPrice:sum,comboPrice:combo,saving:Math.round(sum-combo),
+      why:'Combo de alto ticket para grupos/parejas. Aumenta el ticket promedio en 60-80% vs orden individual. Los pedidos en rango S/80–120 tienen mayor margen relativo.'});
+  }
+
+  return combos.slice(0,6);
+}
+
+function genPromoRecs(d){
+  const DOW=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const recs=[];
+
+  // Always-on: new user hook
+  recs.push({
+    type:'ao',icon:'🎯',title:'Descuento bienvenida (always-on)',
+    detail:`${d.avgTicket<50?'20':'15'}% en el primer pedido para usuarios nuevos en la plataforma. Activar para toda la carta, sin mínimo de compra. Costo: ~S/${(d.avgTicket*(d.avgTicket<50?0.20:0.15)).toFixed(0)} por usuario captado — ROI si el cliente compra 3+ veces.`,
+    tags:['tag-ao','tag-roi'],tagLabels:['Always-on','Alto ROI'],effort:'Baja',impact:'Alta'});
+
+  // Always-on: order minimum upsell
+  const minTarget=Math.round(d.avgTicket*1.3/5)*5;
+  recs.push({
+    type:'ao',icon:'⬆️',title:`Envío gratis o beneficio por S/${minTarget}+`,
+    detail:`Activar umbral de envío gratis o descuento adicional para pedidos sobre S/${minTarget} (${Math.round((minTarget/d.avgTicket-1)*100)}% por encima del ticket actual). Técnica probada para desarrollo de ticket en delivery.`,
+    tags:['tag-ao','tag-ef'],tagLabels:['Always-on','Esfuerzo bajo'],effort:'Baja',impact:'Media-Alta'});
+
+  // Day-specific promo
+  recs.push({
+    type:'dy',icon:'📅',title:`Promo ${DOW[d.worstDow]} — activar día más débil`,
+    detail:`Los ${DOW[d.worstDow]} tienen ${d.dowO[d.worstDow]} pedidos promedio vs ${d.dowO[d.bestDow]} los ${DOW[d.bestDow]}. Activar descuento del 15-20% o 2x1 en ítem de menor ticket. Meta: duplicar pedidos ese día en 30 días.`,
+    tags:['tag-dy'],tagLabels:['Por día'],effort:'Baja',impact:'Alta'});
+
+  // Peak hour maintenance
+  recs.push({
+    type:'hr',icon:'⏰',title:`Reforzar hora pico — ${d.peakHour}:00h`,
+    detail:`Tu hora pico es las ${d.peakHour}:00h. Asegura disponibilidad máxima de tu menú en ese slot. Activar "Tiempo de preparación reducido" (si la plataforma lo permite) para mejorar posicionamiento en el algoritmo.`,
+    tags:['tag-hr'],tagLabels:['Por hora'],effort:'Media',impact:'Alta'});
+
+  // Dead zones
+  if(d.deadHours.length>0){
+    const dead=d.deadHours.slice(0,2);
+    recs.push({
+      type:'hr',icon:'💤',title:`Activar zonas muertas: ${dead.map(h=>h.h+':00').join(', ')}h`,
+      detail:`Horarios con menos del 20% de actividad del pico. Opciones: (1) Horario feliz — descuento 15% de ${dead[0].h}:00 a ${dead[0].h+1}:00h. (2) Lunch ejecutivo — versión simplificada de carta a precio especial. (3) Apagar la tienda en esos horarios para mejorar ratio de conversión.`,
+      tags:['tag-hr','tag-ef'],tagLabels:['Por hora','Decisión táctica'],effort:'Baja',impact:'Media'});
+  }
+
+  // Seasonal/event
+  recs.push({
+    type:'ev',icon:'🎉',title:'Calendario de fechas clave — preparación 3 semanas antes',
+    detail:'Activa menús especiales para: Día de la madre (Mayo), Fiestas Patrias (Julio), San Valentín (Feb), Navidad/Año nuevo (Dic). Prepara foto especial + descripción + precio para la ocasión. La anticipación de 3 semanas maximiza la visibilidad orgánica.',
+    tags:['tag-ev'],tagLabels:['Estacional'],effort:'Media',impact:'Alta'});
+
+  // Platform-specific
+  if(Object.keys(d.byPlat).includes('peya')){
+    recs.push({
+      type:'ao',icon:'🔵',title:'PedidosYa Destacado — boostar visibilidad orgánica',
+      detail:`Activar "Restaurante Destacado" en PedidosYa para aparecer primero en la categoría. Inversión: S/200–500/mes. Con un ticket promedio de S/${d.avgTicket.toFixed(0)}, necesitas solo ${Math.ceil(300/d.avgTicket)} pedidos adicionales para cubrir el costo.`,
+      tags:['tag-plat','tag-roi'],tagLabels:['PedidosYa','ROI calculable'],effort:'Baja',impact:'Alta'});
+  }
+  if(Object.keys(d.byPlat).includes('rappi')){
+    recs.push({
+      type:'ao',icon:'🟠',title:'Rappi Turbo — activar para hora pico',
+      detail:`Rappi Turbo (Rappi Prime) posiciona tu tienda mejor entre usuarios premium. Activar especialmente en ${DOW[d.bestDow]} de ${d.peakHour}:00–${d.peakHour+2}:00h cuando el tráfico es máximo.`,
+      tags:['tag-plat','tag-roi'],tagLabels:['Rappi','ROI calculable'],effort:'Baja',impact:'Alta'});
+  }
+
+  return recs;
+}
+
+function genAcquisitionStrategy(d){
+  const DOW=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  return [
+    {num:1,title:'Optimización de posicionamiento orgánico (SEO delivery)',
+     desc:`El algoritmo de Rappi y PedidosYa rankea los restaurantes por: (1) Tasa de aceptación/cancelación — objetivo: < ${Math.max(5,d.canc_pct.toFixed(0))}%, (2) Tiempo de preparación declarado vs real, (3) Rating promedio — objetivo: 4.5+, (4) Volumen de pedidos en las últimas 2-4 semanas.`,
+     impact:'Aumenta impresiones orgánicas sin costo',tags:['Alta prioridad','Sin costo','Esfuerzo medio']},
+    {num:2,title:'Foto de portada y foto de ítem estrella — inversión mínima, máximo impacto',
+     desc:`El ítem más pedido (${d.items[0]?.name||'tu bestseller'}) necesita una foto de alta calidad como portada del menú. Las tiendas con fotos profesionales tienen +35% de conversión en plataformas. Inversión recomendada: S/150–300 en sesión fotográfica de 5–8 ítems estrella.`,
+     impact:'+30-40% en tasa de conversión',tags:['Alta prioridad','Inversión baja']},
+    {num:3,title:'Campaña de lanzamiento en segunda plataforma',
+     desc:`${Object.keys(d.byPlat).length<2?`Actualmente solo en ${Object.keys(d.byPlat).map(p=>({rappi:'Rappi',peya:'PedidosYa',didi:'Didi Food'}[p]||p)).join(', ')}. Activar en una segunda plataforma con campaña de bienvenida del 25% puede generar +${Math.round(d.done_n*0.4)} pedidos adicionales al mes.`:'Con presencia en múltiples plataformas, optimizar el perfil en cada una por separado (fotos, horarios, carta) para maximizar conversión en cada ecosistema.'}`,
+     impact:'+35-60% en volumen total',tags:['Alta prioridad','Setup requerido']},
+    {num:4,title:'Descripción del restaurante con keywords de búsqueda',
+     desc:`La descripción del perfil debe incluir keywords de búsqueda frecuente: el tipo de cocina, ítems estrella, características únicas (ingredientes premium, tamaño de las porciones). Evitar descripciones genéricas como "bienvenidos a nuestro restaurante".`,
+     impact:'Mejora visibilidad en búsqueda interna',tags:['Media prioridad','Sin costo']},
+    {num:5,title:'Rating management — protocolo de respuesta 24h',
+     desc:`El rating es el factor de ranking más importante. Implementar protocolo: (1) Responder TODA reseña negativa en <24h con solución concreta, (2) Responder reseñas positivas con personalización, (3) Identificar productos con quejas recurrentes y resolver la causa raíz operativa.`,
+     impact:'Cada 0.1 de rating sube el ranking significativamente',tags:['Alta prioridad','Esfuerzo medio']},
+  ];
+}
+
+function genTicketStrategy(d){
+  const target=Math.round(d.avgTicket*1.25/5)*5;
+  const gap=target-d.avgTicket;
+  const lowTicketOrders=d.ticketDist.find(b=>b.lbl.includes('30–50'))?.count||0;
+  return [
+    {num:1,title:`Combos estratégicos — de S/${d.avgTicket.toFixed(0)} a S/${target}`,
+     desc:`El ${Math.round(lowTicketOrders/d.done_n*100)}% de pedidos están en el rango S/30–50 (probablemente órdenes de un solo ítem). Si conviertes el 30% de esas órdenes en combos de S/${target}, el ticket promedio sube de S/${d.avgTicket.toFixed(0)} a S/${(d.avgTicket+gap*0.3).toFixed(0)} — incremento de revenue mensual estimado: S/${Math.round(d.done_n*0.3*gap).toLocaleString('es-PE')}.`,
+     impact:`+S/${gap.toFixed(0)} ticket promedio estimado`,tags:['Alta prioridad','Alta palanca']},
+    {num:2,title:'Sección "Complementos sugeridos" — upsell automático',
+     desc:`Activar la funcionalidad de "También te puede gustar" o "Agrega al pedido" en Rappi y PedidosYa. Configurar para sugerir: (1) Bebida cuando el pedido no tiene bebida, (2) Postre cuando el pedido supera S/${Math.round(d.avgTicket*0.8)}, (3) Ítem adicional cuando hay solo un producto principal.`,
+     impact:'+12-18% en ticket promedio sin descuento',tags:['Alta prioridad','Sin costo']},
+    {num:3,title:'Precio ancla — ítem premium visible',
+     desc:`Incluir un ítem de precio alto (S/${Math.round(d.avgTicket*2.2)}-S/${Math.round(d.avgTicket*2.8)}) como ancla visual. El cliente no necesita comprarlo — su función es hacer que los ítems de precio medio parezcan "razonables". Ubicarlo en la primera posición de la carta.`,
+     impact:'+8-12% en ticket promedio por efecto ancla',tags:['Media prioridad','Sin costo']},
+    {num:4,title:'Estrategia de tamaños — small/medium/large',
+     desc:`Si el menú lo permite, ofrecer opciones de tamaño para ítems populares. La versión "grande" a +30% del precio captura a quienes ya compraron y quieren más. Esto es especialmente efectivo en bebidas, papas y postres.`,
+     impact:'+15% en ítems con size option',tags:['Media prioridad','Requiere operativo']},
+    {num:5,title:`Umbral de beneficio en S/${Math.round(d.avgTicket*1.3/5)*5}`,
+     desc:`Configurar un beneficio (envío gratis, postre gratis, descuento adicional) cuando el pedido supera S/${Math.round(d.avgTicket*1.3/5)*5}. Este threshold obliga a los clientes a agregar ítems para "alcanzar" el beneficio. Costo real: solo para los pedidos que ya estarían en ese rango — el incremental es casi puro margen.`,
+     impact:'+20% de pedidos alcanzando el umbral',tags:['Alta prioridad','Bajo costo']},
+  ];
+}
+
+function genRetentionStrategy(d){
+  const DOW=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const bestDay=DOW[d.bestDow];
+  return [
+    {num:1,title:'Frecuencia de reorden — identificar y reactivar',
+     desc:`Sin datos de usuarios individuales, la mejor proxy de retención es el volumen semanal consistente. Estrategia: mantener la tienda activa y visible TODOS LOS DÍAS (no apagar la tienda en horarios de baja demanda sino activar descuentos) para que el algoritmo te muestre con más frecuencia a usuarios recurrentes.`,
+     impact:'Mejora ranking orgánico y frecuencia de visita',tags:['Alta prioridad','Sin costo']},
+    {num:2,title:`Programa de lealtad informal — comunicar en empaque`,
+     desc:`Incluir en el empaque del pedido una tarjeta pequeña (costo: S/0.10/pedido) con: (1) Código QR al perfil en Rappi/PedidosYa para dejar reseña, (2) Mensaje de agradecimiento personalizado, (3) Teaser del próximo combo especial. El objetivo: crear conexión emocional post-entrega.`,
+     impact:'+25-40% en probabilidad de reorden',tags:['Alta prioridad','Costo mínimo']},
+    {num:3,title:'Consistencia de calidad — el driver #1 de retención',
+     desc:`Los datos muestran ${d.reclamos} reclamos (${d.reclamosPct.toFixed(1)}%). Cada reclamo tiene probabilidad de ${d.reclamosPct>5?'60%':'40%'} de no volver. Protocolo: (1) Checklist de calidad antes de entregar al repartidor, (2) Empaque que proteja la presentación, (3) Monitoreo de temperatura para ítems que lo requieren.`,
+     impact:`-${Math.min(80,d.reclamosPct*5).toFixed(0)}% en churnn por calidad`,tags:['Crítico','Operativo']},
+    {num:4,title:`Comunicación de lanzamientos — novedades en el menú`,
+     desc:`Cada vez que se lanza un nuevo ítem o combo, actualizar inmediatamente el perfil en todas las plataformas con: nueva foto, descripción optimizada, y si es posible activar una promo de lanzamiento por 2 semanas. Las novedades generan tráfico orgánico adicional del algoritmo.`,
+     impact:'Reactivación de usuarios inactivos + nuevos',tags:['Media prioridad','Sin costo']},
+    {num:5,title:'Ventana de reactivación — ${bestDay} como día de "volver"',
+     desc:`Los ${bestDay} son tu mejor día. Activar una campaña semanal consistent para ese día (mismo nombre, mismo visual si la plataforma lo permite) crea un patrón de hábito. El objetivo es que los clientes recurrentes asocien el día ${bestDay} con pedir en tu tienda.`,
+     impact:'Hábito de recompra semanal',tags:['Media prioridad','Bajo esfuerzo']},
+  ];
+}
+
+function genRoadmap(d,combos){
+  const DOW=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  return {
+    m0:[
+      {w:'Semana 1',action:'Optimización completa de perfil',detail:'Foto portada, fotos de top 5 ítems, descripción con keywords, horarios exactos, tiempo de preparación realista.',pri:'p1',imp:'+30% conversión',own:'Sazón'},
+      {w:'Semana 1',action:'Activar descuento always-on nuevos usuarios',detail:`${d.avgTicket<50?'20':'15'}% primer pedido. Activar en todas las plataformas activas. Configurar sin mínimo de compra.`,pri:'p1',imp:'+15-25% nuevos usuarios',own:'Sazón'},
+      {w:'Semana 2',action:`Crear ${combos.slice(0,2).map(c=>c.name).join(' y ')}`,detail:`Subir combos a la carta con precio S/${combos[0]?.comboPrice||'X'} y S/${combos[1]?.comboPrice||'Y'}. Foto de cada combo. Activar sección "Combos" como primera categoría del menú.`,pri:'p1',imp:`+S/${(combos.reduce((s,c)=>s+(c.saving||0),0)/combos.length||10).toFixed(0)} ticket prom.`,own:'Sazón + Cliente'},
+      {w:'Semana 2',action:'Configurar promo día débil',detail:`${DOW[d.worstDow]}: activar descuento 20% en ítem de menor rotación. Meta: duplicar pedidos ese día.`,pri:'p1',imp:`+${d.dowO[d.worstDow]} pedidos extra/sem`,own:'Sazón'},
+      {w:'Semana 3',action:'Protocolo de rating management',detail:'Responder 100% de reseñas pendientes. Plantillas por tipo. Configurar alerta de nuevas reseñas. Asignar responsable.',pri:'p2',imp:'+0.2 rating en 30 días',own:'Sazón'},
+      {w:'Semana 3',action:'Setup segunda plataforma (si aplica)',detail:Object.keys(d.byPlat).length<2?'Configurar perfil completo con menú optimizado + campaña de lanzamiento 25% dto.':'Optimizar perfil en cada plataforma por separado.',pri:'p1',imp:'+35-60% volumen',own:'Sazón + Cliente'},
+      {w:'Semana 4',action:'Reunión de diagnóstico — revisión de resultados',detail:'Presentar KPIs vs baseline. Comparar con los accionables ejecutados. Ajustar estrategia para M1.',pri:'p2',imp:'Alineación estratégica',own:'Sazón + Cliente'},
+    ],
+    m1:[
+      {w:'Semana 5',action:'Escalar campañas con mejor ROI',detail:'Identificar cuál campaña de M0 generó más pedidos. Duplicar presupuesto o extender alcance.',pri:'p1',imp:'x2 en mejor campaña',own:'Sazón'},
+      {w:'Semana 5',action:'Lanzar combo premium (Para 2)',detail:`Activar el combo de grupo a S/${combos.find(c=>c.name.includes('Para 2'))?.comboPrice||'X'}. Foto grupal. Meta: capturar pedidos de fin de semana.`,pri:'p1',imp:`+${Math.round(d.done_n*0.05)} pedidos/mes`,own:'Sazón + Cliente'},
+      {w:'Semana 6',action:'Optimización de precios selectiva',detail:`Subir precio de top 3 ítems más pedidos en S/2-3. Testear por 2 semanas y medir impacto en volumen vs revenue.`,pri:'p2',imp:'+3-5% revenue sin volumen',own:'Sazón'},
+      {w:'Semana 6',action:'Horario feliz en zona muerta',detail:`Activar descuento 15% de ${d.deadHours[0]?.h||15}:00 a ${(d.deadHours[0]?.h||15)+2}:00h. Meta: generar 2-3 pedidos en ese slot.`,pri:'p2',imp:`+${Math.round(d.avgDailyOrds*0.15)} pedidos/día`,own:'Sazón'},
+      {w:'Semana 7',action:'Actualizar fotos de ítems con mayor potencial',detail:'Ítems en categoría "Potencial" del BCG necesitan mejor foto y descripción para subir conversión.',pri:'p2',imp:'+20% en ítems actualizados',own:'Cliente (foto) + Sazón (publicación)'},
+      {w:'Semana 8',action:'Preparar propuesta de carta dinámica',detail:'Definir: ítems a eliminar (baja rotación), ítems de temporada a agregar, ajustes de descripción.',pri:'p3',imp:'Simplificación + eficiencia',own:'Sazón + Cliente'},
+    ],
+    m2_3:[
+      {w:'M2',action:'Revisión de estructura de comisiones',detail:d.hasFinancials?`Con ${d.comPct.toFixed(1)}% de comisión + deduciones (${(100-d.netPct).toFixed(0)}% del revenue), explorar plan premium de la plataforma o renegociación por volumen.`:'Revisar estructura de comisiones con el ejecutivo de cuenta de cada plataforma.',pri:'p2',imp:'Recuperar 2-3% de margen',own:'Cliente + Sazón'},
+      {w:'M2',action:'Lanzar programa de lealtad en empaque',detail:'Diseñar e imprimir tarjeta de agradecimiento con QR para dejar reseña + teaser de próximo combo.',pri:'p3',imp:'+25% reorden',own:'Cliente'},
+      {w:'M3',action:'Presentar reporte final de 90 días',detail:`Comparar todos los KPIs vs baseline del diagnóstico. Revenue proyectado al mes 3: S/${Math.round(d.revenue*(1+(d.trendPct>0?d.trendPct/100:0.15))).toLocaleString('es-PE')}.`,pri:'p1',imp:'Evidencia de ROI',own:'Sazón'},
+      {w:'M3',action:'Propuesta de plan siguiente trimestre',detail:'Basado en resultados, definir objetivos para Q2: nueva plataforma, nuevos productos, expansión a más sucursales.',pri:'p2',imp:'Continuidad y crecimiento',own:'Sazón'},
+    ]
+  };
+}
+
+// ════════════════════════════════════════════════════════════════
+//  RENDER FUNCTIONS
+// ════════════════════════════════════════════════════════════════
+const fp=n=>'S/ '+(n||0).toLocaleString('es-PE',{minimumFractionDigits:0,maximumFractionDigits:0});
+const fD=d=>d?d.toLocaleDateString('es-PE',{day:'2-digit',month:'short',year:'numeric'}):'—';
+const C={r:'rgba(200,57,43',g:'rgba(200,160,69',d:'rgba(15,15,13',gr:'rgba(45,106,79',b:'rgba(43,87,151'};
+const cc=(c,a)=>`${c},${a})`;
+
+function renderDashboard(d){
+  const trend=d.trendPct>=0?`<span class="up">↑ ${d.trendPct.toFixed(1)}%</span>`:`<span class="dn">↓ ${Math.abs(d.trendPct).toFixed(1)}%</span>`;
+  // Add prep time KPI if available
+  const prepKPI = d.avgPrepTime ? `<div class="kpi"><div class="kpi-l">Tiempo prep. prom.</div><div class="kpi-v">${d.avgPrepTime.toFixed(0)}'</div><div class="kpi-n">minutos · ${d.primePct.toFixed(0)}% Prime</div></div>` : '';
+  document.getElementById('kpiRow').innerHTML=`
+    <div class="kpi hl"><div class="kpi-l">Pedidos completados</div><div class="kpi-v">${d.done_n.toLocaleString()}</div><div class="kpi-n">${d.totalDays} días · ${(d.done_n/Math.max(d.weeks.length,1)).toFixed(1)}/sem</div></div>
+    <div class="kpi hl"><div class="kpi-l">Revenue total</div><div class="kpi-v" style="font-size:1.2rem">${fp(d.revenue)}</div>${trend}</div>
+    <div class="kpi gl"><div class="kpi-l">Ticket promedio</div><div class="kpi-v">${fp(d.avgTicket)}</div><div class="kpi-n">Target: ${fp(Math.round(d.avgTicket*1.25/5)*5)}</div></div>
+    ${prepKPI}<div class="kpi yl"><div class="kpi-l">Cancelaciones</div><div class="kpi-v" style="color:${d.canc_pct>10?'var(--r)':'inherit'}">${d.canc_pct.toFixed(1)}%</div><div class="kpi-n">${d.canc_n} de ${d.total_n} · Ref: <5%</div></div>`;
+
+  // Status bars
+  const entries=Object.entries(d.byStatus).sort((a,b)=>b[1]-a[1]);
+  document.getElementById('statusList').innerHTML=entries.map(([s,n])=>{
+    const pct=(n/d.total_n*100).toFixed(1);
+    const col=/cancel|rechaz/i.test(s)?'var(--r)':/entreg|complet/i.test(s)?'var(--gr)':'var(--g)';
+    return `<div style="padding:7px 0;border-bottom:1px solid var(--l)">
+      <div style="display:flex;justify-content:space-between;margin-bottom:2px;font-size:.75rem">
+        <span>${s}</span><span style="font-family:'DM Mono',monospace">${n} (${pct}%)</span></div>
+      <div style="height:5px;border-radius:100px;background:${col};width:${pct}%;opacity:.75"></div>
+    </div>`;
+  }).join('');
+
+  // Alerts
+  const alerts=[];
+  if(d.canc_pct>10)alerts.push({t:'⚠️ Tasa de cancelación crítica',m:`${d.canc_pct.toFixed(1)}% está muy por encima del benchmark (< 5%). Cada cancelación afecta el ranking en el algoritmo.`});
+  if(d.hasFinancials&&d.netPct<55)alerts.push({t:'💸 Margen neto bajo',m:`El ingreso estimado es ${d.netPct.toFixed(1)}% del revenue bruto. La plataforma retiene el ${(100-d.netPct).toFixed(1)}% restante.`});
+  if(d.avgTicket<35)alerts.push({t:'💰 Ticket promedio bajo',m:`S/${d.avgTicket.toFixed(0)} sugiere que la mayoría de órdenes son de un solo ítem. Los combos pueden subir esto significativamente.`});
+  if(d.trendPct<-15)alerts.push({t:'📉 Tendencia negativa acelerada',m:`Revenue cayó ${Math.abs(d.trendPct).toFixed(0)}% en la segunda mitad del período. Requiere acción urgente.`});
+  if(Object.keys(d.byPlat).length<2)alerts.push({t:'🚀 Oportunidad: segunda plataforma',m:'Solo activos en una plataforma. Activar una segunda puede aumentar el volumen total en un 35-60%.'});
+  document.getElementById('alertsBox').innerHTML=alerts.map(a=>`<div class="insight"><strong>${a.t}:</strong> ${a.m}</div>`).join('');
+}
+
+function renderMenuPanel(d){
+  if(!d.hasItems||d.items.length===0){
+    document.getElementById('menuInsight').innerHTML='<strong>Sin datos de productos.</strong> Sube un reporte de PedidosYa para análisis de menú (la columna Artículos es requerida).';
+    return;
+  }
+  const totalOrds=d.items.reduce((s,i)=>s+i.orders,0)||1;
+  const totalRev=d.items.reduce((s,i)=>s+i.revenue,0)||1;
+  const avgOrdShare=1/d.items.length;
+  const avgRevShare=1/d.items.length;
+  const stars=d.items.filter(i=>i.orders/totalOrds>=avgOrdShare&&i.revenue/totalRev>=avgRevShare);
+  const cash=d.items.filter(i=>i.orders/totalOrds>=avgOrdShare&&i.revenue/totalRev<avgRevShare);
+  const question=d.items.filter(i=>i.orders/totalOrds<avgOrdShare&&i.revenue/totalRev>=avgRevShare);
+  const dogs=d.items.filter(i=>i.orders/totalOrds<avgOrdShare&&i.revenue/totalRev<avgRevShare);
+
+  function quadHTML(items,cls,label,color,icon,rec){
+    return `<div class="bcg-q ${cls}">
+      <div class="bcg-label" style="color:${color}">${icon} ${label}</div>
+      <div style="font-size:.67rem;color:var(--m);margin-bottom:8px;font-style:italic">${rec}</div>
+      ${items.slice(0,5).map(it=>`<div class="bcg-item">
+        <span style="font-size:.74rem;font-weight:500;flex:1">${it.name.length>22?it.name.slice(0,20)+'…':it.name}</span>
+        <span style="font-size:.68rem;font-family:'DM Mono',monospace;color:var(--m)">${it.orders} pedidos</span>
+      </div>`).join('')}
+      ${items.length===0?'<div style="font-size:.72rem;color:var(--m);padding:8px 0">Sin ítems en este cuadrante</div>':''}
+    </div>`;
+  }
+  document.getElementById('bcgMatrix').innerHTML=
+    quadHTML(stars,'star','Estrellas','var(--r)','⭐','Priorizar en carta, fotos premium, no cambiar precio')+
+    quadHTML(cash,'cash','Vacas lecheras','var(--g)','💛','Alto volumen pero bajo ticket — potencial de upsell')+
+    quadHTML(question,'question','Interrogantes','#2B5797','❓','Buena revenue por pedido — necesitan más visibilidad')+
+    quadHTML(dogs,'dog','Perros','var(--m)','🐾','Evaluar eliminar o convertir en modificadores de otros ítems');
+
+  // Pricing recommendations
+  const pricingHTML=d.items.slice(0,8).map(it=>{
+    const estPrice=it.orders>0?it.revenue/it.orders:0;
+    const isLow=estPrice>0&&estPrice<d.avgTicket*0.5;
+    const isStar=stars.includes(it);
+    let rec='',color='var(--m)',action='';
+    if(isStar&&isLow){rec=`Subir precio S/2-3`;color='var(--gr)';action='Alta demanda + precio bajo = elasticidad favorable. Testear subida gradual.';}
+    else if(isStar){rec='Mantener precio';color='var(--gr)';action='Estrella estable. No arriesgar volumen.';}
+    else if(dogs.includes(it)){rec='Revisar/eliminar';color='var(--r)';action='Baja demanda y bajo revenue. Evaluar si aporta al menú o confunde al cliente.';}
+    else{rec='Optimizar visibilidad';color='var(--g)';action='Mejorar foto y descripción antes de cambiar precio.';}
+    return `<div style="display:flex;align-items:center;gap:10px;padding:8px 0;border-bottom:1px solid var(--l);font-size:.75rem">
+      <span style="flex:1;font-weight:500">${it.name}</span>
+      <span style="font-family:'DM Mono',monospace;color:var(--m)">${fp(estPrice)}</span>
+      <span style="font-size:.68rem;color:${color};font-weight:600;min-width:120px">${rec}</span>
+      <span style="font-size:.68rem;color:var(--m);flex:2">${action}</span>
+    </div>`;
+  }).join('');
+  document.getElementById('pricingRecs').innerHTML=`<div class="card-t">Recomendaciones de precio por ítem</div>${pricingHTML}`;
+
+  // Menu order
+  const menuOrderHTML=`<div style="font-size:.77rem;color:var(--m);margin-bottom:10px">Orden recomendado de categorías en la carta — la primera sección es la más vista:</div>
+  ${['1. Combos (nueva sección a crear)','2. '+stars.map(i=>i.name).slice(0,2).join(', ')+' — ítems estrella al inicio','3. Categorías actuales ordenadas por revenue','4. Ítems de temporada o lanzamientos nuevos','5. Complementos y bebidas al final'].map((s,i)=>`<div style="padding:6px 0;border-bottom:1px solid var(--l);font-size:.76rem">${s}</div>`).join('')}
+  <div style="margin-top:10px;padding:10px;background:rgba(200,57,43,.04);border-radius:2px;font-size:.73rem;color:var(--m)">
+    💡 En Rappi y PedidosYa, los primeros 4-6 ítems visibles sin scroll son los que más convierten. Asegúrate que sean tus mejores fotos y precios más estratégicos.
+  </div>`;
+  document.getElementById('menuOrder').innerHTML=`<div class="card-t">Orden recomendado de carta</div>${menuOrderHTML}`;
+
+  // Insight
+  document.getElementById('menuInsight').innerHTML=`<strong>Análisis:</strong> ${d.items.length} productos únicos detectados. ${stars.length} estrellas (${stars.map(i=>i.name.split(' ')[0]).join(', ')}), ${dogs.length} ítems a revisar. El top 3 de productos concentra el ${Math.round(d.items.slice(0,3).reduce((s,i)=>s+i.orders,0)/totalOrds*100)}% de los pedidos.`;
+}
+
+function renderCombosPanel(d,combos){
+  if(!d.hasItems){
+    document.getElementById('combosInsight').innerHTML='Los combos se generan con datos reales de co-ocurrencia de PedidosYa. <strong>Sube un reporte de PedidosYa para ver las recomendaciones específicas.</strong>';
+    document.getElementById('combosList').innerHTML='';
+    return;
+  }
+  document.getElementById('combosInsight').innerHTML=`<strong>Basado en datos reales:</strong> Los combos sugeridos provienen del análisis de ${d.coOccurrence.slice(0,3).map(c=>`"${c.a.split(' ')[0]}" + "${c.b.split(' ')[0]}"  (${c.count}x)`).join(', ')} — pares de ítems más frecuentes en el mismo pedido.`;
+  document.getElementById('combosList').innerHTML=combos.map(c=>`
+    <div class="combo-card">
+      <span class="combo-tag ${c.tag}">${c.tagTxt}</span>
+      <div class="combo-name">${c.name}</div>
+      <div class="combo-items">🛒 ${c.items.join('  +  ')}</div>
+      <div class="combo-prices">
+        <span class="cp-orig">${fp(c.originalPrice)}</span>
+        <span class="cp-new">${fp(c.comboPrice)}</span>
+        <span class="cp-save">Cliente ahorra ${fp(c.saving)}</span>
+      </div>
+      <div class="combo-why">💡 ${c.why}</div>
+    </div>`).join('');
+
+  // Dynamic menu structure
+  document.getElementById('dynamicMenu').innerHTML=`<div class="card-t">Estructura de carta recomendada</div>
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:8px">
+      ${['🎯 Combos (nueva sección)','⭐ Ítems Estrella','🔥 Más pedidos','🆕 Lanzamientos','🥤 Bebidas y postres','📦 Complementos'].map(s=>`<div style="padding:10px;background:var(--w);border-radius:2px;font-size:.76rem;font-weight:500">${s}</div>`).join('')}
+    </div>
+    <div style="margin-top:10px;font-size:.73rem;color:var(--m);line-height:1.7">
+      <strong>Regla de oro:</strong> La primera categoría y los primeros 3 ítems son los más vistos. Coloca ahí tus combos de mejor margen, no necesariamente los más baratos.
+    </div>`;
+
+  // Modifiers
+  document.getElementById('modifiers').innerHTML=`<div class="card-t">Recomendaciones de modificadores y opciones</div>
+    <div style="margin-top:8px">
+      ${[
+        {t:'Opciones de tamaño en ítems top',d:`Para "${d.items[0]?.name||'ítem estrella'}": agregar opción Regular / Grande (+S/${Math.round(d.avgTicket*0.15)}). El 20-30% de clientes elige la opción grande.`},
+        {t:'Modificadores de personalización',d:`Permitir customización de ingredientes (sin cebolla, extra queso, término de cocción). Reduce reclamos y aumenta satisfacción. Costo operativo bajo, impacto en rating alto.`},
+        {t:'Add-ons de alto margen',d:`"¿Quieres agregar papas por S/${Math.round(d.avgTicket*0.12)}?" activado como modificador del ítem principal. Los add-ons tienen margen típicamente mayor al ítem principal.`},
+        {t:'Salsas y extras',d:`Ofrecer salsas especiales o toppings premium como modificadores opcionales a S/2-5. Baja fricción para el cliente, alto margen para el negocio.`},
+      ].map(m=>`<div style="padding:10px 0;border-bottom:1px solid var(--l)">
+        <div style="font-weight:600;font-size:.78rem;margin-bottom:2px">${m.t}</div>
+        <div style="font-size:.73rem;color:var(--m);line-height:1.6">${m.d}</div>
+      </div>`).join('')}
+    </div>`;
+}
+
+function renderPromosPanel(d,promoRecs){
+  const DOW=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  // Promo insight
+  document.getElementById('promoInsight').innerHTML=`<strong>Estrategia de promociones:</strong> Mejor día ${DOW[d.bestDow]} (${d.dowO[d.bestDow]} pedidos), peor día ${DOW[d.worstDow]} (${d.dowO[d.worstDow]} pedidos). Hora pico: ${d.peakHour}:00h. ${d.deadHours.length>0?`Zonas muertas detectadas: ${d.deadHours.slice(0,3).map(h=>h.h+':00').join(', ')}h.`:''}`;
+
+  // Promo heatmap (simplified - just show day/hour matrix)
+  const maxV=Math.max(...d.hm.flat().filter(v=>v>0));
+  const hours=[9,10,11,12,13,14,15,16,17,18,19,20,21,22,23];
+  let hm='<div class="promo-grid"><div></div>'+DOW.map(d=>`<div class="ph">${d}</div>`).join('');
+  hours.forEach(h=>{
+    hm+=`<div class="pl">${h}h</div>`;
+    DOW.forEach((_,dow)=>{
+      const v=d.hm[h][dow];
+      const pct=maxV>0?v/maxV:0;
+      let cls='p-off',txt='';
+      if(pct>=0.6){cls='p-peak';txt='🔥';}
+      else if(pct>=0.3){cls='p-ok';txt=v>0?v.toString():'';}
+      else if(h>=9&&h<=22&&pct<0.15){cls='p-dead';txt=v>0?'⚡':'';}
+      hm+=`<div class="pc ${cls}" title="${v} pedidos ${DOW[dow]} ${h}:00h">${txt}</div>`;
+    });
+  });
+  hm+='</div><div style="display:flex;gap:12px;margin-top:8px;font-size:.65rem;color:var(--m)"><span>🔥 Pico</span><span style="color:var(--gr)">● Activo</span><span style="color:var(--r)">⚡ Zona muerta (activa promo)</span></div>';
+  document.getElementById('promoHeatmap').innerHTML=hm;
+
+  // Promo recs
+  const typeClass={ao:'pi-ao',dy:'pi-dy',hr:'pi-hr',ev:'pi-ev'};
+  document.getElementById('promoRecs').innerHTML=promoRecs.map(p=>`
+    <div class="promo-rec">
+      <div class="promo-icon ${typeClass[p.type]||'pi-ao'}">${p.icon}</div>
+      <div style="flex:1">
+        <div class="pr-title">${p.title}</div>
+        <div class="pr-detail">${p.detail}</div>
+        <div>
+          ${p.tags.map((t,i)=>`<span class="pr-tag ${t}">${p.tagLabels[i]}</span>`).join('')}
+          <span style="font-size:.65rem;color:var(--m)">Esfuerzo: ${p.effort} · Impacto: ${p.impact}</span>
+        </div>
+      </div>
+    </div>`).join('');
+}
+
+function renderStrategyPanel(id,items,targetEl){
+  document.getElementById(targetEl).innerHTML=items.map(s=>`
+    <div class="strat-card">
+      <div class="strat-header">
+        <div class="strat-ico" style="background:rgba(200,57,43,.08);font-size:.9rem">${s.num}</div>
+        <div>
+          <div class="strat-title">${s.title}</div>
+          <div style="font-size:.68rem;color:var(--g);font-weight:600;margin-top:1px">${s.impact||''}</div>
+        </div>
+      </div>
+      <div style="font-size:.76rem;color:var(--m);line-height:1.7;margin-bottom:8px">${s.desc}</div>
+      <div style="display:flex;gap:5px;flex-wrap:wrap">
+        ${(s.tags||[]).map(t=>`<span style="font-size:.6rem;font-weight:700;padding:2px 8px;border-radius:100px;background:rgba(200,57,43,.08);color:var(--r)">${t}</span>`).join('')}
+      </div>
+    </div>`).join('');
+}
+
+function renderFinancialPanel(d){
+  // Show PedidosYa summary if available
+  const pey = d.peyaSummary;
+  if(pey){
+    const peyComPct = pey.ventasNetas>0 ? pey.commission/pey.ventasNetas*100 : 0;
+    const peyAdsPct = pey.ventasNetas>0 ? pey.adSpend/pey.ventasNetas*100 : 0;
+    const peyNetPct = pey.ventasNetas>0 ? pey.payTotal/pey.ventasNetas*100 : 0;
+    const peyAvgTicket = pey.orders>0 ? pey.ventasNetas/pey.orders : 0;
+    document.getElementById('financialContent').innerHTML = `
+      <div class="insight"><strong>📊 Resumen PedidosYa — ${pey.period}</strong>: ${pey.orders} órdenes · Ventas netas S/${fp(pey.ventasNetas)} · Pago recibido S/${fp(pey.payTotal)} (${peyNetPct.toFixed(1)}% del revenue).</div>
+      <div class="g2" style="margin-bottom:16px">
+        <div class="card"><div class="card-t">Estructura de revenue PedidosYa</div>
+          <div style="padding:8px 0">
+            ${[
+              ['Ventas netas (100%)', pey.ventasNetas, 'var(--gr)', 100],
+              ['Servicio PedidosYa (comisión '+peyComPct.toFixed(1)+'%)', -pey.commission, 'var(--r)', peyComPct],
+              ['Descuentos subsidiados', pey.descPeya, 'var(--g)', pey.ventasNetas>0?pey.descPeya/pey.ventasNetas*100:0],
+              ['Publicidad dentro plataforma', -pey.adSpend, '#7c3aed', peyAdsPct],
+              ['Crédito PedidosYa', -pey.credit, 'var(--g)', pey.ventasNetas>0?pey.credit/pey.ventasNetas*100:0],
+              ['Pago neto recibido', pey.payTotal, '#2B5797', peyNetPct],
+            ].map(([lbl,val,col,pct])=>`
+              <div style="margin-bottom:5px">
+                <div style="display:flex;justify-content:space-between;font-size:.7rem;margin-bottom:2px">
+                  <span style="color:var(--m)">${lbl}</span>
+                  <strong style="font-family:'DM Mono',monospace;color:${val<0?'var(--r)':'inherit'}">${val<0?'-':''}${fp(Math.abs(val))}</strong>
+                </div>
+                <div style="height:5px;border-radius:2px;background:${col};width:${Math.min(pct,100)}%;opacity:.8"></div>
+              </div>`).join('')}
+          </div>
+        </div>
+        <div class="card"><div class="card-t">KPIs PedidosYa</div>
+          <div style="padding:4px 0">
+            ${[
+              ['Período', pey.period],
+              ['Total órdenes', pey.orders.toLocaleString()],
+              ['Ticket promedio', fp(peyAvgTicket)],
+              ['Ventas netas (bruto)', fp(pey.ventasNetas)],
+              ['Comisión plataforma', fp(pey.commission)+' ('+peyComPct.toFixed(1)+'%)'],
+              ['Gasto en publicidad', fp(pey.adSpend)+' ('+peyAdsPct.toFixed(1)+'%)'],
+              ['Total deducido', fp(pey.commission+pey.adSpend+pey.credit)+' ('+(((pey.commission+pey.adSpend+pey.credit)/pey.ventasNetas)*100).toFixed(1)+'%)'],
+              ['Pago neto recibido', fp(pey.payTotal)+' ('+peyNetPct.toFixed(1)+'%)'],
+            ].map(([l,v])=>`<div style="display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px solid var(--l);font-size:.76rem"><span style="color:var(--m)">${l}</span><strong style="font-family:'DM Mono',monospace">${v}</strong></div>`).join('')}
+          </div>
+        </div>
+      </div>
+      ${pey.adSpend > pey.ventasNetas*0.15 ? `<div class="insight" style="border-left-color:#7c3aed"><strong>⚠️ Alerta de ads spend:</strong> El gasto en publicidad de PedidosYa es S/${fp(pey.adSpend)} (${peyAdsPct.toFixed(1)}% del revenue). Evalúa si el ROI de cada campaña justifica ese nivel de inversión — target recomendado: <15% del revenue.</div>` : ''}
+    `;
+    return;
+  }
+  if(!d.hasFinancials){
+    document.getElementById('financialContent').innerHTML='<div class="insight">Los datos financieros detallados (comisiones, ingreso estimado) solo están disponibles en los reportes de PedidosYa. Sube un reporte de PedidosYa para ver el análisis de rentabilidad.</div>';
+    return;
+  }
+  const otherDed=Math.max(0,100-d.netPct-d.comPct);
+  const html=`
+    <div class="g2">
+      <div class="card">
+        <div class="card-t">Estructura de revenue — waterfall</div>
+        <div style="padding:8px 0">
+          <div style="margin-bottom:6px">
+            <div style="font-size:.68rem;color:var(--m);margin-bottom:2px">Revenue bruto (Total parcial)</div>
+            <div class="fin-bar" style="background:var(--gr);width:100%">${fp(d.revenue)} (100%)</div>
+          </div>
+          <div style="margin-bottom:6px">
+            <div style="font-size:.68rem;color:var(--m);margin-bottom:2px">Comisión PedidosYa (${d.comPct.toFixed(1)}%)</div>
+            <div class="fin-bar" style="background:var(--r);width:${Math.min(d.comPct,60)}%">${fp(d.totalComision)}</div>
+          </div>
+          <div style="margin-bottom:6px">
+            <div style="font-size:.68rem;color:var(--m);margin-bottom:2px">Otras deducciones / descuentos (${otherDed.toFixed(1)}%)</div>
+            <div class="fin-bar" style="background:var(--g);width:${Math.min(otherDed,60)}%">${fp(d.revenue*otherDed/100)}</div>
+          </div>
+          <div>
+            <div style="font-size:.68rem;color:var(--m);margin-bottom:2px">Ingreso estimado (${d.netPct.toFixed(1)}%)</div>
+            <div class="fin-bar" style="background:#2B5797;width:${Math.min(d.netPct,100)}%">${fp(d.totalIngreso)}</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-t">KPIs financieros</div>
+        <div style="padding:4px 0">
+          ${[
+            ['Revenue bruto total',fp(d.revenue)],
+            ['Comisión PedidosYa',`${fp(d.totalComision)} (${d.comPct.toFixed(1)}%)`],
+            ['Otras deducciones',`${fp(d.revenue*otherDed/100)} (${otherDed.toFixed(1)}%)`],
+            ['Ingreso estimado neto',`${fp(d.totalIngreso)} (${d.netPct.toFixed(1)}%)`],
+            ['Ingreso por pedido',fp(d.done_n>0?d.totalIngreso/d.done_n:0)],
+            ['Revenue por pedido (bruto)',fp(d.avgTicket)],
+          ].map(([l,v])=>`<div style="display:flex;justify-content:space-between;padding:7px 0;border-bottom:1px solid var(--l);font-size:.76rem"><span style="color:var(--m)">${l}</span><strong style="font-family:'DM Mono',monospace">${v}</strong></div>`).join('')}
+        </div>
+      </div>
+    </div>
+    <div class="insight"><strong>⚠️ Alerta de rentabilidad:</strong> La plataforma retiene el ${(100-d.netPct).toFixed(1)}% del revenue bruto. Con un ticket promedio de ${fp(d.avgTicket)}, el ingreso real por pedido es ${fp(d.done_n>0?d.totalIngreso/d.done_n:0)}. Considera esto al calcular el ROI de tus campañas de descuento.</div>
+    <div class="card">
+      <div class="card-t">Estrategias de mitigación de comisiones</div>
+      ${[
+        {t:'Negociar plan premium',d:`Al crecer volumen sostenidamente, PedidosYa ofrece planes con menor comisión. Objetivo: superar ${Math.round(d.done_n*1.5)} pedidos/mes para tener poder de negociación.`},
+        {t:'Diversificar plataformas',d:'Tener presencia en 2-3 plataformas reduce dependencia de una y da poder de negociación con cada una.'},
+        {t:'Maximizar ticket bruto',d:`Cada S/1 adicional de ticket tiene mayor impacto en ingresos netos cuando la comisión es % fijo. Subir el ticket de S/${d.avgTicket.toFixed(0)} a S/${Math.round(d.avgTicket*1.2)} no cambia % de comisión pero sube el ingreso neto en S/${fp(d.done_n*(d.avgTicket*0.2)*d.netPct/100)}/mes.`},
+        {t:'Canal directo como complemento',d:'Desarrollar canal de WhatsApp o app propia para pedidos directos sin comisión. Útil para clientes recurrentes que ya te conocen de las plataformas.'},
+      ].map(m=>`<div style="padding:9px 0;border-bottom:1px solid var(--l)"><div style="font-weight:600;font-size:.78rem;margin-bottom:2px">${m.t}</div><div style="font-size:.73rem;color:var(--m);line-height:1.6">${m.d}</div></div>`).join('')}
+    </div>`;
+  document.getElementById('financialContent').innerHTML=html;
+}
+
+function renderPatternsPanel(d){
+  // Heatmap
+  const DOW=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const maxV=Math.max(...d.hm.flat().filter(v=>v>0));
+  const hrs=[7,8,9,10,11,12,13,14,15,16,17,18,19,20,21,22,23,0];
+  let hm='<div class="hm-grid"><div></div>'+DOW.map(d=>`<div class="hm-day">${d}</div>`).join('');
+  hrs.forEach(h=>{
+    hm+=`<div class="hm-h">${h}h</div>`;
+    for(let dow=0;dow<7;dow++){
+      const v=d.hm[h][dow];const pct=maxV>0?v/maxV:0;
+      const al=Math.max(0.05,pct*0.88);
+      const bg=pct>0.6?`rgba(200,57,43,${al})`:pct>0.3?`rgba(200,160,69,${al})`:`rgba(15,15,13,${Math.max(0.04,al/2)})`;
+      hm+=`<div class="hm-cell" style="background:${bg}" title="${v} pedidos ${DOW[dow]} ${h}h"></div>`;
+    }
+  });
+  hm+='</div>';
+  document.getElementById('hmWrap').innerHTML=hm;
+
+  // Hours recs
+  const peakSlots=d.hourO.map((v,i)=>({h:i,v})).filter(x=>x.v>0).sort((a,b)=>b.v-a.v).slice(0,3);
+  const deadSlots=d.hourO.map((v,i)=>({h:i,v})).filter(x=>x.h>=9&&x.h<=22&&x.v<Math.max(...d.hourO)*0.2).slice(0,3);
+  document.getElementById('hoursRecs').innerHTML=`<div class="card-t">Ventanas a potenciar</div>
+    ${[
+      {h:'⬆️ Potenciar hora pico',d:`${peakSlots.map(s=>s.h+':00').join(', ')}h — Asegurar máxima disponibilidad de menú completo, tiempo de preparación optimizado, y todas las campañas activas.`},
+      {h:'⚡ Activar zonas muertas',d:deadSlots.length>0?`${deadSlots.map(s=>s.h+':00').join(', ')}h — Activar descuento de 15-20% o "Happy Hour" para generar actividad en ventanas vacías. Target: 2-3 pedidos por slot.`:'Sin zonas muertas identificadas — buen nivel de actividad constante.'},
+      {h:'📅 Concentrar campañas en días clave',d:`${DOW[d.bestDow]} es el día de mayor demanda — asegurar disponibilidad plena. ${DOW[d.worstDow]} es el más débil — activar promociones específicas.`},
+    ].map(r=>`<div style="padding:9px 0;border-bottom:1px solid var(--l)"><div style="font-weight:600;font-size:.78rem;margin-bottom:2px">${r.h}</div><div style="font-size:.73rem;color:var(--m);line-height:1.6">${r.d}</div></div>`).join('')}`;
+}
+
+function renderRoadmap(roadmap){
+  const months=[
+    {key:'m0',title:'M0 — Setup & Diagnóstico',sub:'Las 4 semanas antes de activar',color:'var(--r)',items:roadmap.m0},
+    {key:'m1',title:'M1 — Ejecución intensiva',sub:'Acompañamiento semanal',color:'var(--g)',items:roadmap.m1},
+    {key:'m23',title:'M2–M3 — Consolidación',sub:'Acompañamiento quincenal',color:'var(--gr)',items:roadmap.m2_3},
+  ];
+  document.getElementById('roadmapContent').innerHTML=months.map(m=>`
+    <div class="roadmap-month">
+      <div class="rm-header">
+        <div class="rm-dot" style="background:${m.color}"></div>
+        <div><div class="rm-title">${m.title}</div><div style="font-size:.72rem;color:var(--m)">${m.sub}</div></div>
+      </div>
+      <table class="rm-table">
+        <thead><tr><th style="width:80px">Semana</th><th>Acción</th><th>Detalle</th><th>Impacto</th><th>Prioridad</th><th>Responsable</th></tr></thead>
+        <tbody>${m.items.map(a=>`<tr>
+          <td><span style="font-size:.7rem;font-weight:700;color:var(--m);text-transform:uppercase;letter-spacing:1px">${a.w}</span></td>
+          <td style="font-weight:600;font-size:.78rem">${a.action}</td>
+          <td style="font-size:.72rem;color:var(--m);line-height:1.5">${a.detail}</td>
+          <td><span class="imp-tag">↑ ${a.imp}</span></td>
+          <td><span class="pri ${a.pri}">${a.pri==='p1'?'P1 Crítica':a.pri==='p2'?'P2 Alta':'P3 Media'}</span></td>
+          <td style="font-size:.7rem;font-family:'DM Mono',monospace">${a.own}</td>
+        </tr>`).join('')}</tbody>
+      </table>
+    </div>`).join('');
+}
+
+function renderCharts(d){
+  Object.values(CHARTS).forEach(c=>{try{c.destroy();}catch(e){}});CHARTS={};
+  const DOW=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+
+  CHARTS.rev=new Chart(document.getElementById('cRev'),{type:'line',data:{labels:d.days.map(k=>k.slice(5)),datasets:[{data:d.dailyRevs,borderColor:cc(C.r,'1'),backgroundColor:cc(C.r,'.07'),borderWidth:2,tension:.4,fill:true,pointRadius:d.days.length>20?0:3}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>'S/'+v.toLocaleString('es-PE')}}}}});
+
+  CHARTS.tickDist=new Chart(document.getElementById('cTickDist'),{type:'bar',data:{labels:d.ticketDist.map(b=>b.lbl),datasets:[{data:d.ticketDist.map(b=>b.count),backgroundColor:d.ticketDist.map(b=>b.lo<35?cc(C.r,'.7'):b.lo<60?cc(C.g,'.7'):cc(C.gr,'.7')),borderRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+
+  CHARTS.dow=new Chart(document.getElementById('cDow'),{type:'bar',data:{labels:DOW,datasets:[{data:d.dowO,backgroundColor:d.dowO.map((_,i)=>i===d.bestDow?cc(C.r,'.85'):cc(C.d,'.2')),borderRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+
+  CHARTS.hours=new Chart(document.getElementById('cHours'),{type:'bar',data:{labels:Array.from({length:24},(_,i)=>i+':00'),datasets:[{data:d.hourO,backgroundColor:d.hourO.map((_,i)=>i===d.peakHour?cc(C.r,'.85'):cc(C.d,'.2')),borderRadius:2}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+
+  const wkL=d.weeks.map((_,i)=>`S${i+1}`);
+  CHARTS.weekly=new Chart(document.getElementById('cWeekly'),{type:'line',data:{labels:wkL,datasets:[{data:d.weeks.map(w=>d.byWeek[w].revenue),borderColor:cc(C.g,'1'),backgroundColor:cc(C.g,'.08'),borderWidth:2,tension:.3,fill:true}]},options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{ticks:{callback:v=>'S/'+v.toLocaleString('es-PE')}}}}});
+
+  if(d.hasItems&&d.items.length>0){
+    const top=d.items.slice(0,10);
+    const shortName=n=>n.length>18?n.slice(0,16)+'…':n;
+    CHARTS.items=new Chart(document.getElementById('cItems'),{type:'bar',data:{labels:top.map(i=>shortName(i.name)),datasets:[{data:top.map(i=>i.orders),backgroundColor:cc(C.r,'.75'),borderRadius:2}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}});
+    CHARTS.iRev=new Chart(document.getElementById('cItemsRev'),{type:'bar',data:{labels:top.map(i=>shortName(i.name)),datasets:[{data:top.map(i=>Math.round(i.revenue)),backgroundColor:cc(C.g,'.75'),borderRadius:2}]},options:{indexAxis:'y',responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{x:{ticks:{callback:v=>'S/'+v.toLocaleString('es-PE')}}}}});
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+//  AI NARRATIVE (Gemini)
+// ════════════════════════════════════════════════════════════════
+async function generateAINarrative(d,combos,promoRecs){
+  const key=document.getElementById('geminiKey').value.trim();
+  if(!key){document.getElementById('aiContent').innerHTML='<div style="font-size:.78rem;color:var(--m);padding:16px;background:#fff;border:1px solid var(--l);border-radius:3px">Agrega tu API Key de Gemini para generar el análisis narrativo con IA.</div>';return;}
+  document.getElementById('aiContent').innerHTML='<div class="ai-loading"><div class="spin" style="width:24px;height:24px;border-width:2px"></div><span>Generando análisis con Gemini AI...</span></div>';
+  const DOW=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const prompt=`Eres el Growth Director de ${d.brand}, especialista en crecimiento de restaurantes en plataformas de delivery en Latinoamérica (Rappi, PedidosYa, Didi Food). Tienes los siguientes datos del período analizado:
+
+DATOS DEL PERÍODO:
+- ${d.done_n} pedidos completados en ${d.totalDays} días
+- Revenue total: S/ ${d.revenue.toFixed(2)}
+- Ticket promedio: S/ ${d.avgTicket.toFixed(2)} (target: S/ ${Math.round(d.avgTicket*1.25)})
+- Cancelaciones: ${d.canc_pct.toFixed(1)}%
+- Tendencia de revenue: ${d.trendPct>=0?'+'+'':'-'}${d.trendPct.toFixed(1)}% (segunda mitad vs primera)
+${d.hasFinancials?`- Comisión PedidosYa: ${d.comPct.toFixed(1)}% del revenue bruto
+- Ingreso estimado neto: ${d.netPct.toFixed(1)}% del revenue bruto`:''}
+${d.hasItems?`- Top 3 productos: ${d.items.slice(0,3).map(i=>i.name+' ('+i.orders+' pedidos)').join(', ')}`:''}
+- Mejor día: ${DOW[d.bestDow]} (${d.dowO[d.bestDow]} pedidos)
+- Peor día: ${DOW[d.worstDow]} (${d.dowO[d.worstDow]} pedidos)
+- Hora pico: ${d.peakHour}:00h
+- Plataformas activas: ${Object.keys(d.byPlat).map(p=>({rappi:'Rappi',peya:'PedidosYa',didi:'Didi Food'}[p]||p)).join(', ')}
+${d.reclamos>0?`- Reclamos: ${d.reclamos} (${d.reclamosPct.toFixed(1)}%)`:''}
+
+COMBOS SUGERIDOS: ${combos.slice(0,3).map(c=>c.name+' a S/'+c.comboPrice).join(', ')}
+
+Escribe un análisis estratégico en español latinoamericano (no España), directo y accionable. Formato:
+
+**DIAGNÓSTICO EJECUTIVO** (3-4 oraciones sobre el estado actual)
+
+**PRINCIPALES OPORTUNIDADES** (5 bullets con oportunidad específica + impacto estimado en S/ o %)
+
+**ESTRATEGIA PRIORITARIA** (1 párrafo sobre la estrategia central del próximo mes)
+
+**RIESGOS A GESTIONAR** (3 bullets)
+
+**META DE 90 DÍAS** (1 oración con objetivo cuantificable)
+
+Sé específico con números. Usa el contexto real de delivery en Perú. Máximo 400 palabras.`;
+  try{
+    const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${key}`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({contents:[{parts:[{text:prompt}]}]})});
+    const j=await r.json();
+    const txt=j.candidates?.[0]?.content?.parts?.[0]?.text;
+    if(txt){
+      document.getElementById('aiContent').innerHTML=`<div style="background:#fff;border:1px solid var(--l);border-radius:3px;padding:20px;font-size:.8rem;line-height:1.8;white-space:pre-wrap">${txt.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>')}</div>`;
+    }else{document.getElementById('aiContent').innerHTML='<div class="insight">La API respondió pero sin contenido. Verifica tu API Key de Gemini.</div>';}
+  }catch(err){document.getElementById('aiContent').innerHTML=`<div class="insight"><strong>Error:</strong> ${err.message}</div>`;}
+}
+
+// ════════════════════════════════════════════════════════════════
+//  MAIN
+// ════════════════════════════════════════════════════════════════
+async function run(){
+  if(!FILES.length)return;
+  const brand=document.getElementById('brandInp').value.trim()||'La Marca';
+  document.getElementById('upWrap').style.display='none';
+  document.getElementById('ldWrap').style.display='flex';
+  const ld=t=>document.getElementById('ldTxt').textContent=t;
+  try{
+    ld('Leyendo archivos...');await sleep(200);
+    const allOrders=await parseAllFiles(FILES);
+    if(!allOrders.length){alert('No se encontraron pedidos. Verifica el formato del archivo.');document.getElementById('ldWrap').style.display='none';document.getElementById('upWrap').style.display='flex';return;}
+    ld(`Analizando ${allOrders.length} registros...`);await sleep(300);
+    D=analyze(allOrders,brand);
+    ld('Generando estrategias...');await sleep(200);
+    const combos=genCombos(D);
+    const promoRecs=genPromoRecs(D);
+    const acqStrategy=genAcquisitionStrategy(D);
+    const ticketStrategy=genTicketStrategy(D);
+    const retentionStrategy=genRetentionStrategy(D);
+    const roadmap=genRoadmap(D,combos);
+    ld('Renderizando informe...');await sleep(100);
+    document.getElementById('ldWrap').style.display='none';
+    document.getElementById('rptWrap').style.display='block';
+    const nb=document.getElementById('nb');nb.textContent=brand;nb.style.display='inline-block';
+    document.getElementById('resetBtn').style.display='inline-block';
+    document.getElementById('exportBtn').style.display='inline-block';
+    renderDashboard(D);
+    renderMenuPanel(D);
+    renderCombosPanel(D,combos);
+    renderPromosPanel(D,promoRecs);
+    renderStrategyPanel('acquisition',acqStrategy,'acquisitionContent');
+    renderStrategyPanel('ticket',ticketStrategy,'ticketContent');
+    renderStrategyPanel('retention',retentionStrategy,'retentionContent');
+    renderFinancialPanel(D);
+    renderPatternsPanel(D);
+    renderRoadmap(roadmap);
+    setTimeout(()=>renderCharts(D),80);
+    // AI narrative (non-blocking)
+    generateAINarrative(D,combos,promoRecs);
+  }catch(err){console.error(err);alert('Error: '+err.message);document.getElementById('ldWrap').style.display='none';document.getElementById('upWrap').style.display='flex';}
+}
+
+function sleep(ms){return new Promise(r=>setTimeout(r,ms));}
+function showPanel(id,el){
+  document.querySelectorAll('.panel').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.sb-item').forEach(i=>i.classList.remove('active'));
+  document.getElementById('p-'+id).classList.add('active');
+  el.classList.add('active');
+}
+function resetAll(){
+  FILES=[];D=null;
+  Object.values(CHARTS).forEach(c=>{try{c.destroy();}catch(e){}});CHARTS={};
+  document.getElementById('rptWrap').style.display='none';
+  document.getElementById('upWrap').style.display='flex';
+  document.getElementById('fileList').innerHTML='';
+  document.getElementById('brandInp').value='';
+  document.getElementById('fi').value='';
+  document.getElementById('anBtn').disabled=true;
+  document.getElementById('nb').style.display='none';
+  document.getElementById('resetBtn').style.display='none';
+  document.getElementById('exportBtn').style.display='none';
+  document.querySelectorAll('.panel').forEach((p,i)=>p.classList.toggle('active',i===0));
+  document.querySelectorAll('.sb-item').forEach((i,idx)=>i.classList.toggle('active',idx===0));
+}
+function copyInsights(){
+  const roadmapRows=[...document.querySelectorAll('.rm-table tbody tr')].map(r=>[...r.querySelectorAll('td')].map(td=>td.textContent.trim()).join(' | ')).join('\n');
+  navigator.clipboard.writeText('ACCIONABLES SAZÓN GROWTH ENGINE\n\n'+roadmapRows).then(()=>{event.currentTarget.textContent='✅ Copiado';setTimeout(()=>event.currentTarget.textContent='📋 Copiar accionables',2000);});
+}
+</script>
+</body>
+</html>
