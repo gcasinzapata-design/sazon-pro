@@ -5,6 +5,49 @@
 [functions]
   directory = "netlify/functions"
 
+# Rutas estáticas — antes del catch-all SPA
+[[redirects]]
+  from = "/admin"
+  to = "/admin/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/admin/*"
+  to = "/admin/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/cliente"
+  to = "/cliente/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/cliente/*"
+  to = "/cliente/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/outbound"
+  to = "/outbound/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/outbound/*"
+  to = "/outbound/index.html"
+  status = 200
+
+# Rutas SPA React
+[[redirects]]
+  from = "/politicas"
+  to = "/index.html"
+  status = 200
+
+[[redirects]]
+  from = "/libro-de-reclamaciones"
+  to = "/index.html"
+  status = 200
+
+# Catch-all SPA — siempre al final
 [[redirects]]
   from = "/*"
   to = "/index.html"
