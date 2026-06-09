@@ -304,7 +304,7 @@ function CarlosMsg({ text }) {
 }
 
 // ─── APP ─────────────────────────────────────────────────────────────────────
-export default function App() {
+function App() {
   const [scrolled,  setScrolled]  = useState(false);
   const [chatOpen,  setChatOpen]  = useState(false);
   const [chatHist,  setChatHist]  = useState([]);   // [{from:"carlos"|"user", text}]
