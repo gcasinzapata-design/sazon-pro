@@ -223,6 +223,11 @@ input[type=file]{display:none;}
         <div class="pgc"><div class="pg-n" style="color:#0064C8">🔵 PedidosYa Hub</div><div class="pg-h">Finanzas → <code>Reportes</code> → Descargar<br>Incluye ítems, comisiones y reclamos</div></div>
       </div>
       <button class="an-btn" id="anBtn" disabled onclick="run()">Generar análisis 360° →</button>
+      <div style="text-align:center;margin-top:10px">
+        <button onclick="runDemo()" style="background:none;border:none;color:var(--r);font-size:.75rem;font-weight:600;cursor:pointer;text-decoration:underline;font-family:'DM Sans',sans-serif;">
+          👁 Ver demo con datos de ejemplo
+        </button>
+      </div>
     </div>
   </div>
 </div>
@@ -258,7 +263,7 @@ input[type=file]{display:none;}
     </div>
 
     <!-- CONTENT -->
-    <div class="main-content">
+    <div class="main-content" id="main-content">
 
       <!-- DASHBOARD -->
       <div class="panel active" id="p-dashboard">
@@ -1463,6 +1468,139 @@ function copyInsights(){
   const roadmapRows=[...document.querySelectorAll('.rm-table tbody tr')].map(r=>[...r.querySelectorAll('td')].map(td=>td.textContent.trim()).join(' | ')).join('\n');
   navigator.clipboard.writeText('ACCIONABLES SAZÓN GROWTH ENGINE\n\n'+roadmapRows).then(()=>{event.currentTarget.textContent='✅ Copiado';setTimeout(()=>event.currentTarget.textContent='📋 Copiar accionables',2000);});
 }
+
+// ════════════════════════════════════════════════════════════════
+//  DEMO MODE — datos de ejemplo realistas
+// ════════════════════════════════════════════════════════════════
+function generateDemoOrders() {
+  const items_pool = [
+    'Cheddar Bacon Burger','Oklahoma Burger','American Style Burger',
+    'Cheddar Burger','Maui Burger','Seasoned Fries','Oreo Milkshake',
+    'Coca Cola 500ml','Inka Cola 500ml','Combo Clásico'
+  ];
+  const combos_pool = [
+    ['Cheddar Bacon Burger','Seasoned Fries'],
+    ['Oklahoma Burger','Coca Cola 500ml'],
+    ['American Style Burger','Seasoned Fries','Oreo Milkshake'],
+    ['Cheddar Burger','Inka Cola 500ml'],
+    ['Cheddar Bacon Burger','Oreo Milkshake'],
+  ];
+  const sucursales = ['Mr. Smash - El Refugio','Mr. Smash - Miraflores'];
+  const metodos   = ['Pago online','Pago online','Pago online','Efectivo','Yape'];
+  const estados   = ['Entregado','Entregado','Entregado','Entregado','Entregado','Cancelado'];
+
+  const orders = [];
+  const now = new Date();
+  // Generate 3 months of data
+  for (let d = 90; d >= 0; d--) {
+    const date = new Date(now - d * 86400000);
+    const dow = date.getDay();
+    // Weekend has more orders
+    const baseOrders = [2,1,1,1,2,3,3][dow];
+    const numOrders = Math.max(0, baseOrders + Math.floor(Math.random()*3) - 1);
+    for (let i = 0; i < numOrders; i++) {
+      const hour = [12,13,13,19,20,20,21,21,22][Math.floor(Math.random()*9)];
+      const orderDate = new Date(date.getFullYear(), date.getMonth(), date.getDate(), hour, Math.floor(Math.random()*59));
+      const cancelled = Math.random() < 0.07;
+      const combo = combos_pool[Math.floor(Math.random()*combos_pool.length)];
+      const extraItem = Math.random() < 0.3 ? items_pool[Math.floor(Math.random()*5)] : null;
+      const allItems = extraItem ? [...combo, extraItem] : combo;
+      const itemsStr = allItems.map((it,idx) => (idx===0?2:1)+' '+it).join(', ');
+      const baseTicket = 35 + allItems.length * 12 + Math.floor(Math.random()*15);
+      const total = cancelled ? 0 : baseTicket;
+      const comision = total * 0.19;
+      const ingreso  = total - comision - total * 0.05;
+      orders.push({
+        id: 'DEMO'+Math.random().toString(36).slice(2,8).toUpperCase(),
+        date: orderDate,
+        total,
+        cancelled,
+        sucursal: sucursales[Math.random()<0.7?0:1],
+        metodo:   metodos[Math.floor(Math.random()*metodos.length)],
+        items:    cancelled ? '' : itemsStr,
+        platform: Math.random()<0.55 ? 'rappi' : 'peya',
+        estado:   cancelled ? 'Cancelado' : 'Entregado',
+        comision, ingreso,
+        reclamo: Math.random()<0.04 ? 'Sí' : 'No',
+        motivoReclamo: Math.random()<0.04 ? 'Producto faltante' : '',
+        prepTime: 10 + Math.floor(Math.random()*15),
+        isPrime: Math.random() < 0.45,
+        _format: 'demo',
+      });
+    }
+  }
+  return orders;
+}
+
+async function runDemo() {
+  document.getElementById('upWrap').style.display  = 'none';
+  document.getElementById('ldWrap').style.display  = 'flex';
+  document.getElementById('ldTxt').textContent     = 'Cargando datos de ejemplo...';
+  await sleep(600);
+
+  const allOrders = generateDemoOrders();
+  // Add fake PedidosYa summary
+  allOrders._peyaSummary = [{
+    _isPeyaSummary: true,
+    period:      'Dic 2025 – Jun 2026 (demo)',
+    orders:      490,
+    payTotal:    6207.66,
+    ventasNetas: 18424.07,
+    commission:  3533.91,
+    adSpend:     5089.18,
+    credit:      359.24,
+    descPeya:    309.03,
+  }];
+
+  document.getElementById('ldTxt').textContent = 'Analizando '+allOrders.length+' órdenes...';
+  await sleep(400);
+
+  D = analyze(allOrders, 'Demo — Beso Francés');
+  document.getElementById('ldTxt').textContent = 'Generando estrategias...';
+  await sleep(300);
+
+  const combos        = genCombos(D);
+  const promoRecs     = genPromoRecs(D);
+  const acqStrategy   = genAcquisitionStrategy(D);
+  const ticketStrategy= genTicketStrategy(D);
+  const retStrategy   = genRetentionStrategy(D);
+  const roadmap       = genRoadmap(D, combos);
+
+  document.getElementById('ldWrap').style.display  = 'none';
+  document.getElementById('rptWrap').style.display = 'block';
+
+  // Nav
+  const nb = document.getElementById('nb');
+  nb.textContent = '👁 Demo — Beso Francés';
+  nb.style.display = 'inline-block';
+  nb.style.background = 'rgba(200,160,69,.15)';
+  nb.style.color = '#C8A045';
+  document.getElementById('resetBtn').style.display  = 'inline-block';
+  document.getElementById('exportBtn').style.display = 'inline-block';
+
+  // Header
+  document.getElementById('rBrand').textContent  = '👁 Demo — Beso Francés';
+  document.getElementById('rPeriod').textContent = allOrders.length+' órdenes simuladas · '+allOrders.filter(o=>o.date).reduce((m,o)=>{const d=o.date.toISOString().split("T")[0];return d<m?d:m},'9999')+'  →  '+new Date().toLocaleDateString('es-PE',{day:'2-digit',month:'short',year:'numeric'});
+
+  // Add demo banner
+  document.getElementById('main-content').insertAdjacentHTML('afterbegin',
+    '<div style="background:rgba(200,160,69,.12);border-bottom:1px solid rgba(200,160,69,.3);padding:8px 24px;font-size:.73rem;color:#8a6000;text-align:center">👁 <strong>MODO DEMO</strong> — Datos de ejemplo. Sube tus archivos reales para el análisis de tu marca.</div>'
+  );
+
+  // Render all panels
+  renderDashboard(D);
+  renderMenuPanel(D);
+  renderCombosPanel(D, combos);
+  renderPromosPanel(D, promoRecs);
+  renderStrategyPanel('acquisition', acqStrategy,  'acquisitionContent');
+  renderStrategyPanel('ticket',      ticketStrategy,'ticketContent');
+  renderStrategyPanel('retention',   retStrategy,   'retentionContent');
+  renderFinancialPanel(D);
+  renderPatternsPanel(D);
+  renderRoadmap(roadmap);
+  setTimeout(() => renderCharts(D), 80);
+}
+
 </script>
 </body>
 </html>
