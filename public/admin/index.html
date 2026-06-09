@@ -1462,10 +1462,15 @@ function sendCode() {
   });
 
   // Send email
+  // Pass recipient in multiple formats to match any EmailJS template setup
   emailjs.send(EJS_SVC, EJS_TPL, {
-    to_email:   ADMIN_EM,
-    code:       otpCode,
-    admin_name: "Admin"
+    to_email:    ADMIN_EM,
+    email:       ADMIN_EM,
+    user_email:  ADMIN_EM,
+    reply_to:    ADMIN_EM,
+    code:        otpCode,
+    otp:         otpCode,
+    admin_name:  "Admin"
   }).then(function() {
     document.getElementById("st-wait").style.display = "none";
     document.getElementById("st-ok").style.display   = "block";
