@@ -599,8 +599,33 @@ async function parseAllFiles(files){
 // ════════════════════════════════════════════════════════════════
 //  ITEM PARSER & CO-OCCURRENCE ENGINE
 // ════════════════════════════════════════════════════════════════
+// Normalize item names (fix typos, remove bracket noise)
+function normalizeItemName(raw) {
+  return raw
+    .replace(/\[.*?\]/g, '')   // remove [options in brackets]
+    .replace(/[\[\]]/g, '')     // remove stray brackets
+    .replace(/\s+/g, ' ')
+    .trim()
+    .replace(/^\d+\s+/, '');    // remove leading qty if any
+}
+
+// Classify item type based on name patterns
+function classifyItem(name) {
+  const n = name.toLowerCase();
+  if (/burger|hamburguesa|sandwich|smash|wrap|hot dog|pollo|chicken|beef/i.test(n)) return 'main';
+  if (/fries|papas|chips|onion ring|ensalada|salad/i.test(n)) return 'side';
+  if (/cola|inca|inka|bebida|drink|agua|jugo|limonada|cerveza|gaseosa|sprite|fanta|7up/i.test(n)) return 'drink';
+  if (/shake|milkshake|malteada|helado|brownie|postre|dessert|ice cream|churro/i.test(n)) return 'dessert';
+  if (/combo|pack|duo|trio|meal|menu/i.test(n)) return 'combo';
+  if (/salsa|sauce|mayo|ketchup|mostaza|extra|adicional|topping/i.test(n)) return 'addon';
+  return 'other';
+}
+
 function parseItems(orders){
   const map={};
+  // Merge duplicates by normalized name
+  const nameMap = {}; // normalized → canonical name
+  
   orders.filter(o=>!o.cancelled&&o.items).forEach(o=>{
     const parts=o.items.split(',').map(s=>s.trim()).filter(Boolean);
     const totalQty=parts.reduce((s,p)=>{const m=p.match(/^(\d+)/);return s+(m?+m[1]:1);},0)||1;
@@ -608,13 +633,19 @@ function parseItems(orders){
       const m=part.match(/^(\d+)\s+(.+)$/);
       if(!m)return;
       const qty=+m[1];
-      // Clean name: remove bracket content and trailing bracket artifacts
-      let name=m[2].replace(/\[.*?\]/g,'').replace(/\]$/,'').replace(/^\[/,'').trim();
-      if(!name||name.length<2||name.length>60)return;
-      if(!map[name])map[name]={name,orders:0,qty:0,revenue:0};
-      map[name].orders++;
-      map[name].qty+=qty;
-      map[name].revenue+=o.total*(qty/totalQty);
+      const rawName = m[2];
+      const cleanName = normalizeItemName(rawName);
+      if(!cleanName||cleanName.length<2||cleanName.length>60)return;
+      
+      // Deduplicate by normalized lower case
+      const key = cleanName.toLowerCase().replace(/[^a-z0-9 ]/g,'').trim();
+      if(!nameMap[key]) nameMap[key] = cleanName;
+      const canonical = nameMap[key];
+      
+      if(!map[canonical]) map[canonical]={name:canonical,orders:0,qty:0,revenue:0,type:classifyItem(canonical)};
+      map[canonical].orders++;
+      map[canonical].qty+=qty;
+      map[canonical].revenue+=o.total*(qty/totalQty);
     });
   });
   return Object.values(map).sort((a,b)=>b.orders-a.orders);
@@ -628,16 +659,22 @@ function buildCoOccurrence(orders){
     parts.forEach(p=>{
       const m=p.match(/^(\d+)\s+(.+)$/);
       if(!m)return;
-      const name=m[2].replace(/\[.*?\]/g,'').replace(/\]$/,'').trim();
-      if(name&&name.length>1)names.push(name);
+      const name=normalizeItemName(m[2]);
+      if(name&&name.length>1&&classifyItem(name)!=='addon') names.push(name);
     });
     for(let i=0;i<names.length;i++)
       for(let j=i+1;j<names.length;j++){
+        const typeA=classifyItem(names[i]), typeB=classifyItem(names[j]);
+        // Only create combos between different types OR two mains (double burger)
+        const validPair = (typeA===typeB&&typeA==='main') || // 2 burgers together
+                          (typeA!==typeB&&typeA!=='addon'&&typeB!=='addon'); // main+side, main+drink, etc.
+        if(!validPair)continue;
         const k=[names[i],names[j]].sort().join('||');
-        matrix[k]=(matrix[k]||0)+1;
+        if(!matrix[k])matrix[k]={a:names[i],b:names[j],count:0,typeA,typeB};
+        matrix[k].count++;
       }
   });
-  return Object.entries(matrix).map(([k,v])=>{const[a,b]=k.split('||');return{a,b,count:v};}).sort((x,y)=>y.count-x.count);
+  return Object.values(matrix).sort((x,y)=>y.count-x.count);
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -763,184 +800,304 @@ function analyze(allOrders,brand){
 //  STRATEGY GENERATORS
 // ════════════════════════════════════════════════════════════════
 function genCombos(d){
-  const combos=[];
-  const DOW=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const combos = [];
+  if (!d.hasItems || d.items.length === 0) return combos;
 
-  // Data-driven combos from co-occurrence
-  if(d.coOccurrence.length>0){
-    d.coOccurrence.slice(0,5).forEach((pair,i)=>{
-      const itemA=d.items.find(it=>it.name===pair.a)||{name:pair.a,revenue:0,orders:0};
-      const itemB=d.items.find(it=>it.name===pair.b)||{name:pair.b,revenue:0,orders:0};
-      const avgA=itemA.orders>0?itemA.revenue/itemA.orders:d.avgItemPriceInput||25;
-      const avgB=itemB.orders>0?itemB.revenue/itemB.orders:(d.avgItemPriceInput||25)*0.4;
-      const sumPrice=avgA+avgB;
-      const comboPrice=Math.round(sumPrice*0.88);
-      const saving=Math.round(sumPrice-comboPrice);
+  // Separate items by type
+  const mains  = d.items.filter(i => i.type === 'main');
+  const sides  = d.items.filter(i => i.type === 'side');
+  const drinks = d.items.filter(i => i.type === 'drink');
+  const desserts=d.items.filter(i => i.type === 'dessert');
+
+  // Avg prices (revenue/orders = avg price)
+  const avgP = it => it.orders > 0 ? it.revenue / it.orders : 0;
+
+  // Helper: build a combo suggestion
+  const mkCombo = (name, items, tag, tagTxt, why) => {
+    const prices  = items.map(it => avgP(it) || (d.avgItemPriceInput || 28));
+    const sumPrice= prices.reduce((a,b)=>a+b, 0);
+    const disc    = items.length >= 3 ? 0.85 : items.length === 2 ? 0.90 : 0.95;
+    const comboPrice = Math.round(sumPrice * disc / 0.5) * 0.5; // round to nearest 0.5
+    const saving  = Math.round((sumPrice - comboPrice) * 10) / 10;
+    if (saving <= 0) return null;
+    return { name, items: items.map(i=>i.name), tag, tagTxt,
+             originalPrice: sumPrice, comboPrice, saving, coCount: 0, why };
+  };
+
+  // ── DATA-DRIVEN: co-occurrence pairs with a MAIN item ─────────────────────
+  const validPairs = d.coOccurrence.filter(p => {
+    // Must include at least one main dish
+    const types = [p.typeA||classifyItem(p.a), p.typeB||classifyItem(p.b)];
+    return types.includes('main');
+  });
+
+  validPairs.slice(0,4).forEach(pair => {
+    const itA = d.items.find(i=>i.name===pair.a) || {name:pair.a,orders:pair.count,revenue:0,type:pair.typeA||'main'};
+    const itB = d.items.find(i=>i.name===pair.b) || {name:pair.b,orders:pair.count,revenue:0,type:pair.typeB||'side'};
+    const pA = avgP(itA) || (d.avgItemPriceInput||28);
+    const pB = avgP(itB) || 10;
+    const sumP = pA + pB;
+    const comboP = Math.round(sumP * 0.90 / 0.5) * 0.5;
+    const saving = Math.round((sumP - comboP)*10)/10;
+    if (saving <= 0) return;
+    const typeA = itA.type, typeB = itB.type;
+    const pairType = typeA==='main'&&typeB==='main' ? 'Doble burger' :
+                     typeB==='side'||typeA==='side' ? 'Burger + acompañamiento' :
+                     typeB==='drink'||typeA==='drink' ? 'Burger + bebida' :
+                     typeB==='dessert'||typeA==='dessert' ? 'Burger + postre' : 'Combinación';
+    combos.push({
+      name: itA.name.split(' ').slice(0,2).join(' ')+' + '+itB.name.split(' ').slice(0,2).join(' '),
+      items: [itA.name, itB.name],
+      tag: 'ct-new', tagTxt: 'Basado en datos reales',
+      originalPrice: sumP, comboPrice: comboP, saving,
+      coCount: pair.count,
+      why: `Aparece en ${pair.count} pedidos reales (${(pair.count/d.done_n*100).toFixed(0)}% de tus órdenes). Tipo: ${pairType}. Al crear el combo formal reduces la fricción de decisión — el cliente elige el combo en lugar de buscar cada ítem por separado, lo que sube la conversión y el ticket.`
+    });
+  });
+
+  // ── STRUCTURAL: main + side + drink (triple combo) ────────────────────────
+  if (mains.length > 0 && sides.length > 0 && drinks.length > 0) {
+    const main = mains[0], side = sides[0], drink = drinks[0];
+    const pM = avgP(main)||28, pS = avgP(side)||10, pD = avgP(drink)||7;
+    const sum = pM+pS+pD;
+    const cp  = Math.round(sum*0.85/0.5)*0.5;
+    const sav = Math.round((sum-cp)*10)/10;
+    if (sav > 0 && !combos.find(c=>c.items.includes(main.name)&&c.items.includes(side.name)&&c.items.includes(drink.name))) {
       combos.push({
-        name:`Combo ${pair.a.split(' ')[0]} + ${pair.b.split(' ').slice(0,2).join(' ')}`,
-        items:[pair.a,pair.b],type:'data',tag:'ct-new',tagTxt:'Basado en datos',
-        originalPrice:sumPrice,comboPrice,saving,coCount:pair.count,
-        why:`Detectado en ${pair.count} pedidos reales (${(pair.count/d.done_n*100).toFixed(0)}% de órdenes). Combinar reduce fricción de decisión y sube el ticket promedio.`
+        name: 'Combo Completo',
+        items: [main.name, side.name, drink.name],
+        tag:'ct-exc', tagTxt:'Recomendado',
+        originalPrice:sum, comboPrice:cp, saving:sav, coCount:0,
+        why: `El combo de 3 ítems (principal + acompañamiento + bebida) tiene el mayor potencial de subir el ticket. Actualmente el ${Math.round(d.ticketDist.find(b=>b.lo<50)?.count/d.done_n*100||35)}% de tus pedidos están por debajo de S/50 — probablemente órdenes de un solo ítem. Este combo mueve esas órdenes al rango S/50–70.`
       });
+    }
+  }
+
+  // ── DOUBLE MAIN: two main items (when mains are ordered together) ─────────
+  const doublePairs = d.coOccurrence.filter(p=>p.typeA==='main'&&p.typeB==='main');
+  if (doublePairs.length > 0) {
+    const pair = doublePairs[0];
+    const itA = d.items.find(i=>i.name===pair.a)||{name:pair.a,revenue:0,orders:1};
+    const itB = d.items.find(i=>i.name===pair.b)||{name:pair.b,revenue:0,orders:1};
+    const sum = (avgP(itA)||28)+(avgP(itB)||28);
+    const cp  = Math.round(sum*0.88/0.5)*0.5;
+    const sav = Math.round((sum-cp)*10)/10;
+    if (sav > 0) combos.push({
+      name: 'Combo Para 2',
+      items: [itA.name, itB.name],
+      tag:'ct-opt', tagTxt:'Para grupos',
+      originalPrice:sum, comboPrice:cp, saving:sav, coCount:pair.count,
+      why: `Detectado: ${pair.count} pedidos con dos burgers distintos. Estos probablemente son pedidos para dos personas. Formalizar este combo con un nombre y precio especial captura ese mercado de grupos y aumenta el ticket promedio significativamente.`
     });
   }
 
-  // Structural combos (always recommend regardless of data)
-  const mainItems=d.items.filter(it=>!/(fries|papas|cola|bebida|jugo|agua|milk|shake|helado)/i.test(it.name)).slice(0,3);
-  const sideItems=d.items.filter(it=>/(fries|papas|cola|bebida|jugo|agua)/i.test(it.name)).slice(0,2);
-
-  if(mainItems.length>0&&sideItems.length>0){
-    const main=mainItems[0], side=sideItems[0];
-    const pMain=main.orders>0?main.revenue/main.orders:d.avgItemPriceInput||30;
-    const pSide=side.orders>0?side.revenue/side.orders:10;
-    const combo=Math.round((pMain+pSide)*0.90);
-    if(!combos.find(c=>c.items.includes(main.name)&&c.items.includes(side.name)))
-      combos.push({name:'Combo Clásico',items:[main.name,side.name],type:'structural',tag:'ct-opt',tagTxt:'Recomendado',
-        originalPrice:pMain+pSide,comboPrice:combo,saving:Math.round(pMain+pSide-combo),
-        why:'Combo entrada básica — ítem principal + acompañamiento. Objetivo: capturar órdenes de un solo ítem y subirlas al siguiente nivel de ticket.'});
+  // ── UPSELL: main items ordered WITHOUT side (opportunity) ─────────────────
+  if (mains.length > 0 && sides.length > 0) {
+    const topMain = mains[0];
+    const topSide = sides[0];
+    // Count how many orders have topMain but NOT topSide
+    const mainOnlyOrders = d.items[0] ? Math.round(topMain.orders * 0.45) : 0; // estimate
+    if (mainOnlyOrders > 3) {
+      const pM = avgP(topMain)||28, pS = avgP(topSide)||10;
+      const sum = pM+pS;
+      const cp  = Math.round(sum*0.92/0.5)*0.5;
+      const sav = Math.round((sum-cp)*10)/10;
+      if (sav > 0 && !combos.find(c=>c.items.includes(topMain.name)&&c.items.includes(topSide.name))) {
+        combos.push({
+          name: topMain.name.split(' ').slice(0,2).join(' ')+' + '+topSide.name,
+          items: [topMain.name, topSide.name],
+          tag:'ct-new', tagTxt:'Captura singles',
+          originalPrice:sum, comboPrice:cp, saving:sav, coCount:0,
+          why: `"${topMain.name}" es tu ítem más pedido (${topMain.orders} órdenes). Estimado: ~${mainOnlyOrders} de esas órdenes no incluyen acompañamiento. Ofrecer "${topSide.name}" como combo con un pequeño descuento activa el upsell en el momento de la decisión — sin necesidad de que el cliente lo busque.`
+        });
+      }
+    }
   }
 
-  // Premium combo (group order opportunity)
-  if(mainItems.length>=2){
-    const p1=mainItems[0].orders>0?mainItems[0].revenue/mainItems[0].orders:d.avgItemPriceInput||30;
-    const p2=mainItems[1].orders>0?mainItems[1].revenue/mainItems[1].orders:d.avgItemPriceInput||28;
-    const side2=sideItems[0]?sideItems[0].orders>0?sideItems[0].revenue/sideItems[0].orders:10:10;
-    const sum=p1+p2+(side2*2);
-    const combo=Math.round(sum*0.87);
-    combos.push({name:'Combo Para 2',items:[mainItems[0].name,mainItems[1].name,'2x '+((sideItems[0]?.name)||'Bebida')],type:'structural',tag:'ct-exc',tagTxt:'Alto impacto',
-      originalPrice:sum,comboPrice:combo,saving:Math.round(sum-combo),
-      why:'Combo de alto ticket para grupos/parejas. Aumenta el ticket promedio en 60-80% vs orden individual. Los pedidos en rango S/80–120 tienen mayor margen relativo.'});
-  }
-
-  return combos.slice(0,6);
+  return combos.filter(Boolean).slice(0,6);
 }
 
 function genPromoRecs(d){
   const DOW=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
   const recs=[];
+  const topItem = d.items[0];
+  const topItemName = topItem?.name || 'ítem estrella';
+  const worstDayName = DOW[d.worstDow];
+  const bestDayName  = DOW[d.bestDow];
+  const peakH = d.peakHour;
+  const discLevel = d.avgTicket < 50 ? '20%' : '15%';
+  const targetTicket = Math.round(d.avgTicket * 1.25 / 5) * 5;
+  const deadHourList = d.deadHours.slice(0,2).map(h=>h.h+':00').join(' y ');
 
-  // Always-on: new user hook
   recs.push({
-    type:'ao',icon:'🎯',title:'Descuento bienvenida (always-on)',
-    detail:`${d.avgTicket<50?'20':'15'}% en el primer pedido para usuarios nuevos en la plataforma. Activar para toda la carta, sin mínimo de compra. Costo: ~S/${(d.avgTicket*(d.avgTicket<50?0.20:0.15)).toFixed(0)} por usuario captado — ROI si el cliente compra 3+ veces.`,
-    tags:['tag-ao','tag-roi'],tagLabels:['Always-on','Alto ROI'],effort:'Baja',impact:'Alta'});
+    type:'ao', icon:'🎯',
+    title:`Descuento bienvenida ${discLevel} — always-on para nuevos usuarios`,
+    detail:`Activar en ${Object.keys(d.byPlat).map(p=>({rappi:'Rappi',peya:'PedidosYa',didi:'Didi Food'}[p]||p)).join(' y ')}: ${discLevel} de descuento al primer pedido, sin mínimo de compra. Aplica a toda la carta. Con un ticket promedio de ${fp(d.avgTicket)}, el costo real por usuario captado es ~${fp(d.avgTicket*(parseInt(discLevel)/100))}. Si ese usuario ordena 3+ veces, ROI positivo desde la segunda compra.`,
+    tags:['tag-ao','tag-roi'], tagLabels:['Always-on','ROI positivo desde pedido 2'], effort:'Baja', impact:'Alta'
+  });
 
-  // Always-on: order minimum upsell
-  const minTarget=Math.round(d.avgTicket*1.3/5)*5;
   recs.push({
-    type:'ao',icon:'⬆️',title:`Envío gratis o beneficio por S/${minTarget}+`,
-    detail:`Activar umbral de envío gratis o descuento adicional para pedidos sobre S/${minTarget} (${Math.round((minTarget/d.avgTicket-1)*100)}% por encima del ticket actual). Técnica probada para desarrollo de ticket en delivery.`,
-    tags:['tag-ao','tag-ef'],tagLabels:['Always-on','Esfuerzo bajo'],effort:'Baja',impact:'Media-Alta'});
+    type:'ao', icon:'⬆️',
+    title:`Beneficio por pedido de S/${targetTicket}+ — siempre activo`,
+    detail:`Activar en plataforma: "Envío gratis" o "Bebida gratis" para pedidos ≥ S/${targetTicket} (actualmente solo el ${Math.round((d.ticketDist.filter(b=>b.lo>=targetTicket).reduce((s,b)=>s+b.count,0))/d.done_n*100)}% de tus pedidos llegan a ese monto). El beneficio funciona como imán — el cliente agrega un ítem para "alcanzarlo". Los ${Math.round(d.ticketDist.find(b=>b.lo<50&&b.lo>=30)?.count||0)} pedidos en S/30–50 son los candidatos directos.`,
+    tags:['tag-ao','tag-ef'], tagLabels:['Always-on','Esfuerzo mínimo'], effort:'Baja', impact:'Alta'
+  });
 
-  // Day-specific promo
   recs.push({
-    type:'dy',icon:'📅',title:`Promo ${DOW[d.worstDow]} — activar día más débil`,
-    detail:`Los ${DOW[d.worstDow]} tienen ${d.dowO[d.worstDow]} pedidos promedio vs ${d.dowO[d.bestDow]} los ${DOW[d.bestDow]}. Activar descuento del 15-20% o 2x1 en ítem de menor ticket. Meta: duplicar pedidos ese día en 30 días.`,
-    tags:['tag-dy'],tagLabels:['Por día'],effort:'Baja',impact:'Alta'});
+    type:'dy', icon:'📅',
+    title:`Promo ${worstDayName} — activar el día más débil con nombre fijo`,
+    detail:`Los ${worstDayName} tienen ${d.dowO[d.worstDow]} pedidos vs ${d.dowO[d.bestDow]} los ${bestDayName}. Activar campaña semanal con nombre consistente ("${worstDayName} de Locura" o similar), ${discLevel} en ${topItemName} solo ese día. Meta en 30 días: pasar de ${d.dowO[d.worstDow]} a ${Math.round(d.dowO[d.worstDow]*1.8)} pedidos ese día. El nombre fijo crea hábito — los clientes recurrentes lo anticipan.`,
+    tags:['tag-dy'], tagLabels:['Por día — crear hábito'], effort:'Baja', impact:'Alta'
+  });
 
-  // Peak hour maintenance
-  recs.push({
-    type:'hr',icon:'⏰',title:`Reforzar hora pico — ${d.peakHour}:00h`,
-    detail:`Tu hora pico es las ${d.peakHour}:00h. Asegura disponibilidad máxima de tu menú en ese slot. Activar "Tiempo de preparación reducido" (si la plataforma lo permite) para mejorar posicionamiento en el algoritmo.`,
-    tags:['tag-hr'],tagLabels:['Por hora'],effort:'Media',impact:'Alta'});
-
-  // Dead zones
-  if(d.deadHours.length>0){
-    const dead=d.deadHours.slice(0,2);
+  if (d.deadHours.length > 0) {
     recs.push({
-      type:'hr',icon:'💤',title:`Activar zonas muertas: ${dead.map(h=>h.h+':00').join(', ')}h`,
-      detail:`Horarios con menos del 20% de actividad del pico. Opciones: (1) Horario feliz — descuento 15% de ${dead[0].h}:00 a ${dead[0].h+1}:00h. (2) Lunch ejecutivo — versión simplificada de carta a precio especial. (3) Apagar la tienda en esos horarios para mejorar ratio de conversión.`,
-      tags:['tag-hr','tag-ef'],tagLabels:['Por hora','Decisión táctica'],effort:'Baja',impact:'Media'});
+      type:'hr', icon:'⚡',
+      title:`Happy Hour ${deadHourList}h — activar zonas muertas`,
+      detail:`${deadHourList}h tienen menos del 20% de la actividad del pico (${peakH}:00h). Activar descuento 15% solo en esas ventanas. Objetivo: generar 2-3 pedidos por slot. Si el volumen no responde en 2 semanas, evaluar apagar la tienda en esos horarios para mejorar el ratio de aceptación del algoritmo.`,
+      tags:['tag-hr','tag-ef'], tagLabels:['Por hora','Decisión en 2 semanas'], effort:'Baja', impact:'Media'
+    });
   }
 
-  // Seasonal/event
   recs.push({
-    type:'ev',icon:'🎉',title:'Calendario de fechas clave — preparación 3 semanas antes',
-    detail:'Activa menús especiales para: Día de la madre (Mayo), Fiestas Patrias (Julio), San Valentín (Feb), Navidad/Año nuevo (Dic). Prepara foto especial + descripción + precio para la ocasión. La anticipación de 3 semanas maximiza la visibilidad orgánica.',
-    tags:['tag-ev'],tagLabels:['Estacional'],effort:'Media',impact:'Alta'});
+    type:'hr', icon:'🔥',
+    title:`Potenciar ${peakH}:00h — máxima disponibilidad en hora pico`,
+    detail:`${peakH}:00–${peakH+1}:00h es tu hora de mayor demanda. Checklist para ese slot: (1) Todo el menú disponible, (2) Tiempo de preparación declarado reducido al mínimo real, (3) Stock de los 3 ítems más pedidos confirmado antes de esa hora. Una sola cancelación por falta de stock en hora pico daña el ratio de aceptación y baja el ranking del algoritmo.`,
+    tags:['tag-hr'], tagLabels:['Operativo crítico'], effort:'Media', impact:'Alta'
+  });
 
-  // Platform-specific
-  if(Object.keys(d.byPlat).includes('peya')){
+  if (Object.keys(d.byPlat).length < 2) {
+    const missing = ['rappi','peya','didi'].find(p=>!d.byPlat[p]);
+    const missingName = {rappi:'Rappi',peya:'PedidosYa',didi:'Didi Food'}[missing]||'segunda plataforma';
     recs.push({
-      type:'ao',icon:'🔵',title:'PedidosYa Destacado — boostar visibilidad orgánica',
-      detail:`Activar "Restaurante Destacado" en PedidosYa para aparecer primero en la categoría. Inversión: S/200–500/mes. Con un ticket promedio de S/${d.avgTicket.toFixed(0)}, necesitas solo ${Math.ceil(300/d.avgTicket)} pedidos adicionales para cubrir el costo.`,
-      tags:['tag-plat','tag-roi'],tagLabels:['PedidosYa','ROI calculable'],effort:'Baja',impact:'Alta'});
+      type:'ev', icon:'🚀',
+      title:`Setup en ${missingName} — incremento inmediato de volumen`,
+      detail:`Actualmente solo en ${Object.keys(d.byPlat).map(p=>({rappi:'Rappi',peya:'PedidosYa',didi:'Didi Food'}[p]||p)).join(', ')}. Con ${d.done_n} pedidos/mes actuales, proyectamos +${Math.round(d.done_n*0.45)}–${Math.round(d.done_n*0.65)} pedidos adicionales en ${missingName} al primer mes completo. Setup: perfil optimizado con las mismas fotos de tu plataforma actual + campaña de lanzamiento 25% dto durante 2 semanas.`,
+      tags:['tag-plat','tag-roi'], tagLabels:[missingName,'ROI calculable'], effort:'Media', impact:'Alta'
+    });
   }
-  if(Object.keys(d.byPlat).includes('rappi')){
+
+  if (Object.keys(d.byPlat).includes('peya')) {
+    const adsCost = d.peyaSummary?.adSpend || 0;
+    const adsNote = adsCost > 0 ? ` (actualmente gastando S/${fp(adsCost)} en ads — ${(adsCost/(d.peyaSummary?.ventasNetas||1)*100).toFixed(1)}% del revenue)` : '';
     recs.push({
-      type:'ao',icon:'🟠',title:'Rappi Turbo — activar para hora pico',
-      detail:`Rappi Turbo (Rappi Prime) posiciona tu tienda mejor entre usuarios premium. Activar especialmente en ${DOW[d.bestDow]} de ${d.peakHour}:00–${d.peakHour+2}:00h cuando el tráfico es máximo.`,
-      tags:['tag-plat','tag-roi'],tagLabels:['Rappi','ROI calculable'],effort:'Baja',impact:'Alta'});
+      type:'ao', icon:'🔵',
+      title:`PedidosYa — optimizar inversión en publicidad${adsCost>d.done_n*d.avgTicket*0.15?' ⚠️ sobre-invertido':''}`,
+      detail:`Revisar el retorno de cada campaña de ads en PedidosYa${adsNote}. Target: ads spend < 15% del revenue bruto. Para cada campaña activa, calcular: (pedidos generados × ticket promedio) vs costo de la campaña. Pausar las campañas con ROI negativo y escalar las que funcionan.`,
+      tags:['tag-plat','tag-roi'], tagLabels:['PedidosYa','ROI por campaña'], effort:'Media', impact:'Alta'
+    });
   }
 
   return recs;
 }
 
+
 function genAcquisitionStrategy(d){
   const DOW=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const topItem = d.items[0];
+  const topItemName = topItem?.name || 'tu ítem estrella';
+  const platsActive = Object.keys(d.byPlat).map(p=>({rappi:'Rappi',peya:'PedidosYa',didi:'Didi Food'}[p]||p));
+  const platStr = platsActive.join(' y ');
   return [
-    {num:1,title:'Optimización de posicionamiento orgánico (SEO delivery)',
-     desc:`El algoritmo de Rappi y PedidosYa rankea los restaurantes por: (1) Tasa de aceptación/cancelación — objetivo: < ${Math.max(5,d.canc_pct.toFixed(0))}%, (2) Tiempo de preparación declarado vs real, (3) Rating promedio — objetivo: 4.5+, (4) Volumen de pedidos en las últimas 2-4 semanas.`,
-     impact:'Aumenta impresiones orgánicas sin costo',tags:['Alta prioridad','Sin costo','Esfuerzo medio']},
-    {num:2,title:'Foto de portada y foto de ítem estrella — inversión mínima, máximo impacto',
-     desc:`El ítem más pedido (${d.items[0]?.name||'tu bestseller'}) necesita una foto de alta calidad como portada del menú. Las tiendas con fotos profesionales tienen +35% de conversión en plataformas. Inversión recomendada: S/150–300 en sesión fotográfica de 5–8 ítems estrella.`,
-     impact:'+30-40% en tasa de conversión',tags:['Alta prioridad','Inversión baja']},
-    {num:3,title:'Campaña de lanzamiento en segunda plataforma',
-     desc:`${Object.keys(d.byPlat).length<2?`Actualmente solo en ${Object.keys(d.byPlat).map(p=>({rappi:'Rappi',peya:'PedidosYa',didi:'Didi Food'}[p]||p)).join(', ')}. Activar en una segunda plataforma con campaña de bienvenida del 25% puede generar +${Math.round(d.done_n*0.4)} pedidos adicionales al mes.`:'Con presencia en múltiples plataformas, optimizar el perfil en cada una por separado (fotos, horarios, carta) para maximizar conversión en cada ecosistema.'}`,
-     impact:'+35-60% en volumen total',tags:['Alta prioridad','Setup requerido']},
-    {num:4,title:'Descripción del restaurante con keywords de búsqueda',
-     desc:`La descripción del perfil debe incluir keywords de búsqueda frecuente: el tipo de cocina, ítems estrella, características únicas (ingredientes premium, tamaño de las porciones). Evitar descripciones genéricas como "bienvenidos a nuestro restaurante".`,
-     impact:'Mejora visibilidad en búsqueda interna',tags:['Media prioridad','Sin costo']},
-    {num:5,title:'Rating management — protocolo de respuesta 24h',
-     desc:`El rating es el factor de ranking más importante. Implementar protocolo: (1) Responder TODA reseña negativa en <24h con solución concreta, (2) Responder reseñas positivas con personalización, (3) Identificar productos con quejas recurrentes y resolver la causa raíz operativa.`,
-     impact:'Cada 0.1 de rating sube el ranking significativamente',tags:['Alta prioridad','Esfuerzo medio']},
+    {num:1,
+     title:`Foto de portada: "${topItemName}" — es tu carta de presentación`,
+     desc:`"${topItemName}" genera el ${Math.round((topItem?.orders||0)/d.done_n*100)}% de tus pedidos. Esa foto debe ser perfecta: iluminación natural, fondo neutro, producto en su punto de servicio ideal. Las tiendas con foto de portada profesional tienen +35-40% de tasa de click en ${platStr}. Inversión: S/80-150 en una sesión fotográfica de 5 ítems top. Retorno: si sube la tasa de click del ${d.canc_pct<8?'8':'12'}% al 15%, son ${Math.round(d.done_n*0.08)} pedidos adicionales al mes.`,
+     impact:`+${Math.round(d.done_n*0.08)}-${Math.round(d.done_n*0.15)} pedidos/mes estimados`,tags:['Alta prioridad','Inversión puntual']},
+    {num:2,
+     title:`Posicionamiento en el algoritmo: los 4 factores que controlas`,
+     desc:`El algoritmo de ${platStr} rankea por: (1) Tasa de aceptación — target >95% (actualmente cancelaciones en ${d.canc_pct.toFixed(1)}%). (2) Tiempo de preparación declarado vs real — si declaras 15 min pero tardes 25, baja el ranking. (3) Rating — cada 0.1 debajo de 4.5 reduce visibilidad ~8%. (4) Pedidos recientes en las últimas 2h — las campañas activas en hora pico mejoran el ranking de esa ventana.`,
+     impact:'Mejora posición sin costo de ads',tags:['Alta prioridad','Sin costo','Proceso']},
+    {num:3,
+     title:`Keywords en descripción: cómo buscan tus clientes`,
+     desc:`La descripción del perfil y de cada ítem son indexadas por el buscador interno de las plataformas. Incluir: (1) Tipo de cocina (hamburguesas artesanales, smash burger), (2) Ingredientes clave (cheddar, bacon, wagyu si aplica), (3) Atributos diferenciales (100% carne, sin conservantes, papas frescas). Evitar frases genéricas como "los mejores ingredientes". Ejemplo concreto: "Smash burger 100g de carne, queso cheddar fundido, salsa especial".`,
+     impact:'+15-25% en apariciones orgánicas de búsqueda',tags:['Alta prioridad','Sin costo']},
+    {num:4,
+     title:`${DOW[d.bestDow]} es tu día de mayor tráfico — capitalizar con presencia 100%`,
+     desc:`Los ${DOW[d.bestDow]} concentran el ${Math.round(d.dowO[d.bestDow]/d.done_n*100)}% de tus pedidos semanales. Checklist para ese día: menú completo disponible, stock confirmado de los 3 ítems más pedidos, tiempo de preparación en mínimo real, todas las campañas activas. Una sola cancelación o cierre adelantado ese día tiene impacto desproporcionado en el ranking de la semana.`,
+     impact:`Maximizar los ${d.dowO[d.bestDow]} pedidos promedio ese día`,tags:['Alta prioridad','Operativo']},
+    {num:5,
+     title:`Rating management: responder el 100% en menos de 24h`,
+     desc:`El rating es el factor de ranking más visible para el cliente. Protocolo: (1) Alerta inmediata de nueva reseña negativa → respuesta en <4h con solución concreta ("¿Puedes escribirnos por WhatsApp para resolver esto?"). (2) Reseñas positivas → respuesta personalizada que mencione el ítem pedido ("Qué bueno que te gustó el ${topItemName}!"). (3) Revisar las últimas 10 reseñas negativas — si hay un patrón (tiempos, empaque, ítem específico), resolver la causa raíz.`,
+     impact:`+0.2-0.3 de rating en 30 días`,tags:['Crítico','Proceso','Sin costo']},
   ];
 }
 
+
 function genTicketStrategy(d){
-  const target=Math.round(d.avgTicket*1.25/5)*5;
-  const gap=target-d.avgTicket;
-  const lowTicketOrders=d.ticketDist.find(b=>b.lbl.includes('30–50'))?.count||0;
+  const topMain   = d.items.find(i=>i.type==='main') || d.items[0];
+  const topSide   = d.items.find(i=>i.type==='side');
+  const topDrink  = d.items.find(i=>i.type==='drink');
+  const topDessert= d.items.find(i=>i.type==='dessert');
+  const avgP = it => it&&it.orders>0 ? it.revenue/it.orders : 0;
+  const target = Math.round(d.avgTicket*1.25/5)*5;
+  const gap = target - d.avgTicket;
+  const singleItemOrders = d.ticketDist.find(b=>b.lo<50)?.count || 0;
+  const singlePct = Math.round(singleItemOrders/d.done_n*100);
+  const thresholdBenefit = Math.round(d.avgTicket*1.3/5)*5;
+
   return [
-    {num:1,title:`Combos estratégicos — de S/${d.avgTicket.toFixed(0)} a S/${target}`,
-     desc:`El ${Math.round(lowTicketOrders/d.done_n*100)}% de pedidos están en el rango S/30–50 (probablemente órdenes de un solo ítem). Si conviertes el 30% de esas órdenes en combos de S/${target}, el ticket promedio sube de S/${d.avgTicket.toFixed(0)} a S/${(d.avgTicket+gap*0.3).toFixed(0)} — incremento de revenue mensual estimado: S/${Math.round(d.done_n*0.3*gap).toLocaleString('es-PE')}.`,
-     impact:`+S/${gap.toFixed(0)} ticket promedio estimado`,tags:['Alta prioridad','Alta palanca']},
-    {num:2,title:'Sección "Complementos sugeridos" — upsell automático',
-     desc:`Activar la funcionalidad de "También te puede gustar" o "Agrega al pedido" en Rappi y PedidosYa. Configurar para sugerir: (1) Bebida cuando el pedido no tiene bebida, (2) Postre cuando el pedido supera S/${Math.round(d.avgTicket*0.8)}, (3) Ítem adicional cuando hay solo un producto principal.`,
-     impact:'+12-18% en ticket promedio sin descuento',tags:['Alta prioridad','Sin costo']},
-    {num:3,title:'Precio ancla — ítem premium visible',
-     desc:`Incluir un ítem de precio alto (S/${Math.round(d.avgTicket*2.2)}-S/${Math.round(d.avgTicket*2.8)}) como ancla visual. El cliente no necesita comprarlo — su función es hacer que los ítems de precio medio parezcan "razonables". Ubicarlo en la primera posición de la carta.`,
-     impact:'+8-12% en ticket promedio por efecto ancla',tags:['Media prioridad','Sin costo']},
-    {num:4,title:'Estrategia de tamaños — small/medium/large',
-     desc:`Si el menú lo permite, ofrecer opciones de tamaño para ítems populares. La versión "grande" a +30% del precio captura a quienes ya compraron y quieren más. Esto es especialmente efectivo en bebidas, papas y postres.`,
-     impact:'+15% en ítems con size option',tags:['Media prioridad','Requiere operativo']},
-    {num:5,title:`Umbral de beneficio en S/${Math.round(d.avgTicket*1.3/5)*5}`,
-     desc:`Configurar un beneficio (envío gratis, postre gratis, descuento adicional) cuando el pedido supera S/${Math.round(d.avgTicket*1.3/5)*5}. Este threshold obliga a los clientes a agregar ítems para "alcanzar" el beneficio. Costo real: solo para los pedidos que ya estarían en ese rango — el incremental es casi puro margen.`,
-     impact:'+20% de pedidos alcanzando el umbral',tags:['Alta prioridad','Bajo costo']},
+    {num:1,
+     title:`Convertir el ${singlePct}% de pedidos solo-ítem en combos`,
+     desc:`${singleItemOrders} de tus ${d.done_n} pedidos están por debajo de S/50 — probablemente son un solo ítem (${topMain?.name||'burger'} sin acompañamiento). Si conviertes el 30% de esos en un combo con ${topSide?.name||'papas'} (precio sugerido: S/${topMain&&topSide?Math.round((avgP(topMain)+avgP(topSide))*0.90):45}), el ticket promedio pasa de S/${d.avgTicket.toFixed(0)} a S/${(d.avgTicket + gap*0.3).toFixed(0)}. Acción: activar el combo en la primera posición de la carta con foto atractiva y describirlo como "la elección completa".`,
+     impact:`+S/${(gap*0.3).toFixed(0)} en ticket prom. → +S/${Math.round(d.done_n*gap*0.3).toLocaleString('es-PE')}/mes`,
+     tags:['Alta palanca','Alta prioridad']},
+    {num:2,
+     title:`"¿Agregas ${topSide?.name||'papas'}?" — modificador en el momento de compra`,
+     desc:`Configurar en ${Object.keys(d.byPlat).map(p=>({rappi:'Rappi',peya:'PedidosYa',didi:'Didi Food'}[p]||p)).join(' y ')}: cuando el cliente agrega "${topMain?.name||'ítem principal'}" al carrito, mostrar automáticamente "${topSide?.name||'papas'} por solo S/${topSide?Math.round(avgP(topSide)*0.9):8} más". Este upsell aparece en el momento de mayor intención de compra. Conversión esperada: 20-30% de quienes ven el sugerido lo agregan.`,
+     impact:`+S/${topSide?Math.round(avgP(topSide)*0.85):8} en ${Math.round(d.done_n*0.25)} pedidos = +S/${Math.round(d.done_n*0.25*(topSide?avgP(topSide)*0.85:8)).toLocaleString('es-PE')}/mes`,
+     tags:['Alta prioridad','Sin costo']},
+    {num:3,
+     title:`Precio ancla: ítem premium visible en primera posición`,
+     desc:`Incluir un ítem de S/${Math.round(d.avgTicket*2.2)}-S/${Math.round(d.avgTicket*2.5)} como primera opción visible${topMain?` (por ejemplo una versión XXL o premium del "${topMain.name}")`:' '}. Su función es psicológica: hace que los ítems a S/${d.avgTicket.toFixed(0)}-S/${Math.round(d.avgTicket*1.2)} parezcan "razonables". No necesita venderse mucho — existe para subir el punto de referencia del cliente.`,
+     impact:'+8-12% ticket promedio por efecto ancla',
+     tags:['Media prioridad','Sin costo operativo']},
+    {num:4,
+     title:`Umbral S/${thresholdBenefit}: "${topDrink?.name||'bebida'} gratis al pedir S/${thresholdBenefit}+"`,
+     desc:`Activar beneficio para pedidos ≥ S/${thresholdBenefit} (${Math.round((thresholdBenefit-d.avgTicket)/d.avgTicket*100)}% por encima del ticket actual). Solo el ${Math.round((d.ticketDist.filter(b=>b.lo>=thresholdBenefit).reduce((s,b)=>s+b.count,0))/d.done_n*100)}% de tus pedidos actuales lo alcanzan — el resto tiene que agregar algo para llegar. Costo real: el beneficio se activa solo en pedidos que YA habrían llegado a ese monto, más el margen del ítem gratis para los que lo alcanzan por el incentivo.`,
+     impact:`+${Math.round(d.done_n*0.18)} pedidos alcanzando el umbral`,
+     tags:['Alta prioridad','Bajo costo']},
+    {num:5,
+     title:`${topDessert?`"${topDessert.name}" como cierre — ofrecer con cada combo`:'Postre como cierre de pedido'}`,
+     desc:`${topDessert?`El "${topDessert.name}" aparece en ${topDessert.orders} pedidos (${(topDessert.orders/d.done_n*100).toFixed(0)}% de órdenes). Incluirlo como opción de cierre en todos los combos a S/${Math.round(avgP(topDessert)*0.85)} (con pequeño descuento al estar en combo) puede capturar a los que normalmente no lo agregan.`:'Agregar una opción de postre sencilla (brownie, helado, mousse) con precio entre S/8-15 para incluir en combos como cierre. Los postres tienen margen alto y convierten bien como complemento, no como ítem principal.'}`,
+     impact:'+15-20% de pedidos que incluyen un postre/dessert',
+     tags:['Media prioridad','Requiere ítem en carta']},
   ];
 }
+
 
 function genRetentionStrategy(d){
   const DOW=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-  const bestDay=DOW[d.bestDow];
+  const topMain = d.items.find(i=>i.type==='main') || d.items[0];
+  const topItemName = topMain?.name || 'tu ítem estrella';
+  const reclamos = d.reclamos || 0;
+  const recPct = d.reclamosPct || 0;
+  const bestDay = DOW[d.bestDow];
+  const avgTicket = d.avgTicket;
+
   return [
-    {num:1,title:'Frecuencia de reorden — identificar y reactivar',
-     desc:`Sin datos de usuarios individuales, la mejor proxy de retención es el volumen semanal consistente. Estrategia: mantener la tienda activa y visible TODOS LOS DÍAS (no apagar la tienda en horarios de baja demanda sino activar descuentos) para que el algoritmo te muestre con más frecuencia a usuarios recurrentes.`,
-     impact:'Mejora ranking orgánico y frecuencia de visita',tags:['Alta prioridad','Sin costo']},
-    {num:2,title:`Programa de lealtad informal — comunicar en empaque`,
-     desc:`Incluir en el empaque del pedido una tarjeta pequeña (costo: S/0.10/pedido) con: (1) Código QR al perfil en Rappi/PedidosYa para dejar reseña, (2) Mensaje de agradecimiento personalizado, (3) Teaser del próximo combo especial. El objetivo: crear conexión emocional post-entrega.`,
-     impact:'+25-40% en probabilidad de reorden',tags:['Alta prioridad','Costo mínimo']},
-    {num:3,title:'Consistencia de calidad — el driver #1 de retención',
-     desc:`Los datos muestran ${d.reclamos} reclamos (${d.reclamosPct.toFixed(1)}%). Cada reclamo tiene probabilidad de ${d.reclamosPct>5?'60%':'40%'} de no volver. Protocolo: (1) Checklist de calidad antes de entregar al repartidor, (2) Empaque que proteja la presentación, (3) Monitoreo de temperatura para ítems que lo requieren.`,
-     impact:`-${Math.min(80,d.reclamosPct*5).toFixed(0)}% en churnn por calidad`,tags:['Crítico','Operativo']},
-    {num:4,title:`Comunicación de lanzamientos — novedades en el menú`,
-     desc:`Cada vez que se lanza un nuevo ítem o combo, actualizar inmediatamente el perfil en todas las plataformas con: nueva foto, descripción optimizada, y si es posible activar una promo de lanzamiento por 2 semanas. Las novedades generan tráfico orgánico adicional del algoritmo.`,
-     impact:'Reactivación de usuarios inactivos + nuevos',tags:['Media prioridad','Sin costo']},
-    {num:5,title:'Ventana de reactivación — ${bestDay} como día de "volver"',
-     desc:`Los ${bestDay} son tu mejor día. Activar una campaña semanal consistent para ese día (mismo nombre, mismo visual si la plataforma lo permite) crea un patrón de hábito. El objetivo es que los clientes recurrentes asocien el día ${bestDay} con pedir en tu tienda.`,
-     impact:'Hábito de recompra semanal',tags:['Media prioridad','Bajo esfuerzo']},
+    {num:1,
+     title:`Empaque como herramienta de retención — costo: S/0.10/pedido`,
+     desc:`Incluir en cada pedido una tarjeta pequeña (impresión: S/0.08-0.12 c/u) con: (1) Mensaje personalizado ("Gracias por pedir tu ${topItemName.split(' ').slice(0,2).join(' ')}"), (2) QR que lleva directo a tu perfil en ${Object.keys(d.byPlat).map(p=>({rappi:'Rappi',peya:'PedidosYa',didi:'Didi Food'}[p]||p)).slice(0,1).join('')} para dejar reseña, (3) Promesa de la próxima novedad. Costo mensual con ${d.done_n} pedidos: S/${Math.round(d.done_n*0.10)}. Impacto esperado en reorden: +25-35% en clientes que reciben la tarjeta vs los que no.`,
+     impact:`+${Math.round(d.done_n*0.12)} pedidos/mes por reactivación`,tags:['Alta prioridad','Costo mínimo']},
+    {num:2,
+     title:`Protocolo de calidad: los ${reclamos} reclamos son ${reclamos} clientes en riesgo`,
+     desc:`${recPct>5?`El ${recPct.toFixed(1)}% de reclamos está por encima del benchmark saludable (<3%). `:`Con ${reclamos} reclamos, cada uno representa un cliente que probablemente no vuelve.`} Proceso: (1) Revisar el último reclamo de cada tipo, identificar si es empaque, temperatura, ítem incorrecto o tiempo de entrega. (2) Para el motivo más frecuente, crear un checklist de 3 puntos que el equipo revisa antes de entregar al repartidor. (3) En reclamos de ítem faltante: incluir lista de verificación pegada en el empaque.`,
+     impact:`-${Math.min(80,recPct*6).toFixed(0)}% en churn por mala experiencia`,tags:['Crítico','Proceso operativo']},
+    {num:3,
+     title:`${bestDay} como "día de los habituales" — crear rutina de recompra`,
+     desc:`Los ${bestDay} ya son tu mejor día (${d.dowO[d.bestDow]} pedidos). Reforzar ese patrón con una campaña semanal consistente que tenga el mismo nombre y mecánica cada ${bestDay}. Los clientes recurrentes que piden los ${bestDay} deben encontrar siempre algo especial ese día — un ítem del día, una promoción exclusiva, o simplemente la garantía de disponibilidad completa. La consistencia crea hábito.`,
+     impact:'Hábito de recompra semanal en día pico',tags:['Alta prioridad','Bajo esfuerzo']},
+    {num:4,
+     title:`Comunicar lanzamientos: cada nuevo ítem = spike de tráfico orgánico`,
+     desc:`Las plataformas dan visibilidad adicional a las tiendas que actualizan su menú. Cada vez que se agrega un ítem o combo nuevo: (1) Subir foto el día de lanzamiento, (2) Actualizar la descripción del perfil mencionando "Nuevo: [nombre ítem]", (3) Activar promo de lanzamiento 15% por 2 semanas. Este ciclo de novedades reactiva usuarios que no han pedido en 3+ semanas — el algoritmo les muestra la novedad porque tuvieron actividad previa.`,
+     impact:'+20-30% en pedidos la semana de lanzamiento',tags:['Media prioridad','Sin costo']},
+    {num:5,
+     title:`Ventana de reactivación: detectar y actuar en semanas sin pedidos`,
+     desc:`Sin datos de usuarios individuales de las plataformas, el proxy de retención es el volumen semanal. Si una semana tiene menos del 60% del promedio semanal (< ${Math.round(d.done_n/d.weeks.length*0.6)} pedidos), activar inmediatamente una campaña de emergencia: descuento de 20% por 48h. Esto recupera el volumen perdido antes de que el algoritmo penalice la caída de actividad rebajando el ranking.`,
+     impact:'Recuperación de volumen en semanas débiles',tags:['Media prioridad','Táctica de rescate']},
   ];
 }
+
 
 function genRoadmap(d,combos){
   const DOW=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
@@ -1079,7 +1236,14 @@ function renderCombosPanel(d,combos){
     document.getElementById('combosList').innerHTML='';
     return;
   }
-  document.getElementById('combosInsight').innerHTML=`<strong>Basado en datos reales:</strong> Los combos sugeridos provienen del análisis de ${d.coOccurrence.slice(0,3).map(c=>`"${c.a.split(' ')[0]}" + "${c.b.split(' ')[0]}"  (${c.count}x)`).join(', ')} — pares de ítems más frecuentes en el mismo pedido.`;
+  const mainCount = d.items.filter(i=>i.type==='main').length;
+  const sideCount = d.items.filter(i=>i.type==='side').length;
+  const drinkCount= d.items.filter(i=>i.type==='drink').length;
+  const validCoOcc= d.coOccurrence.filter(p=>{
+    const tA=p.typeA||classifyItem(p.a), tB=p.typeB||classifyItem(p.b);
+    return tA==='main'||tB==='main';
+  });
+  document.getElementById('combosInsight').innerHTML=`<strong>Lógica de combos:</strong> Solo se proponen combos con al menos un ítem principal (burger/plato). Se detectaron ${mainCount} ítems principales, ${sideCount} acompañamientos y ${drinkCount} bebidas. ${validCoOcc.length>0?`Co-ocurrencias válidas (principal+otro): ${validCoOcc.slice(0,3).map(c=>`"${c.a.split(' ').slice(0,2).join(' ')}" + "${c.b.split(' ').slice(0,2).join(' ')}" (${c.count}x)`).join(', ')}.`:''} Opciones y modificadores dentro de combos existentes NO se cuentan como nuevos combos.`;
   document.getElementById('combosList').innerHTML=combos.map(c=>`
     <div class="combo-card">
       <span class="combo-tag ${c.tag}">${c.tagTxt}</span>
