@@ -824,10 +824,18 @@ function analyze(allOrders,brand){
   // PeyaSummary data (if loaded)
   const peyaSummary = allOrders._peyaSummary?.[0] || null;
 
+  // Rappi financial metrics (if Rappi financial report loaded)
+  const rappiFinOrders = allOrders.filter(o=>o._format==='rappi_fin'&&!o.cancelled&&o.total>0);
+  const rappiAvgVB = rappiFinOrders.length ? rappiFinOrders.reduce((s,o)=>s+o.total,0)/rappiFinOrders.length : 0;
+  const rappiDiscPct = rappiFinOrders.length && rappiAvgVB > 0
+    ? rappiFinOrders.reduce((s,o)=>s+(o.total>0?(o.total-o.ingreso)/o.total:0),0)/rappiFinOrders.length
+    : 0.287; // default from real data
+
   return {
     brand,done_n,total_n,canc_n,canc_pct,revenue,avgTicket,
     hasFinancials,totalComision,totalIngreso,comPct,netPct,otherDedPct,
     avgPrepTime,primeOrders,primePct,peyaSummary,
+    _rappiAvgVB: rappiAvgVB, _rappiDiscPct: rappiDiscPct,
     byStatus,reclamos:reclamos.length,reclamosPct,motivosReclamo,
     earliest,latest,days,dailyRevs,dailyOrds,byWeek,weeks,
     dowO,dowR,bestDow,worstDow,hourO,peakHour,deadHours,hm,
@@ -1745,187 +1753,314 @@ const SEASONAL_CALENDAR = [
 // RENDER PRICING PANEL
 function renderPricingPanel(d, allOrders) {
   const DOW = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-  
+
   if (!d.hasItems || d.items.length === 0) {
-    document.getElementById('pricingInsight').innerHTML = 
-      '<strong>Sin datos de productos.</strong> El motor de precios requiere datos de PedidosYa con la columna de ítems.';
+    ['pricingInsight','itemPriceTable','dynamicPricingMatrix','seasonalCalendar','branchPricing','modifierAnalysis']
+      .forEach(id => { const el=document.getElementById(id); if(el) el.innerHTML='<div style="font-size:.76rem;color:var(--m);padding:10px 0">Requiere datos de PedidosYa con columna de ítems.</div>'; });
     return;
   }
 
-  // Parse modifiers from actual orders
-  const rawOrders = allOrders || [];
-  const { comboOptions } = parseModifiers(rawOrders.filter(o=>!o.cancelled&&o.items));
-  
-  // Elasticity estimation
-  const elasticityMap = estimateElasticity(d.items, rawOrders);
-  
-  // Avg price per item
   const avgP = it => it.orders > 0 ? it.revenue / it.orders : 0;
-  
-  // Insight summary
-  const elasticItems = d.items.filter(i=>elasticityMap[i.name]==='high').map(i=>i.name);
-  const inelasticItems= d.items.filter(i=>elasticityMap[i.name]==='low').map(i=>i.name);
-  document.getElementById('pricingInsight').innerHTML = 
-    `<strong>Elasticidad de precios estimada:</strong> Ítems con demanda elástica (sensibles al precio): ${elasticItems.slice(0,3).map(n=>`<em>${n}</em>`).join(', ') || '—'}. Ítems inelásticos (potencial de subida): ${inelasticItems.slice(0,3).map(n=>`<em>${n}</em>`).join(', ') || '—'}. Los ítems elásticos requieren ajustes graduales (±3-5%); los inelásticos soportan mayor variación (±8-12%).`;
 
-  // ── ITEM PRICE TABLE ────────────────────────────────────────────────────
-  const elasLabel = {'high':'Alta (cauteloso)','medium':'Media','low':'Baja (margen)'};
-  const elasCls   = {'high':'e-hi','medium':'e-med','low':'e-lo'};
-  const elasDesc  = {
-    'high': 'Demanda sensible al precio. Testear subida de S/1-2 y medir impacto en volumen.',
-    'medium':'Elasticidad moderada. Ajustes de S/2-4 son seguros sin riesgo de perder volumen.',
-    'low':  'Demanda inelástica. Puede subir S/3-6 sin afectar el volumen de pedidos.'
+  // ── REAL DISCOUNT STRUCTURE ─────────────────────────────────────────────
+  // From Rappi financial: restaurant funds ~28.7% discount per order (S/22.8)
+  // Avg Rappi ticket (Venta Bruta = base price): S/80.8
+  // PedidosYa avg ticket paid: S/37.60
+  // Strategy: set base (lista) HIGH → apply discount → customer perceives benefit
+  const rappiDisc  = d._rappiDiscPct  || 0.287;  // funded by restaurant
+  const rappiVB    = d._rappiAvgVB    || 0;       // avg venta bruta (base price)
+  const peya_avgT  = d._peyaAvgTicket || 0;       // avg ticket paid
+  const hasRappiF  = rappiVB > 0;
+
+  // For each item: estimate unit price paid, then back-calculate base price
+  const items = d.items.filter(i => i.orders > 0 && avgP(i) > 0);
+
+  // Platform discount rates
+  const discByPlat = {
+    rappi: hasRappiF ? rappiDisc : 0.25,  // from actual data
+    peya:  d.peyaSummary ? 0.15 : 0.18,   // PedidosYa has lower restaurant discount (platform subsidizes more)
+    didi:  0.20,
   };
-  
-  const rows = d.items.map(item => {
-    const price = avgP(item);
-    const elas  = elasticityMap[item.name] || 'medium';
-    const safe  = {'high':0.04,'medium':0.08,'low':0.12}[elas];
-    const sugLo = Math.round((price*(1-safe/2))*2)/2;
-    const sugHi = Math.round((price*(1+safe))*2)/2;
-    const action= elas==='low' ? 'Subir' : elas==='high' ? 'Testear gradual' : 'Mantener / +S/2';
-    const px_cls = elas==='low'?'px-up':elas==='high'?'px-dn':'px-ok';
-    const typeLabel = {main:'🍔 Principal',side:'🍟 Acomp.',drink:'🥤 Bebida',dessert:'🍦 Postre',combo:'📦 Combo',addon:'➕ Add-on',other:'•'}[item.type]||'•';
+
+  // Determine platform for each item if possible
+  // Items from PedidosYa (which has item data) use peya discount
+  const primaryPlat = Object.keys(d.byPlat).includes('rappi') && rappiVB > 0 ? 'rappi' :
+                      Object.keys(d.byPlat).includes('peya') ? 'peya' : 'rappi';
+  const discRate = discByPlat[primaryPlat] || 0.25;
+
+  // ── INSIGHT ──────────────────────────────────────────────────────────────
+  const insightEl = document.getElementById('pricingInsight');
+  if (insightEl) {
+    const rappiNote = hasRappiF
+      ? `Rappi: precio base (Venta Bruta) promedio <strong>${fp(rappiVB)}</strong> con descuento restaurante del <strong>${(rappiDisc*100).toFixed(0)}%</strong> = precio pagado ~${fp(rappiVB*(1-rappiDisc))}.`
+      : '';
+    const peyaNote = d.peyaSummary
+      ? ` PedidosYa: precio pagado promedio <strong>${fp(d.peyaSummary.ventasNetas/d.peyaSummary.orders)}</strong> por orden.`
+      : '';
+    insightEl.innerHTML = `<strong>Estructura de precios real:</strong> ${rappiNote}${peyaNote} 
+      El motor calcula el <em>precio base (lista)</em> como el precio final pagado ÷ (1 - descuento), 
+      para que siempre haya margen de descuento visible al cliente. 
+      Los ajustes dinámicos modifican el <strong>% de descuento activo</strong> según la demanda — el precio lista no cambia.`;
+  }
+
+  // ── TABLE: PRICE PAID → BASE → DYNAMIC ──────────────────────────────────
+  const slots = [
+    { id:'peak',  label:'Hora pico',     mult:1.00, disc: Math.max(0, discRate-0.05), note:'Mantén descuento bajo — demanda alta, cliente menos sensible al precio' },
+    { id:'normal',label:'Hora normal',   mult:1.00, disc: discRate,                   note:'Precio estándar de operación' },
+    { id:'dead',  label:'Hora muerta',   mult:1.00, disc: Math.min(0.35, discRate+0.08), note:'Aumentar descuento para estimular demanda' },
+    { id:'bestday',label:'Mejor día',    mult:1.00, disc: Math.max(0, discRate-0.08), note:'Menor descuento — cliente ya decidió comprar' },
+    { id:'worstday',label:'Día más débil',mult:1.00,disc: Math.min(0.40, discRate+0.12), note:'Mayor descuento — necesita activación' },
+  ];
+
+  const tableRows = items.slice(0,12).map(item => {
+    const paidPrice = avgP(item);
+    const basePrice = Math.round(paidPrice / (1 - discRate) * 2) / 2; // round to 0.5
+    const type_icon = {main:'🍔',side:'🍟',drink:'🥤',dessert:'🍦',combo:'📦',addon:'➕'}[item.type]||'•';
+
+    const slotCells = slots.map(s => {
+      const finalPrice = Math.round(basePrice * (1 - s.disc) * 2) / 2;
+      const saving     = basePrice - finalPrice;
+      const isHigh = s.disc < discRate - 0.03;
+      const isLow  = s.disc > discRate + 0.03;
+      const color  = isHigh ? 'var(--gr)' : isLow ? '#7c3aed' : 'var(--m)';
+      return `<td style="text-align:center;vertical-align:middle;padding:7px 5px">
+        <div style="font-family:'DM Mono',monospace;font-size:.8rem;font-weight:700">${fp(finalPrice)}</div>
+        <div style="font-size:.58rem;color:${color};font-weight:600">${(s.disc*100).toFixed(0)}% off</div>
+        <div style="font-size:.56rem;color:var(--m)">lista ${fp(basePrice)}</div>
+      </td>`;
+    }).join('');
+
     return `<tr>
-      <td style="font-weight:600">${item.name}</td>
-      <td><span style="font-size:.65rem;color:var(--m)">${typeLabel}</span></td>
-      <td style="font-family:'DM Mono',monospace">${fp(price)}</td>
-      <td style="font-family:'DM Mono',monospace;color:var(--gr)">${fp(sugLo)} – ${fp(sugHi)}</td>
-      <td><span class="elas-chip ${elasCls[elas]}">${elasLabel[elas]}</span></td>
-      <td><span class="px-badge ${px_cls}">${action}</span></td>
-      <td style="font-size:.69rem;color:var(--m)">${elasDesc[elas]}</td>
+      <td style="font-weight:600;font-size:.8rem;padding:7px 10px;white-space:nowrap">${type_icon} ${item.name}</td>
+      <td style="text-align:center;font-family:'DM Mono',monospace;font-size:.78rem;color:var(--m);padding:7px 8px">
+        <div style="font-weight:700;color:var(--t)">${fp(paidPrice)}</div>
+        <div style="font-size:.6rem">precio pagado</div>
+      </td>
+      <td style="text-align:center;padding:7px 8px">
+        <div style="font-family:'DM Mono',monospace;font-size:.82rem;font-weight:700;color:var(--r)">${fp(basePrice)}</div>
+        <div style="font-size:.6rem;color:var(--m)">precio lista</div>
+      </td>
+      ${slotCells}
     </tr>`;
   }).join('');
-  
-  document.getElementById('itemPriceTable').innerHTML = `<div class="card-t">Precios actuales y sugeridos — basado en elasticidad estimada</div>
-    <div style="font-size:.72rem;color:var(--m);margin-bottom:10px;padding:8px;background:var(--w);border-radius:2px">
-      ⚠️ Los precios son estimados a partir de revenue ÷ pedidos. Para validar: implementar un cambio de precio en 1 ítem durante 2 semanas y medir el cambio en volumen. Elasticidad real = (ΔVolumen% / ΔPrecio%).
-    </div>
-    <table class="price-table">
-      <thead><tr><th>Ítem</th><th>Tipo</th><th>Precio est.</th><th>Rango sugerido</th><th>Elasticidad</th><th>Acción</th><th>Razonamiento</th></tr></thead>
-      <tbody>${rows}</tbody>
-    </table>`;
 
-  // ── DYNAMIC PRICING MATRIX ─────────────────────────────────────────────
-  const dpm = genDynamicPricing(d);
-  const cellColors = {
-    high: `background:rgba(45,106,79,.18);color:#1a4a2e`,
-    base: `background:rgba(107,101,96,.1);color:var(--m)`,
-    low:  `background:rgba(200,160,69,.15);color:#6b4800`,
-    dead: `background:rgba(200,57,43,.12);color:var(--r)`,
-  };
-  
-  let dpmHtml = '<div class="dpm-grid"><div></div>' + dpm.DOW.map(d=>`<div class="dpm-head">${d}</div>`).join('');
-  dpm.slots.forEach((slot, si) => {
+  const slotHeaders = slots.map(s =>
+    `<th style="text-align:center;min-width:80px">${s.label}</th>`
+  ).join('');
+
+  const slotLegend = slots.map(s =>
+    `<div style="padding:6px 10px;background:var(--c);border:1px solid var(--l);border-radius:2px;font-size:.7rem">
+      <strong>${s.label}:</strong> ${(s.disc*100).toFixed(0)}% descuento activo
+      <div style="font-size:.65rem;color:var(--m);margin-top:1px">${s.note}</div>
+    </div>`
+  ).join('');
+
+  const tablePriceEl = document.getElementById('itemPriceTable');
+  if (tablePriceEl) tablePriceEl.innerHTML = `
+    <div class="card-t">Precio pagado → Precio lista → Precio final por escenario</div>
+    <div style="font-size:.71rem;color:var(--m);padding:9px 12px;background:rgba(200,57,43,.04);border-radius:2px;margin-bottom:10px;line-height:1.7">
+      <strong>Lógica de precios en delivery:</strong> Subir el <em>precio lista</em> (lo que aparece tachado) y activar descuentos que hacen que el <em>precio final</em> sea igual o cercano al precio que el cliente paga hoy. El cliente percibe un beneficio aunque no pague menos.
+      La columna "precio pagado" es el precio promedio real de tus transacciones.
+    </div>
+    <div style="overflow-x:auto">
+      <table class="price-table" style="min-width:820px">
+        <thead><tr>
+          <th style="min-width:160px">Ítem</th>
+          <th style="text-align:center">Precio pagado<br><span style="font-weight:400;opacity:.7">promedio real</span></th>
+          <th style="text-align:center;color:#f87171">Precio lista<br><span style="font-weight:400;opacity:.7">base sin dto.</span></th>
+          ${slotHeaders}
+        </tr></thead>
+        <tbody>${tableRows}</tbody>
+      </table>
+    </div>
+    <div style="display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-top:12px">${slotLegend}</div>`;
+
+  // ── DYNAMIC PRICING MATRIX (hora × día) ────────────────────────────────
+  const SLOTS_H = [
+    {label:'10–12h',hours:[10,11]},
+    {label:'12–14h',hours:[12,13]},
+    {label:'14–17h',hours:[14,15,16]},
+    {label:'17–19h',hours:[17,18]},
+    {label:'19–21h',hours:[19,20]},
+    {label:'21–23h',hours:[21,22]},
+  ];
+  const peakVal = Math.max(...d.hm.flat());
+  const topItem = items[0];
+  const topBase = topItem ? Math.round(avgP(topItem)/(1-discRate)*2)/2 : 0;
+
+  let dpmHtml = `<div style="font-size:.72rem;color:var(--m);margin-bottom:10px">
+    Mostrando precio final sugerido para <strong>${topItem?.name||'ítem principal'}</strong> (lista: ${fp(topBase)}).
+    El precio lista no cambia — varía el % de descuento activo según la demanda del slot.
+  </div>`;
+  dpmHtml += '<div class="dpm-grid" style="grid-template-columns:60px repeat(7,1fr)"><div></div>';
+  dpmHtml += DOW.map(d=>`<div class="dpm-head">${d}</div>`).join('');
+
+  SLOTS_H.forEach(slot => {
     dpmHtml += `<div class="dpm-row-lbl">${slot.label}</div>`;
-    dpm.matrix[si].forEach((cell, di) => {
-      dpmHtml += `<div class="dpm-cell" style="${cellColors[cell.cls]}" title="${cell.v} pedidos · multiplier ${cell.mult}x">${cell.label}</div>`;
+    DOW.forEach((_, dow) => {
+      const v    = slot.hours.reduce((s,h)=>s+(d.hm[h]?.[dow]||0),0);
+      const pct  = peakVal>0 ? v/peakVal : 0;
+      // Discount strategy based on demand
+      let disc, bg, textColor, tooltip;
+      if (pct >= 0.70) {
+        disc=Math.max(0,discRate-0.08); bg='rgba(45,106,79,.18)'; textColor='#1a4a2e';
+        tooltip=`Alta demanda (${(pct*100).toFixed(0)}% del pico) — reducir descuento`;
+      } else if (pct >= 0.40) {
+        disc=discRate; bg='rgba(107,101,96,.1)'; textColor='var(--m)';
+        tooltip=`Demanda normal — descuento estándar`;
+      } else if (pct >= 0.15) {
+        disc=Math.min(0.38,discRate+0.08); bg='rgba(200,160,69,.15)'; textColor='#6b4800';
+        tooltip=`Baja demanda — activar mayor descuento`;
+      } else {
+        disc=v>0?Math.min(0.45,discRate+0.15):null; bg='rgba(200,57,43,.1)'; textColor='var(--r)';
+        tooltip=v>0?`Zona muerta — descuento máximo o cerrar`:`Sin pedidos — evaluar cerrar`;
+      }
+      const finalP = topBase&&disc!=null ? Math.round(topBase*(1-disc)*2)/2 : null;
+      dpmHtml += `<div class="dpm-cell" style="background:${bg};color:${textColor}" title="${tooltip}${finalP?` · ${fp(finalP)}`:''}" >
+        ${finalP ? `${fp(finalP)}<br><span style="font-size:.5rem;opacity:.8">${(disc*100).toFixed(0)}% off</span>` : '<span style="font-size:.6rem">—</span>'}
+      </div>`;
     });
   });
   dpmHtml += '</div>';
-  dpmHtml += `<div style="font-size:.7rem;color:var(--m);margin-top:6px;line-height:1.6">
-    <strong>Cómo usar:</strong> Multiplica tu precio base por el factor sugerido para cada franja. 
-    Ejemplo: si el <strong>${fp(d.avgTicket)} ticket promedio</strong> ocurre en un slot "+7%", 
-    el precio objetivo es ${fp(d.avgTicket*1.07)}. Aplicar en la plataforma como precio de lista para ese horario.
-    <br><span style="color:var(--gr)">▪ Verde +7%</span> = alta demanda, precio premium. 
-    <span style="color:#6b4800">▪ Amarillo -5%</span> = estimular. 
-    <span style="color:var(--r)">▪ Rojo -10%/Cerrar</span> = zona muerta — promo o cierre.
+  dpmHtml += `<div style="margin-top:8px;font-size:.7rem;color:var(--m);display:flex;gap:14px;flex-wrap:wrap">
+    <span style="color:var(--gr)">▪ Verde: reducir descuento (alta demanda)</span>
+    <span style="color:var(--m)">▪ Gris: descuento estándar</span>
+    <span style="color:#6b4800">▪ Amarillo: aumentar descuento</span>
+    <span style="color:var(--r)">▪ Rojo: máximo descuento o cerrar</span>
   </div>`;
-  document.getElementById('dynamicPricingMatrix').innerHTML = `<div class="card-t">Precio dinámico — multiplicador por hora y día</div>${dpmHtml}`;
+
+  // Add item selector to see prices per product
+  const itemSelectHtml = `<div style="margin-bottom:10px;display:flex;align-items:center;gap:10px">
+    <label style="font-size:.72rem;font-weight:600;color:var(--m)">Ver precios para:</label>
+    <select id="dpmItemSelect" onchange="updateDpmItem(this.value)" 
+            style="padding:5px 10px;border:1px solid var(--l);border-radius:2px;font-family:'DM Sans',sans-serif;font-size:.75rem;background:#fff">
+      ${items.slice(0,12).map(it=>`<option value="${it.name.replace(/"/g,'&quot;')}">${it.name}</option>`).join('')}
+    </select>
+  </div>`;
+
+  const matrixEl = document.getElementById('dynamicPricingMatrix');
+  if (matrixEl) matrixEl.innerHTML = `<div class="card-t">Motor de precio dinámico — precio final por ítem, horario y día</div>${itemSelectHtml}${dpmHtml}`;
+
+  // Store items data globally for the item selector
+  window._pricingItems = items;
+  window._pricingDiscRate = discRate;
+  window._pricingD = d;
 
   // ── SEASONAL CALENDAR ──────────────────────────────────────────────────
-  const seasonHtml = SEASONAL_CALENDAR.map(s => {
-    const pct = Math.round((s.mult-1)*100);
-    const color = pct>5?'var(--gr)':pct>0?'var(--g)':pct<-5?'var(--r)':'var(--m)';
-    const sign = pct>0?'+':'';
-    return `<div style="display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--l)">
-      <div style="width:90px;flex-shrink:0">
-        <div style="font-weight:700;font-size:.76rem">${s.month}</div>
-        <div style="font-size:.65rem;color:var(--m)">${s.label}</div>
-      </div>
-      <div style="flex:1;font-size:.71rem;color:var(--m);line-height:1.6">${s.note}</div>
-      <div style="width:45px;text-align:right;flex-shrink:0;font-family:'DM Mono',monospace;font-weight:700;font-size:.78rem;color:${color}">${sign}${pct}%</div>
-    </div>`;
-  }).join('');
-  document.getElementById('seasonalCalendar').innerHTML = `<div class="card-t">Ajustes estacionales recomendados</div>${seasonHtml}`;
+  const seasonEl = document.getElementById('seasonalCalendar');
+  if (seasonEl) {
+    const seasonHtml = SEASONAL_CALENDAR.map(s => {
+      const pct = Math.round((s.mult-1)*100);
+      const adjDisc = discRate - (s.mult-1); // higher demand = less discount needed
+      const adjDiscClamped = Math.max(0.05, Math.min(0.45, adjDisc));
+      const color = pct>5?'var(--gr)':pct>0?'var(--g)':pct<-5?'var(--r)':'var(--m)';
+      const sign = pct>0?'+':'';
+      return `<div style="display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--l)">
+        <div style="width:85px;flex-shrink:0">
+          <div style="font-weight:700;font-size:.75rem">${s.month}</div>
+          <div style="font-size:.62rem;color:var(--m)">${s.label}</div>
+        </div>
+        <div style="flex:1;font-size:.7rem;color:var(--m);line-height:1.5">${s.note}</div>
+        <div style="text-align:right;flex-shrink:0;min-width:70px">
+          <div style="font-size:.7rem;font-weight:700;color:${color}">${sign}${pct}% demanda</div>
+          <div style="font-size:.62rem;color:var(--m)">dto. sugerido: ${(adjDiscClamped*100).toFixed(0)}%</div>
+        </div>
+      </div>`;
+    }).join('');
+    seasonEl.innerHTML = `<div class="card-t">Descuento sugerido por temporada</div>${seasonHtml}`;
+  }
 
   // ── BRANCH PRICING ─────────────────────────────────────────────────────
   const branches = Object.entries(d.bySucursal).sort((a,b)=>b[1].revenue-a[1].revenue);
-  let branchHtml;
-  if (branches.length < 2) {
-    branchHtml = `<div style="font-size:.76rem;color:var(--m)">Con una sola sucursal activa los precios son homogéneos. Cuando abras una segunda ubicación, considera:<br><br>
-      <strong>Local de mayor tráfico</strong> → precio premium de hasta +5-8% (clientes ya comprometidos con la marca).<br>
-      <strong>Local nuevo o zona de expansión</strong> → precio introductorio -5-8% para construir volumen y reseñas rápido.<br>
-      <strong>Diferencial por zona</strong> → ajustar según nivel socioeconómico y competencia del radio de 2km.`;
-  } else {
-    const topBranch = branches[0], lowBranch = branches[branches.length-1];
-    const revRatio  = topBranch[1].revenue / Math.max(lowBranch[1].revenue, 1);
-    const tickTop   = topBranch[1].orders ? topBranch[1].revenue/topBranch[1].orders : 0;
-    const tickLow   = lowBranch[1].orders  ? lowBranch[1].revenue/lowBranch[1].orders  : 0;
-    branchHtml = `<div style="font-size:.76rem;line-height:1.7">
-      <div style="font-weight:700;margin-bottom:6px">Análisis de diferencial de precios entre sucursales:</div>
-      ${branches.map(([name,stats]) => {
+  const branchEl = document.getElementById('branchPricing');
+  if (branchEl) {
+    if (branches.length < 2) {
+      branchEl.innerHTML = `<div class="card-t">Precios diferenciados por local</div>
+        <div style="font-size:.76rem;color:var(--m)">Con una sola sucursal no hay diferencial de precios necesario. 
+        Cuando abras una segunda ubicación:<br><br>
+        <strong>Local líder</strong> → precio lista +5-8%, descuento estándar (-${(discRate*100).toFixed(0)}%)<br>
+        <strong>Local nuevo</strong> → precio lista igual, descuento mayor (-${Math.min(40,(discRate+0.10)*100).toFixed(0)}%) para construir volumen y reseñas rápido</div>`;
+    } else {
+      const topRevBranch = branches[0];
+      const branchRows = branches.map(([name, stats]) => {
         const tick = stats.orders ? stats.revenue/stats.orders : 0;
-        const diff = tick > 0 && tickLow > 0 ? ((tick/tickLow-1)*100).toFixed(1) : 0;
-        const sugMult = tick >= tickTop ? '+5%' : tick >= (tickTop+tickLow)/2 ? '+2%' : 'Base';
-        return `<div style="padding:8px 0;border-bottom:1px solid var(--l)">
-          <div style="display:flex;justify-content:space-between;align-items:center">
-            <strong>${name}</strong>
-            <span style="font-family:'DM Mono',monospace;font-size:.75rem">${fp(tick)} ticket · ${stats.orders} pedidos</span>
-          </div>
-          <div style="font-size:.7rem;color:var(--m);margin-top:2px">
-            Precio sugerido vs base: <span style="font-weight:700;color:var(--gr)">${sugMult}</span> · 
-            ${tick >= tickTop ? 'Local líder — mayor precio tolerable' : 'Construir volumen primero, luego ajustar precio'}
+        const avgTick = d.avgTicket;
+        const relPerf = tick/avgTick;
+        // Higher-performing branch → smaller discount (customers already buying)
+        // Lower-performing branch → bigger discount (need to stimulate)
+        const adjDisc = relPerf >= 1.1 ? Math.max(0.05, discRate-0.06) :
+                        relPerf >= 0.9 ? discRate :
+                        Math.min(0.40, discRate+0.08);
+        const exampleItem = items[0];
+        const exBase  = exampleItem ? Math.round(avgP(exampleItem)/(1-discRate)*2)/2 : 0;
+        const exFinal = exBase ? Math.round(exBase*(1-adjDisc)*2)/2 : 0;
+        return `<tr>
+          <td style="font-weight:600;font-size:.8rem">${name}</td>
+          <td style="font-family:'DM Mono',monospace;text-align:center">${stats.orders}</td>
+          <td style="font-family:'DM Mono',monospace;text-align:center">${fp(tick)}</td>
+          <td style="text-align:center"><span class="px-badge ${relPerf>=1?'px-up':'px-dn'}">${relPerf>=1.1?'↑ Alta':'relPerf>=0.9?'▷ Normal':'↓ Baja'}</span></td>
+          <td style="text-align:center;font-weight:700;color:var(--r)">${fp(exBase)}</td>
+          <td style="text-align:center;font-weight:700;color:var(--gr)">${(adjDisc*100).toFixed(0)}%</td>
+          <td style="text-align:center;font-family:'DM Mono',monospace;font-weight:700">${fp(exFinal)}</td>
+          <td style="font-size:.7rem;color:var(--m)">${relPerf>=1.1?'Demanda alta — reduce descuento':relPerf>=0.9?'Descuento estándar':'Aumentar descuento para subir volumen'}</td>
+        </tr>`;
+      }).join('');
+      branchEl.innerHTML = `<div class="card-t">Precios diferenciados por local</div>
+        <table class="price-table">
+          <thead><tr>
+            <th>Sucursal</th><th style="text-align:center">Pedidos</th><th style="text-align:center">Ticket</th>
+            <th style="text-align:center">Performance</th><th style="text-align:center">Lista</th>
+            <th style="text-align:center">Descuento</th><th style="text-align:center">Final</th><th>Estrategia</th>
+          </tr></thead>
+          <tbody>${branchRows}</tbody>
+        </table>
+        <div style="font-size:.7rem;color:var(--m);margin-top:8px;padding:8px;background:var(--w);border-radius:2px">
+          Ejemplo con "${items[0]?.name||'ítem principal'}". Aplica la misma lógica a todos los ítems: mantén el precio lista fijo y ajusta solo el % de descuento activo por local.
+        </div>`;
+    }
+  }
+
+  // ── MODIFIER ANALYSIS ─────────────────────────────────────────────────────
+  const { comboOptions } = parseModifiers((allOrders||[]).filter(o=>!o.cancelled&&o.items));
+  const comboNames = Object.keys(comboOptions);
+  const modEl = document.getElementById('modifierAnalysis');
+  if (modEl) {
+    let modHtml = `<div style="font-size:.75rem;color:var(--m);margin-bottom:12px;line-height:1.6">
+      Los <strong>[corchetes]</strong> en PedidosYa son las opciones que elige el cliente dentro de cada combo.
+      Esto revela qué composición de combo prefiere el mercado — insumo directo para diseñar carta.
+    </div>`;
+    if (comboNames.length === 0) {
+      modHtml += '<div style="font-size:.76rem;color:var(--m)">No se detectaron opciones de combos en los datos actuales.</div>';
+    } else {
+      comboNames.forEach(combo => {
+        const opts = Object.entries(comboOptions[combo]).sort((a,b)=>b[1]-a[1]);
+        const total = opts.reduce((s,[,v])=>s+v,0)||1;
+        const topOpt = opts[0]?.[0]||'—';
+        modHtml += `<div style="margin-bottom:16px">
+          <div style="font-weight:700;font-size:.83rem;margin-bottom:2px">📦 ${combo}</div>
+          <div style="font-size:.68rem;color:var(--m);margin-bottom:6px">Default sugerido: <strong>${topOpt}</strong> · ${opts.length} opciones disponibles</div>
+          ${opts.map(([opt,cnt],i) => {
+            const pct = cnt/total*100;
+            return `<div class="opt-row">
+              <div style="flex:1;font-size:.74rem;${i===0?'font-weight:600':''}">
+                ${opt}${i===0?' <span style="font-size:.58rem;color:var(--gr);background:rgba(45,106,79,.08);padding:1px 6px;border-radius:100px;font-weight:700">más elegido</span>':''}
+              </div>
+              <div style="width:100px;height:6px;background:rgba(107,101,96,.1);border-radius:3px;overflow:hidden">
+                <div style="height:100%;background:${i===0?'var(--gr)':'rgba(107,101,96,.3)'};width:${pct}%;border-radius:3px"></div>
+              </div>
+              <div style="width:36px;text-align:right;font-family:'DM Mono',monospace;font-size:.69rem;color:var(--m)">${cnt}x</div>
+              <div style="width:42px;text-align:right;font-size:.68rem;color:var(--m)">${pct.toFixed(0)}%</div>
+            </div>`;
+          }).join('')}
+          <div style="font-size:.7rem;color:var(--m);padding:7px 9px;background:var(--w);border-radius:2px;margin-top:5px;line-height:1.6">
+            💡 Configurar <strong>"${topOpt}"</strong> como opción predeterminada (reduce tiempo de decisión).
+            ${opts.filter(([,v])=>v/total<0.08).length>0?`Eliminar opciones con <8% de selección: ${opts.filter(([,v])=>v/total<0.08).map(([n])=>'"'+n+'"').join(', ')}.`:''}
           </div>
         </div>`;
-      }).join('')}
-      <div style="margin-top:10px;font-size:.71rem;color:var(--m);padding:8px;background:var(--w);border-radius:2px">
-        💡 El diferencial de ticket entre "${topBranch[0]}" y "${lowBranch[0]}" es ${(revRatio).toFixed(1)}x. 
-        Esto puede reflejar diferentes tickets de compra o diferente mezcla de productos. 
-        Antes de ajustar precios por local, verificar si la diferencia se debe a precios, 
-        composición de pedidos o segmento de cliente.
-      </div>
-    </div>`;
+      });
+    }
+    modEl.innerHTML = `<div class="card-t">Opciones dentro de combos — qué elige realmente el mercado</div>${modHtml}`;
   }
-  document.getElementById('branchPricing').innerHTML = `<div class="card-t">Precios diferenciados por local</div>${branchHtml}`;
-
-  // ── MODIFIER / COMBO COMPOSITION ANALYSIS ─────────────────────────────
-  const comboNames = Object.keys(comboOptions);
-  let modHtml;
-  if (comboNames.length === 0) {
-    modHtml = `<div style="font-size:.76rem;color:var(--m)">No se detectaron opciones dentro de combos en los datos. Los modificadores aparecen en formato "Combo Name [Opción 1, Opción 2]" en el reporte de PedidosYa.</div>`;
-  } else {
-    modHtml = `<div style="font-size:.75rem;color:var(--m);margin-bottom:12px;line-height:1.6">
-      Los <strong>[corchetes]</strong> en los datos de PedidosYa son las <strong>opciones que eligió el cliente dentro de cada combo</strong>, no ítems independientes. 
-      Esto nos dice qué opciones son más populares y cómo deberíamos estructurar cada combo.
-    </div>`;
-    comboNames.forEach(combo => {
-      const opts = Object.entries(comboOptions[combo]).sort((a,b)=>b[1]-a[1]);
-      const total = opts.reduce((s,[,v])=>s+v,0)||1;
-      modHtml += `<div style="margin-bottom:14px">
-        <div style="font-weight:700;font-size:.82rem;margin-bottom:6px">📦 ${combo}</div>
-        ${opts.map(([opt,cnt],i) => {
-          const pct = cnt/total*100;
-          const isDefault = i === 0;
-          return `<div class="opt-row">
-            <div style="flex:1;font-size:.74rem;${isDefault?'font-weight:600':''}">
-              ${opt} ${isDefault?'<span style="font-size:.6rem;color:var(--gr);font-weight:700;background:rgba(45,106,79,.08);padding:1px 6px;border-radius:100px">Default recomendado</span>':''}
-            </div>
-            <div class="opt-bar" style="background:${isDefault?'var(--gr)':'rgba(107,101,96,.2)'};width:${pct}%"></div>
-            <div style="width:40px;text-align:right;font-family:'DM Mono',monospace;font-size:.7rem;color:var(--m)">${cnt}x</div>
-            <div style="width:45px;text-align:right;font-size:.69rem;color:var(--m)">${pct.toFixed(0)}%</div>
-          </div>`;
-        }).join('')}
-        <div style="font-size:.7rem;color:var(--m);padding:7px 9px;background:var(--w);border-radius:2px;margin-top:6px">
-          💡 <strong>Acción:</strong> Configurar "${opts[0]?.[0]||''}" como opción predeterminada en la plataforma. 
-          Las opciones con menos del 10% de selección pueden eliminarse del combo para simplificar la decisión del cliente.
-          ${opts.filter(([,cnt])=>cnt/total<0.1).length>0 ? 
-            ` Candidatas a eliminar: ${opts.filter(([,cnt])=>cnt/total<0.1).map(([n])=>'"'+n+'"').join(', ')}.` : ''}
-        </div>
-      </div>`;
-    });
-  }
-  document.getElementById('modifierAnalysis').innerHTML = `<div class="card-t">Opciones dentro de combos — qué eligen realmente los clientes</div>${modHtml}`;
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -2135,6 +2270,53 @@ async function runDemo() {
   renderPatternsPanel(D);
   renderRoadmap(roadmap);
   setTimeout(() => renderCharts(D), 80);
+}
+
+function updateDpmItem(itemName) {
+  if (!window._pricingItems || !window._pricingD) return;
+  const DOW = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const item = window._pricingItems.find(i=>i.name===itemName);
+  if (!item) return;
+  const d = window._pricingD;
+  const discRate = window._pricingDiscRate || 0.25;
+  const avgP = it => it.orders > 0 ? it.revenue / it.orders : 0;
+  const baseP = Math.round(avgP(item)/(1-discRate)*2)/2;
+  const SLOTS_H = [
+    {label:'10–12h',hours:[10,11]},{label:'12–14h',hours:[12,13]},
+    {label:'14–17h',hours:[14,15,16]},{label:'17–19h',hours:[17,18]},
+    {label:'19–21h',hours:[19,20]},{label:'21–23h',hours:[21,22]},
+  ];
+  const peakVal = Math.max(...d.hm.flat());
+  let html = '<div class="dpm-grid" style="grid-template-columns:60px repeat(7,1fr)"><div></div>';
+  html += DOW.map(d=>`<div class="dpm-head">${d}</div>`).join('');
+  SLOTS_H.forEach(slot => {
+    html += `<div class="dpm-row-lbl">${slot.label}</div>`;
+    DOW.forEach((_,dow)=>{
+      const v   = slot.hours.reduce((s,h)=>s+(d.hm[h]?.[dow]||0),0);
+      const pct = peakVal>0?v/peakVal:0;
+      let disc, bg, textColor;
+      if(pct>=0.70){disc=Math.max(0,discRate-0.08);bg='rgba(45,106,79,.18)';textColor='#1a4a2e';}
+      else if(pct>=0.40){disc=discRate;bg='rgba(107,101,96,.1)';textColor='var(--m)';}
+      else if(pct>=0.15){disc=Math.min(0.38,discRate+0.08);bg='rgba(200,160,69,.15)';textColor='#6b4800';}
+      else{disc=v>0?Math.min(0.45,discRate+0.15):null;bg='rgba(200,57,43,.1)';textColor='var(--r)';}
+      const finalP = baseP&&disc!=null?Math.round(baseP*(1-disc)*2)/2:null;
+      html+=`<div class="dpm-cell" style="background:${bg};color:${textColor}">
+        ${finalP?`${fp(finalP)}<br><span style="font-size:.5rem;opacity:.8">${(disc*100).toFixed(0)}% off`:'<span style="font-size:.6rem">—</span>'}
+        ${finalP?'</span>':''}
+      </div>`;
+    });
+  });
+  html+='</div><div style="margin-top:6px;font-size:.7rem;color:var(--m)">Lista: <strong>'+fp(baseP)+'</strong> · Precio pagado actual: <strong>'+fp(avgP(item))+'</strong></div>';
+  // Replace grid in DOM (keep selector)
+  const matrixEl = document.getElementById('dynamicPricingMatrix');
+  const gridEl = matrixEl.querySelector('.dpm-grid');
+  if (gridEl) {
+    const tmp = document.createElement('div');
+    tmp.innerHTML = html;
+    gridEl.replaceWith(tmp.querySelector('.dpm-grid'));
+    const noteEl = matrixEl.querySelectorAll('[style*="font-size:.7rem;color:var(--m)"]');
+    if(noteEl.length>0) noteEl[noteEl.length-1].replaceWith(tmp.querySelector('[style*="margin-top:6px"]'));
+  }
 }
 
 </script>
