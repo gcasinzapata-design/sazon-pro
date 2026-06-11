@@ -2266,6 +2266,7 @@ async function runDemo() {
   renderStrategyPanel('acquisition', acqStrategy,  'acquisitionContent');
   renderStrategyPanel('ticket',      ticketStrategy,'ticketContent');
   renderStrategyPanel('retention',   retStrategy,   'retentionContent');
+  renderPricingPanel(D, generateDemoOrders());
   renderFinancialPanel(D);
   renderPatternsPanel(D);
   renderRoadmap(roadmap);
