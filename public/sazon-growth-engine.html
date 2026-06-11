@@ -183,6 +183,28 @@ input[type=file]{display:none;}
 .ai-loading{display:flex;align-items:center;gap:10px;padding:12px 16px;background:rgba(200,57,43,.04);border-radius:2px;font-size:.76rem;color:var(--m);}
 /* Export bar */
 .export-bar{background:var(--d);padding:10px 24px;display:flex;gap:8px;align-items:center;}
+/* Pricing engine */
+.price-table{width:100%;border-collapse:collapse;font-size:.76rem;margin-bottom:16px;}
+.price-table thead tr{background:var(--d);color:#fff;}
+.price-table thead th{padding:8px 12px;text-align:left;font-size:.57rem;font-weight:600;text-transform:uppercase;letter-spacing:1.5px;}
+.price-table tbody tr{border-bottom:1px solid var(--l);transition:background .1s;}
+.price-table tbody tr:hover{background:rgba(200,57,43,.02);}
+.price-table tbody td{padding:9px 12px;vertical-align:middle;}
+.px-badge{font-size:.6rem;font-weight:700;padding:2px 7px;border-radius:100px;}
+.px-up{background:rgba(45,106,79,.1);color:var(--gr);}
+.px-dn{background:rgba(200,57,43,.1);color:var(--r);}
+.px-ok{background:rgba(107,101,96,.08);color:var(--m);}
+.dpm-grid{display:grid;grid-template-columns:55px repeat(7,1fr);gap:2px;font-size:.6rem;margin-bottom:8px;}
+.dpm-head{text-align:center;font-weight:700;color:var(--m);padding:3px 1px;font-size:.58rem;text-transform:uppercase;}
+.dpm-row-lbl{display:flex;align-items:center;justify-content:flex-end;padding-right:5px;color:var(--m);font-family:'DM Mono',monospace;font-size:.57rem;}
+.dpm-cell{padding:5px 2px;border-radius:2px;text-align:center;font-size:.62rem;font-weight:700;cursor:default;}
+.dpm-cell:hover{transform:scale(1.05);z-index:1;position:relative;}
+.opt-row{display:flex;align-items:center;gap:8px;padding:6px 0;border-bottom:1px solid var(--l);font-size:.75rem;}
+.opt-bar{height:6px;border-radius:100px;flex:1;max-width:120px;}
+.elas-chip{display:inline-flex;align-items:center;gap:3px;font-size:.6rem;font-weight:700;padding:2px 7px;border-radius:100px;}
+.e-hi{background:rgba(200,57,43,.1);color:var(--r);}
+.e-lo{background:rgba(45,106,79,.08);color:var(--gr);}
+.e-med{background:rgba(200,160,69,.1);color:var(--g);}
 .eb-l{font-size:.6rem;color:rgba(255,255,255,.3);font-weight:700;text-transform:uppercase;letter-spacing:1px;margin-right:4px;}
 /* Responsive */
 @media(max-width:960px){.sidebar{display:none;}.g2,.g3,.g4,.pg{grid-template-columns:1fr;}}
@@ -263,6 +285,7 @@ input[type=file]{display:none;}
       </div>
       <div class="tab-nav-sep"></div>
       <div class="tab-nav-group">
+        <div class="sb-item" onclick="showPanel('pricing',this)"><span class="sb-ico">💡</span>Precios</div>
         <div class="sb-item" onclick="showPanel('financial',this)"><span class="sb-ico">💸</span>Financiero</div>
         <div class="sb-item" onclick="showPanel('patterns',this)"><span class="sb-ico">⏰</span>Patrones</div>
         <div class="sb-item" onclick="showPanel('roadmap',this)"><span class="sb-ico">📋</span>Roadmap</div>
@@ -334,6 +357,26 @@ input[type=file]{display:none;}
       <div class="panel" id="p-retention">
         <div class="sh"><div class="sh-ico">🔁</div><div><div class="sh-title">Retención & Recompra</div><div class="sh-sub">Estrategias para aumentar la frecuencia y reactivar usuarios inactivos</div></div></div>
         <div id="retentionContent"></div>
+      </div>
+
+      <!-- PRICING ENGINE -->
+      <div class="panel" id="p-pricing">
+        <div class="sh"><div class="sh-ico">💡</div><div>
+          <div class="sh-title">Motor de Precios Inteligente</div>
+          <div class="sh-sub">Elasticidad estimada · Precios sugeridos por ítem · Precio dinámico por horario, día, local y temporada</div>
+        </div></div>
+        <div class="insight" id="pricingInsight"></div>
+        <!-- Item price table -->
+        <div class="card" id="itemPriceTable"><div class="card-t">Precios actuales y sugeridos por ítem</div></div>
+        <!-- Dynamic pricing matrix -->
+        <div class="g2">
+          <div class="card" id="dynamicPricingMatrix"><div class="card-t">Precio dinámico — multiplicador sugerido por hora y día</div></div>
+          <div class="card" id="seasonalCalendar"><div class="card-t">Calendario de ajustes estacionales</div></div>
+        </div>
+        <!-- Branch pricing -->
+        <div class="card" id="branchPricing"><div class="card-t">Precios diferenciados por local</div></div>
+        <!-- Modifier analysis -->
+        <div class="card" id="modifierAnalysis"><div class="card-t">Análisis de opciones dentro de combos — composición de carta</div></div>
       </div>
 
       <!-- FINANCIAL -->
@@ -1568,6 +1611,321 @@ Sé específico con números. Usa el contexto real de delivery en Perú. Máximo
       document.getElementById('aiContent').innerHTML=`<div style="background:#fff;border:1px solid var(--l);border-radius:3px;padding:20px;font-size:.8rem;line-height:1.8;white-space:pre-wrap">${txt.replace(/\*\*([^*]+)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>')}</div>`;
     }else{document.getElementById('aiContent').innerHTML='<div class="insight">La API respondió pero sin contenido. Verifica tu API Key de Gemini.</div>';}
   }catch(err){document.getElementById('aiContent').innerHTML=`<div class="insight"><strong>Error:</strong> ${err.message}</div>`;}
+}
+
+
+// ════════════════════════════════════════════════════════════════
+//  PRICING ENGINE
+// ════════════════════════════════════════════════════════════════
+
+// Parse modifier options from items string
+function parseModifiers(orders) {
+  const comboOptions = {}; // combo_name → {option_name: count}
+  const itemModifiers= {}; // item_name   → {modifier: count}
+
+  orders.filter(o=>!o.cancelled&&o.items).forEach(o => {
+    const parts = o.items.split(',').map(s=>s.trim()).filter(Boolean);
+    parts.forEach(part => {
+      const m = part.match(/^(\d+)\s+(.+)$/);
+      if (!m) return;
+      const fullName = m[2];
+      // Detect if this is a combo (has brackets = has options)
+      const mainName = fullName.replace(/\[.*?\]/g,'').replace(/[\[\]]/g,'').trim();
+      const opts = (fullName.match(/\[([^\]]+)\]/g)||[]).map(s=>s.replace(/[\[\]]/g,'').trim());
+      
+      if (opts.length > 0) {
+        // This is a combo with selectable options
+        if (!comboOptions[mainName]) comboOptions[mainName] = {};
+        opts.forEach(opt => {
+          // Each option might be "N ItemName"
+          const om = opt.match(/^(\d+)\s+(.+)$/);
+          const optName = om ? om[2].trim() : opt;
+          comboOptions[mainName][optName] = (comboOptions[mainName][optName]||0) + 1;
+        });
+      } else {
+        // Standalone item — track for context
+        if (!itemModifiers[mainName]) itemModifiers[mainName] = {};
+      }
+    });
+  });
+  return { comboOptions, itemModifiers };
+}
+
+// Estimate elasticity class for each item
+// Uses: order frequency relative to average + whether item appears in single-item orders
+function estimateElasticity(items, orders) {
+  if (!items.length) return {};
+  
+  // Single-item orders (1 item per order)
+  const singleOrders = orders.filter(o => !o.cancelled && o.items && o.items.split(',').length === 1);
+  const singleItemNames = new Set();
+  singleOrders.forEach(o => {
+    const m = o.items.match(/^\d+\s+(.+?)(?:\[|$)/);
+    if (m) singleItemNames.add(m[1].replace(/[\[\]]/g,'').trim());
+  });
+
+  const totalOrders = items.reduce((s,i)=>s+i.orders,0)||1;
+  const avgFreq = 1 / items.length;
+  
+  const elasticityMap = {};
+  items.forEach(item => {
+    const freq = item.orders / totalOrders;
+    const inSingleOrders = singleItemNames.has(item.name);
+    const isMain = item.type === 'main';
+    
+    // Elasticity: HIGH = price sensitive, LOW = price insensitive
+    // High demand + solo purchases = elastic (customers shopping around by price)
+    // Low demand + combo-only = inelastic (captured audience, less price sensitive)
+    let elasticity;
+    if (isMain && inSingleOrders && freq > avgFreq) {
+      elasticity = 'high';   // Top main items ordered solo = price sensitive shoppers
+    } else if (isMain && freq > avgFreq * 1.5) {
+      elasticity = 'medium'; // Very popular mains in combos = moderate elasticity
+    } else if (!isMain) {
+      elasticity = 'low';    // Sides/drinks = ordered as add-ons, less price sensitive
+    } else {
+      elasticity = 'medium';
+    }
+    elasticityMap[item.name] = elasticity;
+  });
+  return elasticityMap;
+}
+
+// Generate dynamic pricing multipliers
+function genDynamicPricing(d) {
+  const DOW = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  const slots = [
+    {label:'11-13h', hours:[11,12]},
+    {label:'13-15h', hours:[13,14]},
+    {label:'15-18h', hours:[15,16,17]},
+    {label:'18-20h', hours:[18,19]},
+    {label:'20-22h', hours:[20,21]},
+    {label:'22-24h', hours:[22,23]},
+  ];
+  const peakVal = Math.max(...d.hm.flat());
+  
+  // For each slot × day, get demand index
+  const matrix = slots.map(slot => {
+    return DOW.map((_, dow) => {
+      const v = slot.hours.reduce((s,h) => s + (d.hm[h]?.[dow]||0), 0);
+      const pct = peakVal > 0 ? v / peakVal : 0;
+      
+      // Multiplier logic:
+      // >70% demand → +5-8% (premium, inelastic demand)
+      // 40-70%      → base (standard)
+      // 15-40%      → -5% (incentivize)
+      // <15%        → -10% or consider closing
+      let mult, cls, label;
+      if (pct >= 0.70) { mult = 1.07; cls = 'high'; label = '+7%'; }
+      else if (pct >= 0.40) { mult = 1.00; cls = 'base'; label = 'Base'; }
+      else if (pct >= 0.15) { mult = 0.95; cls = 'low'; label = '-5%'; }
+      else { mult = 0.90; cls = 'dead'; label = v > 0 ? '-10%' : 'Cerrar'; }
+      
+      return { v, pct, mult, cls, label };
+    });
+  });
+  return { slots, matrix, DOW };
+}
+
+// Seasonal calendar
+const SEASONAL_CALENDAR = [
+  {month:'Ene-Feb', label:'Post Fiestas',  note:'Caída post-navidad. Activar promos de "enero saludable" o precios base sin descuentos agresivos.', mult:0.95},
+  {month:'Feb 14',  label:'San Valentín',  note:'Pedidos para 2. Activar Combo Para 2 con presentación especial +5% sobre precio base.', mult:1.05},
+  {month:'Mar',     label:'Verano tardío', note:'Temporada escolar inicia. Pedidos familiares del fin de semana. Mantener precio base.', mult:1.00},
+  {month:'Abr-May', label:'Temporada plana',note:'Sin fechas clave. Buen momento para lanzar nuevos ítems y testear precios.', mult:1.00},
+  {month:'May 2do Dom',label:'Día de la Madre',note:'Pico de demanda familiar. +8-10% en combos grandes. Combo Para 2 y Para 3 son los protagonistas.', mult:1.08},
+  {month:'Jun',     label:'Pre-Fiestas Patrias',note:'Inicio de temporada festiva. Preparar menú especial. Precio base con promo de lanzamiento.', mult:1.02},
+  {month:'Jul 28-29',label:'Fiestas Patrias',note:'Pico de demanda gastronómica. +8% precios base. Activar campañas temáticas con urgencia.', mult:1.08},
+  {month:'Ago',     label:'Post-fiestas',  note:'Caída post-fiestas. Promos de reactivación -10% por tiempo limitado.', mult:0.92},
+  {month:'Sep-Oct', label:'Temporada regular',note:'Retorno a patrones normales. Optimizar menú según datos del semestre.', mult:1.00},
+  {month:'Nov',     label:'Pre-Navidad',   note:'Inicio de temporada navideña. Preparar combos de diciembre. Precio base.', mult:1.02},
+  {month:'Dic',     label:'Navidad',       note:'Pico máximo del año. +10% en combos grandes. Combo Para 3 y Para grupos son clave.', mult:1.10},
+];
+
+// RENDER PRICING PANEL
+function renderPricingPanel(d, allOrders) {
+  const DOW = ['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
+  
+  if (!d.hasItems || d.items.length === 0) {
+    document.getElementById('pricingInsight').innerHTML = 
+      '<strong>Sin datos de productos.</strong> El motor de precios requiere datos de PedidosYa con la columna de ítems.';
+    return;
+  }
+
+  // Parse modifiers from actual orders
+  const rawOrders = allOrders || [];
+  const { comboOptions } = parseModifiers(rawOrders.filter(o=>!o.cancelled&&o.items));
+  
+  // Elasticity estimation
+  const elasticityMap = estimateElasticity(d.items, rawOrders);
+  
+  // Avg price per item
+  const avgP = it => it.orders > 0 ? it.revenue / it.orders : 0;
+  
+  // Insight summary
+  const elasticItems = d.items.filter(i=>elasticityMap[i.name]==='high').map(i=>i.name);
+  const inelasticItems= d.items.filter(i=>elasticityMap[i.name]==='low').map(i=>i.name);
+  document.getElementById('pricingInsight').innerHTML = 
+    `<strong>Elasticidad de precios estimada:</strong> Ítems con demanda elástica (sensibles al precio): ${elasticItems.slice(0,3).map(n=>`<em>${n}</em>`).join(', ') || '—'}. Ítems inelásticos (potencial de subida): ${inelasticItems.slice(0,3).map(n=>`<em>${n}</em>`).join(', ') || '—'}. Los ítems elásticos requieren ajustes graduales (±3-5%); los inelásticos soportan mayor variación (±8-12%).`;
+
+  // ── ITEM PRICE TABLE ────────────────────────────────────────────────────
+  const elasLabel = {'high':'Alta (cauteloso)','medium':'Media','low':'Baja (margen)'};
+  const elasCls   = {'high':'e-hi','medium':'e-med','low':'e-lo'};
+  const elasDesc  = {
+    'high': 'Demanda sensible al precio. Testear subida de S/1-2 y medir impacto en volumen.',
+    'medium':'Elasticidad moderada. Ajustes de S/2-4 son seguros sin riesgo de perder volumen.',
+    'low':  'Demanda inelástica. Puede subir S/3-6 sin afectar el volumen de pedidos.'
+  };
+  
+  const rows = d.items.map(item => {
+    const price = avgP(item);
+    const elas  = elasticityMap[item.name] || 'medium';
+    const safe  = {'high':0.04,'medium':0.08,'low':0.12}[elas];
+    const sugLo = Math.round((price*(1-safe/2))*2)/2;
+    const sugHi = Math.round((price*(1+safe))*2)/2;
+    const action= elas==='low' ? 'Subir' : elas==='high' ? 'Testear gradual' : 'Mantener / +S/2';
+    const px_cls = elas==='low'?'px-up':elas==='high'?'px-dn':'px-ok';
+    const typeLabel = {main:'🍔 Principal',side:'🍟 Acomp.',drink:'🥤 Bebida',dessert:'🍦 Postre',combo:'📦 Combo',addon:'➕ Add-on',other:'•'}[item.type]||'•';
+    return `<tr>
+      <td style="font-weight:600">${item.name}</td>
+      <td><span style="font-size:.65rem;color:var(--m)">${typeLabel}</span></td>
+      <td style="font-family:'DM Mono',monospace">${fp(price)}</td>
+      <td style="font-family:'DM Mono',monospace;color:var(--gr)">${fp(sugLo)} – ${fp(sugHi)}</td>
+      <td><span class="elas-chip ${elasCls[elas]}">${elasLabel[elas]}</span></td>
+      <td><span class="px-badge ${px_cls}">${action}</span></td>
+      <td style="font-size:.69rem;color:var(--m)">${elasDesc[elas]}</td>
+    </tr>`;
+  }).join('');
+  
+  document.getElementById('itemPriceTable').innerHTML = `<div class="card-t">Precios actuales y sugeridos — basado en elasticidad estimada</div>
+    <div style="font-size:.72rem;color:var(--m);margin-bottom:10px;padding:8px;background:var(--w);border-radius:2px">
+      ⚠️ Los precios son estimados a partir de revenue ÷ pedidos. Para validar: implementar un cambio de precio en 1 ítem durante 2 semanas y medir el cambio en volumen. Elasticidad real = (ΔVolumen% / ΔPrecio%).
+    </div>
+    <table class="price-table">
+      <thead><tr><th>Ítem</th><th>Tipo</th><th>Precio est.</th><th>Rango sugerido</th><th>Elasticidad</th><th>Acción</th><th>Razonamiento</th></tr></thead>
+      <tbody>${rows}</tbody>
+    </table>`;
+
+  // ── DYNAMIC PRICING MATRIX ─────────────────────────────────────────────
+  const dpm = genDynamicPricing(d);
+  const cellColors = {
+    high: `background:rgba(45,106,79,.18);color:#1a4a2e`,
+    base: `background:rgba(107,101,96,.1);color:var(--m)`,
+    low:  `background:rgba(200,160,69,.15);color:#6b4800`,
+    dead: `background:rgba(200,57,43,.12);color:var(--r)`,
+  };
+  
+  let dpmHtml = '<div class="dpm-grid"><div></div>' + dpm.DOW.map(d=>`<div class="dpm-head">${d}</div>`).join('');
+  dpm.slots.forEach((slot, si) => {
+    dpmHtml += `<div class="dpm-row-lbl">${slot.label}</div>`;
+    dpm.matrix[si].forEach((cell, di) => {
+      dpmHtml += `<div class="dpm-cell" style="${cellColors[cell.cls]}" title="${cell.v} pedidos · multiplier ${cell.mult}x">${cell.label}</div>`;
+    });
+  });
+  dpmHtml += '</div>';
+  dpmHtml += `<div style="font-size:.7rem;color:var(--m);margin-top:6px;line-height:1.6">
+    <strong>Cómo usar:</strong> Multiplica tu precio base por el factor sugerido para cada franja. 
+    Ejemplo: si el <strong>${fp(d.avgTicket)} ticket promedio</strong> ocurre en un slot "+7%", 
+    el precio objetivo es ${fp(d.avgTicket*1.07)}. Aplicar en la plataforma como precio de lista para ese horario.
+    <br><span style="color:var(--gr)">▪ Verde +7%</span> = alta demanda, precio premium. 
+    <span style="color:#6b4800">▪ Amarillo -5%</span> = estimular. 
+    <span style="color:var(--r)">▪ Rojo -10%/Cerrar</span> = zona muerta — promo o cierre.
+  </div>`;
+  document.getElementById('dynamicPricingMatrix').innerHTML = `<div class="card-t">Precio dinámico — multiplicador por hora y día</div>${dpmHtml}`;
+
+  // ── SEASONAL CALENDAR ──────────────────────────────────────────────────
+  const seasonHtml = SEASONAL_CALENDAR.map(s => {
+    const pct = Math.round((s.mult-1)*100);
+    const color = pct>5?'var(--gr)':pct>0?'var(--g)':pct<-5?'var(--r)':'var(--m)';
+    const sign = pct>0?'+':'';
+    return `<div style="display:flex;gap:10px;padding:7px 0;border-bottom:1px solid var(--l)">
+      <div style="width:90px;flex-shrink:0">
+        <div style="font-weight:700;font-size:.76rem">${s.month}</div>
+        <div style="font-size:.65rem;color:var(--m)">${s.label}</div>
+      </div>
+      <div style="flex:1;font-size:.71rem;color:var(--m);line-height:1.6">${s.note}</div>
+      <div style="width:45px;text-align:right;flex-shrink:0;font-family:'DM Mono',monospace;font-weight:700;font-size:.78rem;color:${color}">${sign}${pct}%</div>
+    </div>`;
+  }).join('');
+  document.getElementById('seasonalCalendar').innerHTML = `<div class="card-t">Ajustes estacionales recomendados</div>${seasonHtml}`;
+
+  // ── BRANCH PRICING ─────────────────────────────────────────────────────
+  const branches = Object.entries(d.bySucursal).sort((a,b)=>b[1].revenue-a[1].revenue);
+  let branchHtml;
+  if (branches.length < 2) {
+    branchHtml = `<div style="font-size:.76rem;color:var(--m)">Con una sola sucursal activa los precios son homogéneos. Cuando abras una segunda ubicación, considera:<br><br>
+      <strong>Local de mayor tráfico</strong> → precio premium de hasta +5-8% (clientes ya comprometidos con la marca).<br>
+      <strong>Local nuevo o zona de expansión</strong> → precio introductorio -5-8% para construir volumen y reseñas rápido.<br>
+      <strong>Diferencial por zona</strong> → ajustar según nivel socioeconómico y competencia del radio de 2km.`;
+  } else {
+    const topBranch = branches[0], lowBranch = branches[branches.length-1];
+    const revRatio  = topBranch[1].revenue / Math.max(lowBranch[1].revenue, 1);
+    const tickTop   = topBranch[1].orders ? topBranch[1].revenue/topBranch[1].orders : 0;
+    const tickLow   = lowBranch[1].orders  ? lowBranch[1].revenue/lowBranch[1].orders  : 0;
+    branchHtml = `<div style="font-size:.76rem;line-height:1.7">
+      <div style="font-weight:700;margin-bottom:6px">Análisis de diferencial de precios entre sucursales:</div>
+      ${branches.map(([name,stats]) => {
+        const tick = stats.orders ? stats.revenue/stats.orders : 0;
+        const diff = tick > 0 && tickLow > 0 ? ((tick/tickLow-1)*100).toFixed(1) : 0;
+        const sugMult = tick >= tickTop ? '+5%' : tick >= (tickTop+tickLow)/2 ? '+2%' : 'Base';
+        return `<div style="padding:8px 0;border-bottom:1px solid var(--l)">
+          <div style="display:flex;justify-content:space-between;align-items:center">
+            <strong>${name}</strong>
+            <span style="font-family:'DM Mono',monospace;font-size:.75rem">${fp(tick)} ticket · ${stats.orders} pedidos</span>
+          </div>
+          <div style="font-size:.7rem;color:var(--m);margin-top:2px">
+            Precio sugerido vs base: <span style="font-weight:700;color:var(--gr)">${sugMult}</span> · 
+            ${tick >= tickTop ? 'Local líder — mayor precio tolerable' : 'Construir volumen primero, luego ajustar precio'}
+          </div>
+        </div>`;
+      }).join('')}
+      <div style="margin-top:10px;font-size:.71rem;color:var(--m);padding:8px;background:var(--w);border-radius:2px">
+        💡 El diferencial de ticket entre "${topBranch[0]}" y "${lowBranch[0]}" es ${(revRatio).toFixed(1)}x. 
+        Esto puede reflejar diferentes tickets de compra o diferente mezcla de productos. 
+        Antes de ajustar precios por local, verificar si la diferencia se debe a precios, 
+        composición de pedidos o segmento de cliente.
+      </div>
+    </div>`;
+  }
+  document.getElementById('branchPricing').innerHTML = `<div class="card-t">Precios diferenciados por local</div>${branchHtml}`;
+
+  // ── MODIFIER / COMBO COMPOSITION ANALYSIS ─────────────────────────────
+  const comboNames = Object.keys(comboOptions);
+  let modHtml;
+  if (comboNames.length === 0) {
+    modHtml = `<div style="font-size:.76rem;color:var(--m)">No se detectaron opciones dentro de combos en los datos. Los modificadores aparecen en formato "Combo Name [Opción 1, Opción 2]" en el reporte de PedidosYa.</div>`;
+  } else {
+    modHtml = `<div style="font-size:.75rem;color:var(--m);margin-bottom:12px;line-height:1.6">
+      Los <strong>[corchetes]</strong> en los datos de PedidosYa son las <strong>opciones que eligió el cliente dentro de cada combo</strong>, no ítems independientes. 
+      Esto nos dice qué opciones son más populares y cómo deberíamos estructurar cada combo.
+    </div>`;
+    comboNames.forEach(combo => {
+      const opts = Object.entries(comboOptions[combo]).sort((a,b)=>b[1]-a[1]);
+      const total = opts.reduce((s,[,v])=>s+v,0)||1;
+      modHtml += `<div style="margin-bottom:14px">
+        <div style="font-weight:700;font-size:.82rem;margin-bottom:6px">📦 ${combo}</div>
+        ${opts.map(([opt,cnt],i) => {
+          const pct = cnt/total*100;
+          const isDefault = i === 0;
+          return `<div class="opt-row">
+            <div style="flex:1;font-size:.74rem;${isDefault?'font-weight:600':''}">
+              ${opt} ${isDefault?'<span style="font-size:.6rem;color:var(--gr);font-weight:700;background:rgba(45,106,79,.08);padding:1px 6px;border-radius:100px">Default recomendado</span>':''}
+            </div>
+            <div class="opt-bar" style="background:${isDefault?'var(--gr)':'rgba(107,101,96,.2)'};width:${pct}%"></div>
+            <div style="width:40px;text-align:right;font-family:'DM Mono',monospace;font-size:.7rem;color:var(--m)">${cnt}x</div>
+            <div style="width:45px;text-align:right;font-size:.69rem;color:var(--m)">${pct.toFixed(0)}%</div>
+          </div>`;
+        }).join('')}
+        <div style="font-size:.7rem;color:var(--m);padding:7px 9px;background:var(--w);border-radius:2px;margin-top:6px">
+          💡 <strong>Acción:</strong> Configurar "${opts[0]?.[0]||''}" como opción predeterminada en la plataforma. 
+          Las opciones con menos del 10% de selección pueden eliminarse del combo para simplificar la decisión del cliente.
+          ${opts.filter(([,cnt])=>cnt/total<0.1).length>0 ? 
+            ` Candidatas a eliminar: ${opts.filter(([,cnt])=>cnt/total<0.1).map(([n])=>'"'+n+'"').join(', ')}.` : ''}
+        </div>
+      </div>`;
+    });
+  }
+  document.getElementById('modifierAnalysis').innerHTML = `<div class="card-t">Opciones dentro de combos — qué eligen realmente los clientes</div>${modHtml}`;
 }
 
 // ════════════════════════════════════════════════════════════════
