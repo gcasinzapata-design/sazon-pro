@@ -1998,7 +1998,7 @@ function renderPricingPanel(d, allOrders) {
           <td style="font-weight:600;font-size:.8rem">${name}</td>
           <td style="font-family:'DM Mono',monospace;text-align:center">${stats.orders}</td>
           <td style="font-family:'DM Mono',monospace;text-align:center">${fp(tick)}</td>
-          <td style="text-align:center"><span class="px-badge ${relPerf>=1?'px-up':'px-dn'}">${relPerf>=1.1?'↑ Alta':'relPerf>=0.9?'▷ Normal':'↓ Baja'}</span></td>
+          <td style="text-align:center"><span class="px-badge ${relPerf>=1?'px-up':'px-dn'}">${relPerf>=1.1?'↑ Alta':relPerf>=0.9?'▷ Normal':'↓ Baja'}</span></td>
           <td style="text-align:center;font-weight:700;color:var(--r)">${fp(exBase)}</td>
           <td style="text-align:center;font-weight:700;color:var(--gr)">${(adjDisc*100).toFixed(0)}%</td>
           <td style="text-align:center;font-family:'DM Mono',monospace;font-weight:700">${fp(exFinal)}</td>
