@@ -5,9 +5,43 @@
 <meta name="viewport" content="width=device-width,initial-scale=1.0">
 <title>Sazón · Growth Engine</title>
 <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@700;900&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/4.4.1/chart.umd.min.js"></script>
 <style>
+
+/* ── AUTH SCREEN ── */
+.auth-overlay{position:fixed;top:0;left:0;right:0;bottom:0;background:var(--bg);z-index:999;display:flex;align-items:center;justify-content:center;padding:20px;}
+.auth-box{background:var(--c);border:1px solid var(--l);border-radius:4px;width:100%;max-width:400px;overflow:hidden;}
+.auth-head{background:var(--d);padding:24px 28px;text-align:center;}
+.auth-logo{font-family:'Playfair Display',serif;font-size:1.4rem;font-weight:900;color:#fff;margin-bottom:4px;}
+.auth-logo span{color:var(--r);}
+.auth-tag{font-size:.58rem;font-weight:700;text-transform:uppercase;letter-spacing:2.5px;color:rgba(255,255,255,.4);}
+.auth-body{padding:28px;}
+.auth-title{font-family:'Playfair Display',serif;font-size:1.1rem;font-weight:900;margin-bottom:5px;text-align:center;}
+.auth-sub{font-size:.75rem;color:var(--m);text-align:center;margin-bottom:18px;line-height:1.5;}
+.auth-input{width:100%;padding:11px 14px;border:1px solid var(--l);border-radius:var(--rad);font-family:'DM Sans',sans-serif;font-size:.85rem;background:#fff;color:var(--t);margin-bottom:10px;}
+.auth-input:focus{outline:none;border-color:var(--r);}
+.auth-input.otp{font-family:'DM Mono',monospace;font-size:1.4rem;letter-spacing:8px;text-align:center;padding:11px 6px;font-weight:700;}
+.auth-btn{width:100%;padding:11px;background:var(--r);color:#fff;border:none;border-radius:var(--rad);font-family:'DM Sans',sans-serif;font-size:.8rem;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:1.2px;}
+.auth-btn:hover{background:#a82d22;}
+.auth-btn:disabled{background:var(--m);cursor:default;}
+.auth-link{display:block;text-align:center;margin-top:10px;font-size:.7rem;color:var(--m);cursor:pointer;}
+.auth-link:hover{color:var(--r);text-decoration:underline;}
+.auth-msg{padding:9px 11px;border-radius:var(--rad);font-size:.7rem;margin-bottom:12px;display:none;line-height:1.5;}
+.auth-msg.err{background:rgba(200,57,43,.08);color:var(--r);border:1px solid rgba(200,57,43,.2);display:block;}
+.auth-msg.ok{background:var(--grlit);color:var(--gr);border:1px solid rgba(45,106,79,.2);display:block;}
+.auth-meta{font-size:.6rem;color:var(--m);text-align:center;margin-top:12px;padding-top:10px;border-top:1px solid var(--l);}
+/* Unauthorized modal */
+.unauth-box{max-width:440px;}
+.unauth-icon{width:54px;height:54px;border-radius:50%;background:var(--rlit);display:flex;align-items:center;justify-content:center;font-size:1.7rem;margin:0 auto 14px;}
+.unauth-title{font-family:'Playfair Display',serif;font-size:1.15rem;font-weight:900;text-align:center;margin-bottom:8px;}
+.unauth-msg{font-size:.78rem;color:var(--m);text-align:center;line-height:1.55;margin-bottom:16px;}
+.wa-btn{display:block;width:100%;padding:12px;background:#25D366;color:#fff;border:none;border-radius:var(--rad);font-family:'DM Sans',sans-serif;font-size:.82rem;font-weight:700;cursor:pointer;text-transform:uppercase;letter-spacing:1px;text-align:center;text-decoration:none;}
+.wa-btn:hover{background:#1ea954;}
+/* Hide app while authenticating */
+.app-locked{display:none;}
+
 /* ── TOKENS ── */
 :root{
   --r:#C8392B;--rlit:rgba(200,57,43,.08);
@@ -512,8 +546,55 @@ input[type=file]{display:none;}
 </head>
 <body>
 
+<!-- ═══ AUTH SCREEN ═══════════════════════════════════════════════════════ -->
+<div class="auth-overlay" id="authOverlay">
+  <!-- Email step -->
+  <div class="auth-box" id="authEmailStep">
+    <div class="auth-head">
+      <div class="auth-logo">Sazón<span>.</span></div>
+      <div class="auth-tag">Growth Engine</div>
+    </div>
+    <div class="auth-body">
+      <div class="auth-title">Ingresa a tu cuenta</div>
+      <div class="auth-sub">Te enviaremos un código de acceso a tu correo</div>
+      <div class="auth-msg" id="authMsgEmail"></div>
+      <input type="email" id="authEmail" class="auth-input" placeholder="tu@correo.com" autocomplete="email">
+      <button class="auth-btn" id="authEmailBtn" onclick="requestOTP()">Continuar</button>
+      <div class="auth-meta">Acceso solo para clientes activos · Servicio de Sazón Growth Partner</div>
+    </div>
+  </div>
+
+  <!-- OTP step -->
+  <div class="auth-box" id="authOtpStep" style="display:none">
+    <div class="auth-head">
+      <div class="auth-logo">Sazón<span>.</span></div>
+      <div class="auth-tag">Growth Engine</div>
+    </div>
+    <div class="auth-body">
+      <div class="auth-title">Código enviado</div>
+      <div class="auth-sub">Revisa tu correo <strong id="authEmailDisplay"></strong> · Vence en 10 min</div>
+      <div class="auth-msg" id="authMsgOtp"></div>
+      <input type="text" id="authOtp" class="auth-input otp" placeholder="000000" maxlength="6" inputmode="numeric" autocomplete="one-time-code">
+      <button class="auth-btn" id="authOtpBtn" onclick="verifyOTP()">Verificar y entrar</button>
+      <a class="auth-link" onclick="resetAuthFlow()">← Usar otro correo</a>
+    </div>
+  </div>
+
+  <!-- Unauthorized step -->
+  <div class="auth-box unauth-box" id="authUnauthStep" style="display:none">
+    <div class="auth-body" style="padding:32px 28px">
+      <div class="unauth-icon">🔒</div>
+      <div class="unauth-title">Acceso no autorizado</div>
+      <div class="unauth-msg">El correo que ingresaste no está registrado como cliente activo. Contacta a Sazón para contratar el servicio y obtener acceso al Growth Engine.</div>
+      <a class="wa-btn" id="waContactBtn" target="_blank" rel="noopener">💬 Contactar por WhatsApp</a>
+      <a class="auth-link" onclick="resetAuthFlow()">← Usar otro correo</a>
+    </div>
+  </div>
+</div>
+
+
 <!-- ═══ NAV ════════════════════════════════════════════════════════════════ -->
-<nav class="nav">
+<nav class="nav app-locked" id="appNav">
   <div class="nav-logo">
     Sazón<span>.</span>
     <span class="nav-tag">Growth Engine</span>
@@ -523,6 +604,7 @@ input[type=file]{display:none;}
     <button class="btn btn-ghost btn-sm" id="btnReset" style="display:none" onclick="resetAll()">← Nueva sesión</button>
     <button class="btn btn-ghost btn-sm" id="btnConfig" style="display:none" onclick="showConfig()">⚙ Config</button>
     <button class="btn btn-red btn-sm" id="btnExport" style="display:none" onclick="window.print()">⬇ PDF</button>
+    <button class="btn btn-ghost btn-sm" id="btnLogout" onclick="logout()" title="Cerrar sesión">⎋ Salir</button>
   </div>
 </nav>
 
@@ -556,7 +638,7 @@ input[type=file]{display:none;}
 </div>
 
 <!-- ═══ UPLOAD SCREEN ═════════════════════════════════════════════════════ -->
-<div class="up-wrap" id="upWrap">
+<div class="up-wrap app-locked" id="upWrap">
   <div class="up-grid">
 
     <!-- LEFT: Brand Config -->
@@ -919,6 +1001,198 @@ input[type=file]{display:none;}
 <!-- ═══ JAVASCRIPT ═════════════════════════════════════════════════════════ -->
 <script>
 'use strict';
+
+
+// ════════════════════════════════════════════════════════
+//  AUTH SYSTEM — Fase A
+// ════════════════════════════════════════════════════════
+const AUTHORIZED_EMAILS = [
+  'gc.asin.zapata@gmail.com',
+];
+
+const AUTH = {
+  emailjs: {
+    publicKey:  'uukQlGC-qceetAesl',
+    serviceId:  'service_sazon',
+    templateId: 'template_sazon_otp',
+  },
+  whatsapp: '+51952363643',  // Número WhatsApp Sazón
+  sessionDays: 30,
+  otpExpireMin: 10,
+  // Estado de sesión
+  email: null,
+  otp: null,
+  otpExpires: null,
+  otpAttempts: 0,
+};
+
+function normEmail(e){ return String(e||'').trim().toLowerCase(); }
+
+function isAuthorized(email){
+  return AUTHORIZED_EMAILS.map(e=>e.toLowerCase()).includes(normEmail(email));
+}
+
+function genOTP(){
+  return String(Math.floor(100000 + Math.random()*900000));
+}
+
+function showAuthStep(step){
+  document.getElementById('authEmailStep').style.display  = step==='email'  ? 'block' : 'none';
+  document.getElementById('authOtpStep').style.display    = step==='otp'    ? 'block' : 'none';
+  document.getElementById('authUnauthStep').style.display = step==='unauth' ? 'block' : 'none';
+}
+
+function showAuthMsg(targetId, msg, type){
+  const el = document.getElementById(targetId);
+  el.textContent = msg;
+  el.className = 'auth-msg ' + type;
+}
+
+function resetAuthFlow(){
+  AUTH.email = null;
+  AUTH.otp = null;
+  AUTH.otpAttempts = 0;
+  document.getElementById('authEmail').value = '';
+  document.getElementById('authOtp').value = '';
+  document.getElementById('authMsgEmail').className = 'auth-msg';
+  document.getElementById('authMsgOtp').className = 'auth-msg';
+  showAuthStep('email');
+  setTimeout(()=>document.getElementById('authEmail').focus(), 50);
+}
+
+async function requestOTP(){
+  const emailRaw = document.getElementById('authEmail').value;
+  const email = normEmail(emailRaw);
+  if(!email || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
+    showAuthMsg('authMsgEmail', 'Ingresa un correo válido.', 'err');
+    return;
+  }
+
+  // Check if authorized
+  if(!isAuthorized(email)){
+    // Set WhatsApp link with pre-filled message
+    const waMsg = encodeURIComponent(`Hola, quiero contratar el servicio de Sazón Growth Partner. Mi correo es ${email}.`);
+    const waUrl = `https://wa.me/${AUTH.whatsapp.replace(/[^0-9]/g,'')}?text=${waMsg}`;
+    document.getElementById('waContactBtn').href = waUrl;
+    showAuthStep('unauth');
+    return;
+  }
+
+  // Generate and send OTP via EmailJS
+  const btn = document.getElementById('authEmailBtn');
+  btn.disabled = true;
+  btn.textContent = 'Enviando código...';
+
+  try {
+    if(typeof emailjs === 'undefined'){
+      throw new Error('EmailJS no cargó. Recarga la página.');
+    }
+    emailjs.init({ publicKey: AUTH.emailjs.publicKey });
+
+    AUTH.email = email;
+    AUTH.otp = genOTP();
+    AUTH.otpExpires = Date.now() + AUTH.otpExpireMin*60*1000;
+    AUTH.otpAttempts = 0;
+
+    await emailjs.send(AUTH.emailjs.serviceId, AUTH.emailjs.templateId, {
+      to_email:   email,
+      code:       AUTH.otp,
+      admin_name: 'Sazón Growth Engine',
+    });
+
+    document.getElementById('authEmailDisplay').textContent = email;
+    showAuthStep('otp');
+    setTimeout(()=>document.getElementById('authOtp').focus(), 50);
+  } catch(err) {
+    console.error('OTP send error:', err);
+    showAuthMsg('authMsgEmail', 'Error al enviar el código: ' + (err.text||err.message||'Intenta de nuevo'), 'err');
+  } finally {
+    btn.disabled = false;
+    btn.textContent = 'Continuar';
+  }
+}
+
+function verifyOTP(){
+  const code = String(document.getElementById('authOtp').value||'').trim();
+  if(code.length !== 6){
+    showAuthMsg('authMsgOtp', 'El código debe tener 6 dígitos.', 'err');
+    return;
+  }
+  if(Date.now() > AUTH.otpExpires){
+    showAuthMsg('authMsgOtp', 'El código expiró. Solicita uno nuevo.', 'err');
+    return;
+  }
+  AUTH.otpAttempts++;
+  if(AUTH.otpAttempts > 5){
+    showAuthMsg('authMsgOtp', 'Demasiados intentos. Vuelve a empezar.', 'err');
+    setTimeout(resetAuthFlow, 1500);
+    return;
+  }
+  if(code !== AUTH.otp){
+    showAuthMsg('authMsgOtp', `Código incorrecto. Te quedan ${5-AUTH.otpAttempts} intentos.`, 'err');
+    return;
+  }
+
+  // SUCCESS: persist session
+  const session = {
+    email: AUTH.email,
+    expiresAt: Date.now() + AUTH.sessionDays*24*60*60*1000,
+    loggedInAt: new Date().toISOString(),
+  };
+  saveLS('sazon_session', session);
+  unlockApp();
+}
+
+function checkExistingSession(){
+  const session = loadLS('sazon_session');
+  if(!session) return false;
+  if(!session.email || !session.expiresAt) return false;
+  if(Date.now() > session.expiresAt){
+    localStorage.removeItem('sazon_session');
+    return false;
+  }
+  // Re-validate authorization (in case email was removed from list)
+  if(!isAuthorized(session.email)){
+    localStorage.removeItem('sazon_session');
+    return false;
+  }
+  return true;
+}
+
+function unlockApp(){
+  document.getElementById('authOverlay').style.display = 'none';
+  document.querySelectorAll('.app-locked').forEach(el=>el.classList.remove('app-locked'));
+}
+
+function logout(){
+  if(!confirm('¿Cerrar sesión?')) return;
+  localStorage.removeItem('sazon_session');
+  location.reload();
+}
+
+// Init auth on page load — runs before everything else
+(function initAuth(){
+  if(checkExistingSession()){
+    unlockApp();
+    return;
+  }
+  // Setup keyboard shortcuts
+  document.addEventListener('DOMContentLoaded', ()=>{
+    const emailInp = document.getElementById('authEmail');
+    const otpInp = document.getElementById('authOtp');
+    if(emailInp){
+      emailInp.addEventListener('keypress', e=>{ if(e.key==='Enter') requestOTP(); });
+      setTimeout(()=>emailInp.focus(), 100);
+    }
+    if(otpInp){
+      otpInp.addEventListener('keypress', e=>{ if(e.key==='Enter') verifyOTP(); });
+      otpInp.addEventListener('input', e=>{
+        e.target.value = e.target.value.replace(/[^0-9]/g,'').slice(0,6);
+      });
+    }
+  });
+})();
+
 
 // ════════════════════════════════════════════════════════
 //  STATE
