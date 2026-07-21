@@ -262,7 +262,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
                 <button onclick="this.closest('div').remove();updateAlertBadge()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.9rem;flex-shrink:0;margin-left:8px;">✓</button>
               </div>
               <div style="padding:11px;background:rgba(59,130,246,.07);border:1px solid rgba(59,130,246,.14);border-radius:8px;margin-bottom:8px;font-size:.83rem;display:flex;justify-content:space-between;align-items:flex-start;">
-                <span><span style="color:#60a5fa;font-weight:600;">🔵 Carlos modo manual</span> — Sin VITE_ANTHROPIC_KEY, Carlos usa respuestas inteligentes pero sin IA en tiempo real.</span>
+                <span><span style="color:#60a5fa;font-weight:600;">🔵 Carlos modo manual</span> — Sin GEMINI_API_KEY o ANTHROPIC_API_KEY, Carlos usa respuestas inteligentes pero sin IA en tiempo real.</span>
                 <button onclick="this.closest('div').remove();updateAlertBadge()" style="background:none;border:none;color:var(--muted);cursor:pointer;font-size:.9rem;flex-shrink:0;margin-left:8px;">✓</button>
               </div>
               <div style="padding:11px;background:rgba(34,197,94,.07);border:1px solid rgba(34,197,94,.14);border-radius:8px;font-size:.83rem;display:flex;justify-content:space-between;align-items:flex-start;">
@@ -337,7 +337,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
 
       <!-- CARLOS -->
       <div id="p-carlos" class="panel fadein">
-        <div class="alert aw">⚠️ <div>Carlos opera en <strong>modo fallback inteligente</strong>. Para activar IA completa en tiempo real, configura VITE_ANTHROPIC_KEY en Netlify (variable de entorno del frontend).</div></div>
+        <div class="alert aw">⚠️ <div>Carlos opera en <strong>modo fallback inteligente</strong>. Para activar IA completa en tiempo real, configura GEMINI_API_KEY o ANTHROPIC_API_KEY en Netlify como variable privada del servidor.</div></div>
         <div class="g2" style="margin-bottom:14px;">
           <div class="card">
             <div class="ct">Estado de Carlos</div>
@@ -349,7 +349,7 @@ tr:hover td{background:rgba(255,255,255,.02);}
               <div style="display:flex;justify-content:space-between;align-items:center;font-size:.85rem;"><span>Calculo ROI</span><span class="bg bg-g">Automatico</span></div>
               <div style="display:flex;justify-content:space-between;align-items:center;font-size:.85rem;"><span>Cierre con MP link</span><span class="bg bg-g">Activo</span></div>
               <div style="height:1px;background:var(--border);margin:2px 0;"></div>
-              <div style="font-size:.8rem;color:var(--muted);">Para activar IA completa: agrega VITE_ANTHROPIC_KEY en Netlify → Site settings → Environment variables.</div>
+              <div style="font-size:.8rem;color:var(--muted);">Para activar IA completa: agrega GEMINI_API_KEY o ANTHROPIC_API_KEY en Netlify → Site settings → Environment variables.</div>
             </div>
           </div>
           <div class="card">
@@ -770,7 +770,7 @@ Selecciona un cliente para generar el mensaje.</div>
                 <input class="fi" placeholder="https://mpago.la/tu-link-growth"/>
               </div>
               <div>
-                <label class="fl">VITE_ANTHROPIC_KEY — Carlos IA completa (opcional)</label>
+                <label class="fl">ANTHROPIC_API_KEY — Carlos IA completa (opcional)</label>
                 <input class="fi" type="password" placeholder="sk-ant-..."/>
                 <div style="font-size:.7rem;color:var(--muted);margin-top:4px;">console.anthropic.com → API Keys. Sin esto, Carlos usa fallback inteligente.</div>
               </div>
@@ -779,7 +779,7 @@ Selecciona un cliente para generar el mensaje.</div>
                 <div style="color:var(--muted);line-height:1.7;">
                   1. Netlify dashboard → sazonpartner.com → Site settings<br>
                   2. Build &amp; deploy → Environment variables → Add variable<br>
-                  3. Agrega VITE_MP_STARTER, VITE_MP_GROWTH, VITE_ANTHROPIC_KEY<br>
+                  3. Agrega VITE_MP_STARTER, VITE_MP_GROWTH y GEMINI_API_KEY o ANTHROPIC_API_KEY<br>
                   4. Haz un redeploy desde Deploys → Trigger deploy
                 </div>
               </div>

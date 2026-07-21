@@ -17,6 +17,10 @@ VITE_MP_PREF_PRO=
 VITE_MP_PREF_PLUS=
 ```
 
+## Variables de IA
+
+El chat de Carlos llama a una Netlify Function para evitar que las credenciales se incluyan en el JavaScript público. Configura `GEMINI_API_KEY` o `ANTHROPIC_API_KEY` en las variables de entorno de Netlify. Los nombres anteriores con prefijo `VITE_` siguen funcionando temporalmente en el servidor para facilitar la migración, pero deben reemplazarse porque ese prefijo identifica variables destinadas al frontend.
+
 ## Post-pago (redirección a WhatsApp)
 Usa estos links como `success` (back_urls) o página de agradecimiento en tus Links de pago:
 
