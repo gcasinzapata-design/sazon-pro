@@ -7,7 +7,9 @@ const CONTACT_EMAIL = "comercial@sazonpartner.com";
 
 // Mercado Pago — agrega en Netlify: Site settings → Environment variables
 // Soporta ambos nombres de variable por compatibilidad
-// Mercado Pago removido — planes son informativos
+// MP links eliminados — precios ahora se negocian en llamada
+const MP_STARTER = ""; // deprecated
+const MP_GROWTH  = ""; // deprecated
 
 // ── OPCION 1 (GRATIS): Google Gemini — console.cloud.google.com
 //    Crear proyecto → habilitar Gemini API → Credentials → Create API Key
@@ -31,6 +33,19 @@ const ANTHROPIC_KEY = import.meta.env.VITE_ANTHROPIC_KEY || "";
 //
 // OPCION B (este codigo): Crea un <a> en tiempo de ejecucion — el navegador
 //   lo abre directamente sin pasar por Netlify
+function openPayment(url) {
+  if (!url) return;
+  let full = url.trim();
+  if (!full.startsWith("http")) full = "https://" + full;
+  // Crear elemento <a> temporal — bypasea el link-expander del servidor
+  const a = document.createElement("a");
+  a.href = full;
+  a.target = "_blank";
+  a.rel = "noopener noreferrer";
+  document.body.appendChild(a);
+  a.click();
+  setTimeout(() => { try { document.body.removeChild(a); } catch{} }, 200);
+}
 
 // ─── CARLOS: SYSTEM PROMPT ───────────────────────────────────────────────────
 const CARLOS_SYSTEM = `Eres Carlos, Growth Executive del equipo de Sazón Growth Partner. Sazón ayuda a restaurantes a crecer sus ventas en plataformas de delivery (Rappi, PedidosYa, Didi Food, Glovo y más).
@@ -39,10 +54,11 @@ SOBRE SAZÓN:
 - Equipo especializado que gestiona la presencia de restaurantes en apps de delivery
 - Optimizamos menus digitales, ejecutamos campanas, setup en plataformas para marcas nuevas
 - Los restaurantes crecen +38% en pedidos en los primeros 90 días en promedio
-- Plan Starter: S/2,890/mes — 1 plataforma, hasta 300 pedidos/mes
-- Plan Growth: S/3,790/mes — hasta 3 plataformas, acompañamiento completo (MÁS POPULAR)
-- Plan Pro: cotización a medida para cadenas, multi-local y dark kitchens
-- Sin contratos de largo plazo. Pago mensual seguro.
+- Planes personalizados según operación (no comunicamos precios públicos)
+- Nuestro equipo comercial arma la propuesta específica para cada marca
+- Sin contratos de largo plazo, cancelable cuando quieran
+- Todos los planes incluyen: gestión de plataformas, optimización de menú, campañas, reporte mensual
+- Planes superiores agregan: Growth Manager dedicado, setup en nuevas plataformas, multi-marca
 
 TU MISIÓN: Entender la situación del restaurante, calcular su ROI personalizado y cerrar la venta directamente en este chat.
 
@@ -61,28 +77,20 @@ Ejemplo: 200 pedidos × S/42 ticket = S/2,352 extras al mes
 FLUJO NATURAL DE VENTAS:
 1. Saludo → preguntar en qué plataformas están
 2. Entender volumen → pedidos/mes y ticket promedio
-3. Calcular ROI exacto → mostrar el número real
-4. Recomendar plan → Starter si <300 pedidos/mes, Growth si >300 o ya en 2+ plataformas
-5. Manejar objeciones → siempre con el ROI como argumento
-6. Cerrar → Cuando esten listos: "Para arrancar, completa el formulario en sazonpartner.com/#contacto y te contactamos en 24h."
+3. Calcular ROI proyectado → mostrar el ingreso extra proyectado
+4. NO menciones precios de planes específicos. Di que armamos una propuesta personalizada
+5. Manejar objeciones → siempre con el ROI proyectado como argumento
+6. Cerrar → Cuando estén listos, di exactamente: "[AGENDAR_LLAMADA]" para que nuestro equipo comercial los contacte por WhatsApp
 
 OBJECIONES COMUNES:
-- "muy caro" → calcula cuánto más van a ganar vs el costo. Ej: "Pagas S/890 para generar S/2,352 extra — eso es 264% de retorno"
+- "cuánto cuesta" → "Los planes son personalizados según tu operación. Con tus datos, nuestro equipo te arma una propuesta específica. Basado en tu volumen, proyectamos S/X extra al mes — la inversión se define en la llamada"
 - "voy a pensarlo" → "¿Qué te genera dudas? Te lo resuelvo ahora mismo"
 - "ya tenemos alguien" → "¿Están logrando +38% de crecimiento? Si no, algo se puede mejorar"
 - "no sé si funciona" → mencion resultados: restaurantes que crecieron 40-55%
 
 CUANDO EL CHAT NO SEA SOBRE VENTAS:
 - Si preguntan por el email de contacto: ${CONTACT_EMAIL}
-- Si preguntan algo que no puedes responder: "Déjame consultarlo con el equipo y te confirmo"
-
-CASOS ESPECIALES — manéjalos así:
-- Número solo ("3000", "45"): interpreta por contexto. Si preguntaste pedidos → son pedidos. Si ticket → es ticket.
-- Volúmenes altos (>1000/mes): "Con ese volumen el impacto va a ser enorme" + calcula el ROI real.
-- Cadena/multi-local: recomendar Plan Pro y formulario para cotización.
-- "hola", "buenas", "hey": responder con calidez y preguntar plataformas.
-- NUNCA repitas la misma pregunta. Si tienes pedidos, pide ticket. Si tienes ambos, calcula ROI.
-- Cuando tengas pedidos Y ticket → calcula y muestra el ROI en ese mismo mensaje.`;
+- Si preguntan algo que no puedes responder: "Déjame consultarlo con el equipo y te confirmo"`;
 
 // ─── CARLOS: GEMINI API (GRATIS) ────────────────────────────────────────────
 // google.com/aistudio → Get API Key → sin tarjeta, 1500 requests/dia gratis
@@ -159,49 +167,41 @@ async function callCarlosAPI(history) {
 // ─── CARLOS: MÁQUINA DE ESTADOS ─────────────────────────────────────────────
 // Extrae datos estructurados de toda la conversación
 function parseConvState(history) {
+  const msgs  = history.map(m => m.content);
+  const full  = msgs.join(" ").toLowerCase();
   const uMsgs = history.filter(m => m.role === "user").map(m => m.content.toLowerCase());
   const last  = uMsgs[uMsgs.length - 1] || "";
   const prev  = uMsgs[uMsgs.length - 2] || "";
 
   // Pedidos: acepta "200 pedidos", "hacemos 200 al mes", "unas 200 ordenes"
-  const pedRx = /(?:hacemos|tenemos|recibimos|manejamos|unas?|como|entre|aproximadamente|aprox\.?)?\s*(\d{2,5})\s*(?:pedidos?|ordenes?|ventas?|al\s*mes|por\s*mes|mensuales?)?/;
-  const pedM  = (uFull.match(pedRx) || uFull.match(/(\d{2,5})\s*(?:mes|orden|pedid)/));
+  const pedRx = /(?:hacemos|tenemos|recibimos|unas?|como|entre|aproximadamente)?\s*(\d{2,4})\s*(?:pedidos?|ordenes?|ventas?|al\s*mes|por\s*mes|mensuales?)/;
+  const pedM  = (full.match(pedRx) || full.match(/(\d{3,4})\s*(?:mes|orden|pedid)/));
   const pedidos = pedM ? parseInt(pedM[1]) : null;
 
   // Ticket: acepta "ticket de 45", "gasta 45 soles", "promedio 45", "cobra 45"
   const tickRx = /(?:ticket\s*(?:de|es|promedio)?|gasta\s*(?:unos?)?|promedio\s*(?:de)?|cobra\s*(?:unos?)?|s\/\s*)(\d{2,3})(?:\s*soles?)?/;
-  const tickM  = uFull.match(tickRx);
+  const tickM  = full.match(tickRx);
   const ticket = tickM ? parseInt(tickM[1]) : null;
 
-  // Plataformas — user msgs only, with negation detection
-  const uFull  = uMsgs.join(" ");
-  const lastCA = (history.filter(m=>m.role==="assistant").slice(-1)[0]?.content||"").toLowerCase();
-  const askingPed  = /pedidos|cuantos|ordenes|volumen/.test(lastCA) && !/ticket|promedio|gasta/.test(lastCA);
-  const askingTick = /ticket|promedio|gasta.*cada|cuanto.*gasta/.test(lastCA);
-  const soloNum = last.match(/^(?:aprox\.?\s*|como\s*|unos?\s*)?(\d{2,5})(?:\s*(?:al\s*mes|por\s*mes|pedidos?|ordenes?))?$/i);
-  if (!pedidos && soloNum && askingPed) pedidos = parseInt(soloNum[1]);
-  const tmRx2 = /(\d{2,3})\s*soles?\b/; const tmRx3 = /[sS]\/(\d{2,3})\b/;
-  const tmM2  = !ticket ? (uFull.match(tmRx2)||uFull.match(tmRx3)) : null;
-  if (tmM2) ticket = parseInt(tmM2[1]);
-  if (!ticket && soloNum && askingTick) ticket = parseInt(soloNum[1]);
-  if (ticket && (ticket<8||ticket>500)) ticket=null;
-  const denied = {
-    rappi: uMsgs.some(m=>/no\s+(?:estoy|estamos|tengo)?\s*(?:en\s+)?rappi/.test(m)),
-    peya:  uMsgs.some(m=>/no\s+(?:estoy|estamos|tengo)?\s*(?:en\s+)?(?:pedidos\s*ya|pedidosya)/.test(m)),
-    didi:  uMsgs.some(m=>/no\s+(?:estoy|estamos|tengo)?\s*(?:en\s+)?didi/.test(m)),
-  };
+  // Plataformas
   const plats = [];
-  if (!denied.rappi && /rappi/.test(uFull))                     plats.push("Rappi");
-  if (!denied.peya  && /pedidos\s*ya|pedidosya|\bpeya\b/.test(uFull)) plats.push("PedidosYa");
-  if (!denied.didi  && /didi/.test(uFull))                      plats.push("Didi Food");
-  if (/glovo/.test(uFull))                                      plats.push("Glovo");
-  const aMsgs2   = history.filter(m=>m.role==="assistant");
-  const roiDicho   = aMsgs2.some(m=>/proyectamos|adicionales por mes|retorno del/.test(m.content.toLowerCase()));
-  const planDicho  = aMsgs2.some(m=>/plan starter|plan growth|s\/2[,.]?890|s\/3[,.]?790/.test(m.content.toLowerCase()));
-  const pagoDicho  = aMsgs2.some(m=>/formulario|coordina|diagnostico gratuito|sazonpartner/.test(m.content.toLowerCase()));
-  const saludoDicho= aMsgs2.length > 0;
-  const nCarlos    = aMsgs2.length;
-  return { uFull, last, prev, pedidos, ticket, plats, roiDicho, planDicho, pagoDicho, saludoDicho, nCarlos, uMsgs };
+  if (/rappi/.test(full))              plats.push("Rappi");
+  if (/pedidos\s*ya|pedidosya/.test(full)) plats.push("PedidosYa");
+  if (/didi/.test(full))               plats.push("Didi Food");
+  if (/glovo/.test(full))              plats.push("Glovo");
+  if (/uber/.test(full))               plats.push("Uber Eats");
+  if (/ifood/.test(full))              plats.push("iFood");
+
+  // ¿Ya respondimos sobre ROI? evita repetir el cálculo
+  const roiDicho   = history.some(m => m.role === "assistant" && /proyectamos|roi|retorno|ingresos adicionales/.test(m.content.toLowerCase()));
+  const planDicho  = history.some(m => m.role === "assistant" && /propuesta personalizada|equipo comercial|te contacta/.test(m.content.toLowerCase()));
+  const pagoDicho  = history.some(m => m.role === "assistant" && /\[agendar_llamada\]/.test(m.content.toLowerCase()));
+  const saludoDicho= history.some(m => m.role === "assistant" && /hola.*carlos|soy carlos/.test(m.content.toLowerCase()));
+
+  // Número de respuestas de Carlos (para variar)
+  const nCarlos = history.filter(m => m.role === "assistant").length;
+
+  return { full, last, prev, pedidos, ticket, plats, roiDicho, planDicho, pagoDicho, saludoDicho, nCarlos, uMsgs };
 }
 
 // ─── CARLOS: ROI ENGINE ───────────────────────────────────────────────────────
@@ -216,95 +216,158 @@ function calcROI({ pedidos, ticket, plats = [] }) {
   // Factor total de mejora
   const totalFactor = crescBase + campBonus + comisBonus;
   const mensual     = Math.round(pedidos * ticket * totalFactor);
-  const isGrowth    = pedidos >= 300 || (plats.length >= 2);
-  const plan        = isGrowth ? "Growth" : "Starter";
-  const costo       = isGrowth ? 3790 : 2890;
-  const roi_pct     = Math.round((mensual / costo) * 100);
-  const payback_dias= Math.round((costo / mensual) * 30);
-  return { mensual, anual: mensual * 12, plan, costo, roi_pct, payback_dias, factor: Math.round(totalFactor * 100) };
+  // Nota: ya no calculamos plan/costo/roi_pct — el precio se define en llamada
+  return { mensual, anual: mensual * 12, factor: Math.round(totalFactor * 100) };
 }
 
 // ─── CARLOS: FALLBACK INTELIGENTE (sin API) ───────────────────────────────────
 // Máquina de estados: nunca repite la misma pregunta, avanza en el funnel
 function carlosFallback(history) {
   const s = parseConvState(history);
-  const { uFull, last, plats, pedidos, ticket, roiDicho, planDicho, pagoDicho, saludoDicho, nCarlos } = s;
+  const { full, last, plats, pedidos, ticket, roiDicho, planDicho, pagoDicho, saludoDicho, nCarlos } = s;
   const roi = calcROI({ pedidos, ticket, plats });
 
-  // ── INTENTS ───────────────────────────────────────────────────────────────
-  const l = last.toLowerCase();
+  // ── INTENTS DE ALTO VALOR: siempre primero ──────────────────────────────────
 
-  if (/quiero\s*(empezar|arrancar|contratar|activar)|vamos|arrancamos|me\s*interesa|como\s*(arrancamos|empezamos)/i.test(last)) {
+  // Cierre / pago
+  if (/quiero\s*(iniciar|empezar|contratar|pagar)|listo\s*para|me\s*animo|arrancamos|activ[ae]|cuanto\s*cuesta\s*para\s*empe/.test(last)) {
     if (roi) {
-      const desc = roi.plan === "Growth" ? "hasta 3 plataformas" : "1 plataforma";
-      return `Perfecto! El plan ${roi.plan} (${desc}, S/${roi.costo.toLocaleString()}/mes) proyecta S/${roi.mensual.toLocaleString()} adicionales al mes. Para arrancar: sazonpartner.com/#contacto — te contactamos en menos de 24h.`;
+      return `Genial! Con tu operación (${pedidos} pedidos, S/${ticket} ticket) proyectamos S/${roi.mensual.toLocaleString()} extra por mes. Nuestro equipo comercial te contacta por WhatsApp con la propuesta específica para tu marca. [AGENDAR_LLAMADA]`;
     }
-    return "Para arrancar, completa el formulario en sazonpartner.com/#contacto — nuestro equipo te contacta en menos de 24h.";
+    return "Perfecto! Para armarte la propuesta necesito dos datos: ¿cuántos pedidos recibes por mes y cuál es el ticket promedio? Con eso nuestro equipo te contacta con un plan personalizado.";
   }
 
-  if (/caro|costoso|precio|cuanto\s*(cuesta|sale|cobran)/i.test(last)) {
-    if (roi) return `Pagas S/${roi.costo.toLocaleString()}/mes para generar S/${roi.mensual.toLocaleString()} extra. Eso es ${roi.roi_pct}% de retorno — recuperas la inversión en ${roi.payback_dias} días.`;
-    return "Antes del precio, déjame calcular cuánto puedes ganar. ¿Cuántos pedidos manejan por mes?";
+  // Objeción de precio
+  if (/caro|costoso|mucho\s*(dinero|plata)|no\s*(tengo|puedo|cuento\s*con)\s*(ese\s*)?presupuesto|fuera\s*de\s*(mi\s*)?presupuesto/.test(last)) {
+    if (roi) {
+      return `Entiendo la duda. Con tu operación proyectamos S/${roi.mensual.toLocaleString()} extra al mes — la inversión se ajusta a tu volumen. Nuestro equipo comercial te arma una propuesta que respete tu presupuesto y muestre el retorno claro. ¿Coordinamos una llamada corta para verlo juntos?`;
+    }
+    return `Entiendo. Nuestro modelo funciona solo si el cliente crece — por eso adaptamos la propuesta a cada operación. Dime tus pedidos actuales y ticket promedio, y armamos una propuesta que tenga sentido para tu presupuesto.`;
   }
 
-  if (/pienso|pensandolo|despues|luego|no\s*se\b|no\s*sé\b|duda/i.test(last)) {
-    if (roi) return `Cada semana son S/${Math.round(roi.mensual/4).toLocaleString()} que no estás generando. ¿Qué te genera dudas?`;
-    return "¿Qué te genera dudas? Cuéntame y te lo resuelvo.";
+  // Duda / pensar
+  if (/tengo\s*que\s*pens|lo\s*pienso|dame\s*tiempo|después\s*te|voy\s*a\s*ver|no\s*sé|no\s*estoy\s*seguro|dudas?/.test(last)) {
+    if (roi) {
+      return `Claro, tómate el tiempo que necesitas. Solo para que tengas el número claro: con tu operación proyectamos S/${roi.mensual.toLocaleString()} extras al mes. Cada semana que pasa sin optimizar es dinero que se queda sobre la mesa. ¿Qué específicamente te genera dudas?`;
+    }
+    return "¿Qué es lo que más te genera dudas? Cuéntame y lo resolvemos ahora — no hay ningún compromiso en preguntar.";
   }
 
-  if (/ya\s*tenemos|tenemos\s*(agencia|alguien)|nos\s*(manejan|llevan)/i.test(last)) {
-    return "¿Están creciendo más de 20% por trimestre? Si no, algo se puede mejorar. ¿Qué resultados están viendo?";
+  // "Ya tengo alguien / ya estamos gestionados"
+  if (/ya\s*(tenemos|tengo|estamos)\s*(alguien|un\s*(equipo|partner|agencia))|ya\s*(nos|me)\s*(gestionan|manejan|administran)/.test(last)) {
+    return "Interesante. ¿Están creciendo más de 30% en pedidos por trimestre? Si no, algo hay por mejorar. Cuéntame cuántos pedidos manejan y te digo honestamente si podemos agregar valor o no.";
   }
 
-  if (/que\s*(incluye|hace|es\s*sazon)|como\s*funciona|en\s*que\s*consiste/i.test(last)) {
-    return "Gestionamos tu perfil, menú digital, campañas y reseñas en las apps de delivery. Tú solo cocinas — nuestro equipo se encarga del crecimiento y te manda un reporte mensual con todos los números.";
+  // Preguntan por resultados / garantía
+  if (/resultado|garantia|funciona\s*de\s*verdad|caso\s*de\s*éxito|comprobado|ejemplo/.test(last)) {
+    return `Mr Smash pasó de 80 a 340 pedidos diarios en 3 meses. D'Tinto y Bife subió el ticket promedio 28% con solo optimización de menú. El promedio de nuestros 16+ clientes activos es +38% en ventas en los primeros 90 días. ¿Cuál es tu situación actual?`;
   }
 
-  // ── FLUJO DE DATOS ─────────────────────────────────────────────────────────
-
-  if (pedidos && ticket && roi && !roiDicho) {
-    const desc = roi.plan === "Growth" ? "hasta 3 plataformas" : "1 plataforma";
-    const intro = pedidos >= 1000
-      ? `Con ${pedidos.toLocaleString()} pedidos al mes`
-      : `Con ${pedidos.toLocaleString()} pedidos a S/${ticket} de ticket`;
-    return `${intro}, proyectamos S/${roi.mensual.toLocaleString()} adicionales por mes. Plan ${roi.plan} (${desc}, S/${roi.costo.toLocaleString()}/mes) — ${roi.roi_pct}% ROI mensual. ¿Arrancamos?`;
+  // Preguntan qué incluye / cómo funciona
+  if (/que\s*(incluye|tiene|trae)|como\s*(funciona|trabajan|es\s*el\s*proceso)|que\s*(hacen|ofrecen|servicios)/.test(last)) {
+    return "Nuestro equipo se encarga de todo: gestionamos tus plataformas de delivery, optimizamos fotos, precios y descripciones de tu menú, ejecutamos campañas pagadas y te mandamos un reporte mensual con todos los números. Tú solo cocinas. ¿En qué plataformas estás actualmente?";
   }
 
-  if (pedidos && ticket && roiDicho && !pagoDicho) {
-    return "Para activar el plan, completa el formulario en sazonpartner.com/#contacto — te contactamos en menos de 24h.";
+  // Preguntan sobre planes / precios
+  if (/precio|plan|cuanto\s*(cobran|cuesta)|tarifa|mensualidad/.test(last)) {
+    if (pedidos && ticket && roi) {
+      return `Para tu operación (${pedidos} pedidos, S/${ticket} ticket) proyectamos S/${roi.mensual.toLocaleString()} extra por mes. El plan se personaliza según tu operación — nuestro equipo comercial te arma la propuesta en una llamada corta. ¿Coordinamos?`;
+    }
+    return "Los planes son personalizados según tu operación (número de sucursales, plataformas, volumen). Para recomendarte una propuesta específica necesito entender tu situación. ¿Cuántos pedidos reciben por mes?";
   }
 
+  // Multi-local / cadenas
+  if (/cadena|varios\s*locales?|franquicia|multi\s*local|dark\s*kitchen|varias\s*marcas?/.test(last)) {
+    return "Para operaciones multi-local armamos propuestas específicas según la estructura. ¿Cuántos locales tienen y en qué plataformas están? Con eso nuestro equipo te contacta con una propuesta adecuada.";
+  }
+
+  // No están en delivery aún
+  if (/no\s*(estoy|estamos|tengo|tenemos)|recién\s*(voy|vamos|estamos)|quiero\s*(entrar|empezar\s*en)\s*delivery|desde\s*cero/.test(last)) {
+    return "Perfecto timing para arrancar bien desde el principio. Hacemos el setup completo en Rappi y PedidosYa — perfil, menú optimizado, primera campaña. Nuestro equipo comercial te arma la propuesta específica para tu tipo de operación. ¿Qué tipo de restaurante tienen?";
+  }
+
+  // ── FLUJO DE RECOLECCIÓN DE DATOS ──────────────────────────────────────────
+
+  // Tenemos ROI → empujar al cierre (solo si no lo dijimos ya)
+  if (pedidos && ticket && roi && !pagoDicho) {
+    if (!roiDicho) {
+      return `Perfecto! Con ${pedidos} pedidos a S/${ticket} de ticket, proyectamos S/${roi.mensual.toLocaleString()} adicionales por mes para tu restaurante. Nuestro equipo comercial te arma una propuesta específica según tu operación. ¿Coordinamos una llamada esta semana?`;
+    }
+    if (roiDicho && !planDicho) {
+      return `Para tu operación, el plan lo personalizamos según sucursales, plataformas y objetivos. Nuestro equipo comercial te contacta por WhatsApp con la propuesta puntual. ¿Te parece si arrancamos? [AGENDAR_LLAMADA]`;
+    }
+    if (planDicho && !pagoDicho) {
+      return `Perfecto — te dejo el contacto para agendar la llamada: [AGENDAR_LLAMADA] Nuestro equipo te responde en menos de 24h con la propuesta específica.`;
+    }
+  }
+
+  // Tenemos pedidos, falta ticket
   if (pedidos && !ticket) {
-    return `${pedidos.toLocaleString()} pedidos, perfecto. ¿Y cuál es el ticket promedio? ¿Cuánto gasta un cliente por pedido?`;
+    const variantes = [
+      `${pedidos} pedidos al mes — buen volumen. Para calcular tu ROI exacto, ¿cuál es el ticket promedio? (cuánto gasta en promedio cada cliente por pedido)`,
+      `Bien, ${pedidos} pedidos. Solo me falta un dato: ¿cuánto gasta en promedio cada cliente? ¿S/30, S/45, S/60?`,
+    ];
+    return variantes[nCarlos % variantes.length];
   }
 
-  if (ticket && !pedidos) {
-    return `S/${ticket} de ticket, anotado. ¿Y cuántos pedidos reciben por mes en ${plats.length ? plats.join(" y ") : "la plataforma"}?`;
-  }
-
+  // Tenemos plataformas, falta pedidos
   if (plats.length > 0 && !pedidos) {
-    const yaPreg = history.filter(m=>m.role==="assistant").some(m=>/pedidos|cuantos|volumen/i.test(m.content));
-    if (yaPreg) return "¿Manejan más de 300 pedidos al mes, o están por debajo de eso?";
-    return `Bien, ${plats.join(" y ")}! ¿Cuántos pedidos reciben por mes en total?`;
+    return `Bien, ${plats.join(" y ")}! Para calcularte el ROI exacto: ¿cuántos pedidos reciben por mes aproximadamente en total?`;
   }
 
-  if (!saludoDicho || nCarlos === 0) {
-    const h2 = new Date().getHours();
-    const sal = h2 < 12 ? "Buenos días" : h2 < 19 ? "Buenas tardes" : "Buenas noches";
-    return `${sal}! Soy Carlos de Sazón. Ayudamos a restaurantes a crecer en Rappi, PedidosYa, Didi y más. ¿En qué plataformas están activos actualmente?`;
+  // Tenemos ticket, falta pedidos
+  if (ticket && !pedidos) {
+    return `S/${ticket} de ticket promedio, bien. ¿Y cuántos pedidos reciben por mes aproximadamente?`;
   }
 
-  return "¿En qué plataformas de delivery están activos y cuántos pedidos manejan por mes?";
+  // ── SALUDO INICIAL ──────────────────────────────────────────────────────────
+  if (!saludoDicho || /^(hola|buenas|buenos|hi|hey|buen\s*dia|buenas\s*tardes|saludos)\b/.test(last)) {
+    const horas = new Date().getHours();
+    const saludo = horas < 12 ? "Buenos días" : horas < 19 ? "Buenas tardes" : "Buenas noches";
+    return `${saludo}! Soy Carlos del equipo de Sazón. Ayudamos a restaurantes a crecer en Rappi, PedidosYa, Didi y más. ¿En qué plataformas están activos actualmente?`;
+  }
+
+  // ── PREGUNTA INICIAL (primera interacción sin contexto) ────────────────────
+  if (nCarlos === 0 || (!pedidos && !ticket && plats.length === 0)) {
+    return "Para entender tu situación: ¿en qué plataformas de delivery están activos y cuántos pedidos manejan por mes aproximadamente?";
+  }
+
+  // ── FALLBACK CONTEXTUAL (evita loops) ───────────────────────────────────────
+  const contextuales = [
+    "Cuéntame más sobre tu operación — ¿cuántos pedidos al mes y en qué plataformas?",
+    "Para ayudarte mejor necesito dos datos: pedidos mensuales y ticket promedio. ¿Me los pasas?",
+    `¿Qué es lo que más frena el crecimiento de tu delivery hoy?`,
+  ];
+  return contextuales[nCarlos % contextuales.length];
 }
 
 // ─── CARLOS: RENDER DE MENSAJE (convierte tokens a botones) ───────────────────
 function CarlosMsg({ text }) {
   if (!text) return null;
-  return <span>{text}</span>;
+  if (!text.includes("[AGENDAR_LLAMADA]")) {
+    return <span>{text}</span>;
+  }
+  const parts = text.split(/(\[AGENDAR_LLAMADA\])/g);
+  return (
+    <span>
+      {parts.map((p, i) => {
+        if (p === "[AGENDAR_LLAMADA]") {
+          const waMsg = encodeURIComponent("Hola! Quiero coordinar una llamada para ver una propuesta personalizada de Sazón.");
+          return (
+            <a key={i} href={`https://wa.me/${WA_NUMBER}?text=${waMsg}`} target="_blank" rel="noreferrer"
+              style={{ display:"inline-block", marginTop:8, padding:"10px 20px", background:"#25D366", color:"white", borderRadius:8, fontSize:".82rem", fontWeight:700, textDecoration:"none", textTransform:"uppercase", letterSpacing:1, border:"none", cursor:"pointer", fontFamily:"DM Sans,sans-serif" }}>
+              💬 Coordinar llamada por WhatsApp ↗
+            </a>
+          );
+        }
+        return p ? <span key={i}>{p}</span> : null;
+      })}
+    </span>
+  );
 }
 
 // ─── APP ─────────────────────────────────────────────────────────────────────
-function App() {
+export default function App() {
   const [scrolled,  setScrolled]  = useState(false);
   const [chatOpen,  setChatOpen]  = useState(false);
   const [chatHist,  setChatHist]  = useState([]);   // [{from:"carlos"|"user", text}]
@@ -318,7 +381,7 @@ function App() {
   const [showExit,  setShowExit]  = useState(false);
   const [form, setForm] = useState({
     nombre:"", restaurante:"", email:"", whatsapp:"",
-    plan:"Starter", plataformas:"Solo Rappi",
+    plataformas:"Solo Rappi", sucursales:"1 local", facturacion:"Prefiero no decirlo",
     pedidos:"100-300", ticket:"", mensaje:"",
   });
   const endRef   = useRef(null);
@@ -348,11 +411,8 @@ function App() {
   useEffect(() => {
     if (chatOpen && chatHist.length === 0) {
       setTimeout(() => {
-        const h2 = new Date().getHours();
-        const sal = h2<12?"Buenos dias":h2<19?"Buenas tardes":"Buenas noches";
-        const welcome = sal + "! Soy Carlos de Sazon. Ayudamos a restaurantes a crecer en Rappi, PedidosYa, Didi y mas. En que plataformas estan activos?";
+        const welcome = "Hola! Soy Carlos del equipo de Sazón. Ayudamos a restaurantes a crecer en delivery. ¿En qué plataformas están activos actualmente?";
         setChatHist([{ from: "carlos", text: welcome }]);
-        setApiHist([{ role: "assistant", content: welcome }]);
       }, 350);
     }
   }, [chatOpen]);
@@ -423,7 +483,7 @@ function App() {
 
     const m = ahorroComis + menuUplift + campIncome;
     const plan = p < 300 ? "Starter" : "Growth";
-    const costo = p < 300 ? 2890 : 3790;
+    const costo = p < 300 ? 890 : 1790;
     const roi_pct = Math.round((m / costo) * 100);
     const payback = Math.round((costo / m) * 30);
 
@@ -542,26 +602,6 @@ function App() {
     { ico:"🤝",t:"Acceso Directo a APPs",  d:"Relaciones directas con Rappi, PedidosYa y Didi. Condiciones exclusivas para nuestros clientes." },
     { ico:"📋",t:"Transparencia Total",    d:"Reportes claros y acceso completo a todos tus datos. Sin letra chica ni sorpresas." },
   ];
-  const plans = [
-    {
-      name:"Starter", tag:"1 plataforma · hasta 300 pedidos/mes",
-      price:"S/ 2,890", period:"/mes", fee:null,
-      badge:null, dark:false, mpLink: null,
-      fts:[{t:"Diagnostico inicial",ok:true},{t:"1 plataforma de delivery",ok:true},{t:"Optimizacion basica de menu",ok:true},{t:"Reporte mensual",ok:true},{t:"1 campaña mensual",ok:true},{t:"Growth Manager dedicado",ok:false},{t:"Setup en plataformas (marcas nuevas)",ok:false}],
-    },
-    {
-      name:"Growth", tag:"Hasta 3 plataformas · escala rapida",
-      price:"S/ 3,790", period:"/mes", fee:null,
-      badge:"Mas popular", dark:true, mpLink: null,
-      fts:[{t:"Diagnostico completo",ok:true},{t:"Hasta 3 plataformas",ok:true},{t:"Optimizacion menu foto+copy+precio",ok:true},{t:"Growth Manager dedicado",ok:true},{t:"Setup en plataformas + entrada negociada",ok:true},{t:"Plan comercial mensual",ok:true},{t:"Hasta 3 campañas mensuales",ok:true}],
-    },
-    {
-      name:"Pro", tag:"Cadenas · multi-local · dark kitchens",
-      price:"A medida", period:"cotizacion", fee:null,
-      badge:null, dark:false, mpLink: null,
-      fts:[{t:"Todo Growth incluido",ok:true},{t:"Plataformas ilimitadas",ok:true},{t:"Dark kitchens y marcas virtuales",ok:true},{t:"Equipo dedicado exclusivo",ok:true},{t:"Campañas ilimitadas",ok:true},{t:"Integracion con POS y tech stack",ok:true},{t:"Reunion semanal de seguimiento",ok:true}],
-    },
-  ];
 
   const inp = { background:"#EDE4CE", border:"1px solid rgba(0,0,0,.12)", padding:"14px 18px", fontFamily:"DM Sans,sans-serif", fontSize:".9rem", color:"#1A1A1A", outline:"none", borderRadius:2, width:"100%", transition:"border-color .2s" };
   const lbl = { fontSize:".7rem", textTransform:"uppercase", letterSpacing:"1.5px", fontWeight:500, color:"#5A4E3E", display:"block", marginBottom:6 };
@@ -617,30 +657,25 @@ function App() {
     .csend:disabled{opacity:.4;cursor:default;}
     .dt{width:7px;height:7px;border-radius:50%;background:#ccc;animation:bounce 1.2s ease infinite;}
     .dt:nth-child(2){animation-delay:.15s;}.dt:nth-child(3){animation-delay:.3s;}
-    @media(max-width:1200px){nav{padding:13px 36px!important;}}
     @media(max-width:900px){
-      .nomob{display:none!important;}nav{padding:12px 18px!important;}
-      .nl{display:none!important;}.sec{padding:60px 20px!important;}
-      .hl{padding:110px 20px 60px!important;}
+      .nomob{display:none!important;}nav{padding:14px 22px!important;}
+      .nl{display:none!important;}.sec{padding:68px 22px!important;}
+      .hl{padding:120px 22px 60px!important;}
       .g2{grid-template-columns:1fr!important;}.g3{grid-template-columns:1fr!important;}
-      .g4{grid-template-columns:1fr 1fr!important;}.g5{grid-template-columns:repeat(2,1fr)!important;}
+      .g4{grid-template-columns:1fr 1fr!important;}.g5{grid-template-columns:repeat(3,1fr)!important;}
       .gs{position:static!important;}
-      footer{padding:22px 20px!important;flex-direction:column!important;gap:12px!important;text-align:center!important;}
-      .cwin{width:calc(100vw - 28px);max-height:80vh;}.cw{bottom:14px;right:14px;}
-    }
-    @media(max-width:600px){
-      .g4{grid-template-columns:1fr!important;}.sec{padding:52px 16px!important;}
-      .hl{padding:100px 16px 52px!important;}nav{padding:12px 16px!important;}h1,h2{word-break:break-word;}
+      footer{padding:22px 22px!important;flex-direction:column!important;gap:12px!important;text-align:center!important;}
+      .cwin{width:calc(100vw - 32px);}.cw{bottom:16px;right:14px;}
     }
   `}</style>
 
   {/* ═══ NAV ═══ */}
-  <nav className="anav" style={{position:"fixed",top:0,width:"100%",zIndex:100,display:"flex",alignItems:"center",justifyContent:"space-between",padding:scrolled?"12px 40px":"18px 40px",background:"rgba(245,239,224,.97)",backdropFilter:"blur(12px)",borderBottom:"1px solid rgba(200,57,43,.15)",transition:"padding .3s"}}>
+  <nav className="anav" style={{position:"fixed",top:0,width:"100%",zIndex:100,display:"flex",alignItems:"center",justifyContent:"space-between",padding:scrolled?"13px 60px":"20px 60px",background:"rgba(245,239,224,.97)",backdropFilter:"blur(12px)",borderBottom:"1px solid rgba(200,57,43,.15)",transition:"padding .3s"}}>
     <div className="pf" style={{fontSize:"1.35rem",fontWeight:900,cursor:"pointer",color:"#1A1A1A"}} onClick={()=>window.scrollTo({top:0,behavior:"smooth"})}>
       Saz<span style={{fontFamily:"DM Sans,sans-serif"}}>ó</span>n<span style={{color:"#C8392B"}}>.</span>
     </div>
     <ul className="nl" style={{display:"flex",gap:34,listStyle:"none"}}>
-      {[["Como trabajamos","how"],["Servicios","services"],["Sistema IA","productos"],["Planes","pricing"],["Clientes","clients"],["Contacto","contact"]].map(([l,id])=>(
+      {[["Como trabajamos","how"],["Servicios","services"],["Sistema IA","productos"],["Clientes","clients"],["Contacto","contact"]].map(([l,id])=>(
         <li key={id}><button onClick={()=>goTo(id)} style={{background:"none",border:"none",fontSize:".82rem",fontWeight:500,textTransform:"uppercase",letterSpacing:"1.5px",color:"#1A1A1A",cursor:"pointer",fontFamily:"DM Sans,sans-serif",transition:"color .2s"}} onMouseEnter={e=>e.target.style.color="#C8392B"} onMouseLeave={e=>e.target.style.color="#1A1A1A"}>{l}</button></li>
       ))}
     </ul>
@@ -652,9 +687,9 @@ function App() {
 
   {/* ═══ HERO ═══ */}
   <section id="hero" className="g2" style={{minHeight:"100vh",display:"grid",gridTemplateColumns:"1fr 1fr",background:"#1A1A1A",overflow:"hidden"}}>
-    <div className="hl" style={{display:"flex",flexDirection:"column",justifyContent:"center",padding:"clamp(100px,12vw,140px) clamp(20px,6vw,80px) 80px",zIndex:2}}>
+    <div className="hl" style={{display:"flex",flexDirection:"column",justifyContent:"center",padding:"140px 80px 100px",zIndex:2}}>
       <p className="a1" style={{fontSize:".75rem",fontWeight:500,textTransform:"uppercase",letterSpacing:3,color:"#D4A547",marginBottom:28}}>Growth Partner para Restaurantes</p>
-      <h1 className="pf a2" style={{fontSize:"clamp(3rem,5vw,5.2rem)",lineHeight:1.05,color:"white"}}>Tu delivery,<br/>al <em style={{fontStyle:"italic",color:"#C8392B"}}>máximo</em><br/>rendimiento.</h1>
+      <h1 className="pf a2" style={{fontSize:"clamp(3rem,5vw,5.2rem)",lineHeight:1.05,color:"white"}}>Tu delivery,<br/>al <em style={{fontStyle:"italic",color:"#C8392B"}}>maximo</em><br/>rendimiento.</h1>
       <p className="a3" style={{marginTop:28,fontSize:"1.05rem",lineHeight:1.7,color:"rgba(255,255,255,.6)",maxWidth:420}}>Somos tu equipo especializado en hacer crecer tus ventas en Rappi, PedidosYa, Didi Food y mas. No somos consultores, somos tu partner real de crecimiento.</p>
       <div className="a4" style={{display:"flex",gap:16,alignItems:"center",marginTop:48,flexWrap:"wrap"}}>
         <button onClick={()=>goTo("contact")} style={{background:"#C8392B",color:"white",padding:"16px 36px",border:"none",borderRadius:2,fontSize:".9rem",fontWeight:500,letterSpacing:1,textTransform:"uppercase",cursor:"pointer",fontFamily:"DM Sans,sans-serif",transition:"background .2s, transform .15s",boxShadow:"0 8px 28px rgba(200,57,43,.35)"}} onMouseEnter={e=>{e.currentTarget.style.background="#9B2335";e.currentTarget.style.transform="translateY(-2px)";}} onMouseLeave={e=>{e.currentTarget.style.background="#C8392B";e.currentTarget.style.transform="none";}}>Agendar diagnostico gratuito</button>
@@ -683,7 +718,7 @@ function App() {
   </div>
 
   {/* ═══ HOW ═══ */}
-  <section id="how" className="sec" style={{padding:"clamp(60px,9vw,110px) clamp(20px,6vw,80px)",background:"#1A1A1A"}}>
+  <section id="how" className="sec" style={{padding:"110px 80px",background:"#1A1A1A"}}>
     <p className="rv" style={{fontSize:".7rem",fontWeight:500,textTransform:"uppercase",letterSpacing:3,color:"#D4A547",marginBottom:18}}>Metodologia</p>
     <h2 className="pf rv" style={{fontSize:"clamp(2.2rem,3.5vw,3.4rem)",lineHeight:1.1,color:"white"}}>La receta del<br/>crecimiento en 4 pasos.</h2>
     <p className="rv" style={{marginTop:18,maxWidth:500,fontSize:"1rem",lineHeight:1.7,color:"rgba(255,255,255,.5)"}}>Un proceso claro, medible y sin sorpresas. Del diagnostico al resultado.</p>
@@ -700,7 +735,7 @@ function App() {
   </section>
 
   {/* ═══ SERVICES ═══ */}
-  <section id="services" className="sec" style={{padding:"clamp(60px,9vw,110px) clamp(20px,6vw,80px)",background:"#F5EFE0"}}>
+  <section id="services" className="sec" style={{padding:"110px 80px",background:"#F5EFE0"}}>
     <div className="g2" style={{display:"grid",gridTemplateColumns:"1fr 2fr",gap:80,alignItems:"start"}}>
       <div className="gs rv" style={{position:"sticky",top:120}}>
         <p style={{fontSize:".7rem",fontWeight:500,textTransform:"uppercase",letterSpacing:3,color:"#C8392B",marginBottom:18}}>Servicios</p>
@@ -724,50 +759,45 @@ function App() {
   </section>
 
   {/* ═══ TESTIMONIAL ═══ */}
-  <section style={{background:"#C8392B",color:"white",textAlign:"center",padding:"clamp(60px,8vw,100px) clamp(20px,6vw,80px)"}}>
+  <section style={{background:"#C8392B",color:"white",textAlign:"center",padding:"100px 80px"}}>
     <p className="pf rv" style={{fontStyle:"italic",fontSize:"clamp(1.6rem,2.8vw,2.8rem)",lineHeight:1.35,maxWidth:860,margin:"0 auto 36px"}}>"Con Sazon pasamos de 80 a 340 pedidos diarios en solo tres meses. Su equipo conoce cada detalle de las plataformas y sabe exactamente que palancas mover para crecer."</p>
     <p className="rv" style={{fontSize:".8rem",opacity:.65,textTransform:"uppercase",letterSpacing:2}}>Mauricio Aguila — Fundador · Mr Smash</p>
   </section>
 
   {/* ═══ PRICING ═══ */}
-  <section id="pricing" className="sec" style={{padding:"clamp(60px,9vw,110px) clamp(20px,6vw,80px)",background:"#EDE4CE"}}>
-    <p className="rv" style={{fontSize:".7rem",fontWeight:500,textTransform:"uppercase",letterSpacing:3,color:"#C8392B",marginBottom:18}}>Planes y precios</p>
-    <h2 className="pf rv" style={{fontSize:"clamp(2.2rem,3.5vw,3.4rem)",lineHeight:1.1}}>Inversion clara,<br/>resultados medibles.</h2>
-    <p className="rv" style={{marginTop:18,maxWidth:500,fontSize:"1rem",lineHeight:1.7,color:"#5A4E3E"}}>Sin costos ocultos. Sin contratos de largo plazo. Pago mensual seguro.</p>
-    <div className="g3" style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:2,marginTop:64}}>
-      {plans.map((p,i)=>(
-        <div key={i} className="plc rv" style={{background:p.dark?"#1A1A1A":"#F5EFE0"}}>
-          {p.badge&&<div style={{position:"absolute",top:-14,left:40,background:"#C8392B",color:"white",fontSize:".68rem",fontWeight:500,textTransform:"uppercase",letterSpacing:"1.5px",padding:"5px 14px"}}>{p.badge}</div>}
-          <div className="pf" style={{fontSize:"1.6rem",fontWeight:700,marginBottom:8,color:p.dark?"white":"#1A1A1A"}}>{p.name}</div>
-          <div style={{fontSize:".82rem",color:p.dark?"rgba(255,255,255,.5)":"#5A4E3E",marginBottom:32}}>{p.tag}</div>
-          <div className="pf" style={{fontSize:"2.8rem",fontWeight:900,lineHeight:1,color:p.dark?"white":"#1A1A1A",marginBottom:4}}>{p.price}</div>
-          <div style={{fontSize:".78rem",color:p.dark?"rgba(255,255,255,.4)":"#5A4E3E",marginBottom:4}}>{p.period}</div>
-          
-          <ul style={{listStyle:"none",marginBottom:28}}>
-            {p.fts.map((f,j)=>(
-              <li key={j} style={{fontSize:".88rem",padding:"10px 0",borderBottom:"1px solid "+(p.dark?"rgba(255,255,255,.08)":"rgba(0,0,0,.07)"),display:"flex",gap:12,alignItems:"flex-start",color:p.dark?"rgba(255,255,255,.75)":"#1A1A1A"}}>
-                <span style={{color:f.ok?"#C8392B":(p.dark?"rgba(255,255,255,.2)":"rgba(0,0,0,.2)"),fontWeight:700,flexShrink:0}}>{f.ok?"✓":"—"}</span>{f.t}
-              </li>
-            ))}
-          </ul>
-          <button onClick={()=>goTo("contact")}
-            style={{display:"block",width:"100%",textAlign:"center",padding:"15px",
-              border:p.dark?"1.5px solid rgba(255,255,255,.3)":"1.5px solid #1A1A1A",
-              background:"transparent",color:p.dark?"white":"#1A1A1A",
-              fontSize:".82rem",fontWeight:600,textTransform:"uppercase",letterSpacing:"1.5px",
-              cursor:"pointer",fontFamily:"DM Sans,sans-serif",borderRadius:2,transition:"all .2s"}}
-            onMouseEnter={e=>{e.currentTarget.style.background=p.dark?"rgba(255,255,255,.08)":"#1A1A1A";e.currentTarget.style.color="white";}}
-            onMouseLeave={e=>{e.currentTarget.style.background="transparent";e.currentTarget.style.color=p.dark?"white":"#1A1A1A";}}>
-            Solicitar diagnostico gratuito
-          </button>
+  <section id="services-detail" className="sec" style={{padding:"110px 80px",background:"#EDE4CE"}}>
+    <p className="rv" style={{fontSize:".7rem",fontWeight:500,textTransform:"uppercase",letterSpacing:3,color:"#C8392B",marginBottom:18}}>Qué obtienes</p>
+    <h2 className="pf rv" style={{fontSize:"clamp(2.2rem,3.5vw,3.4rem)",lineHeight:1.1}}>Un equipo dedicado<br/>al crecimiento de tu marca.</h2>
+    <p className="rv" style={{marginTop:18,maxWidth:520,fontSize:"1rem",lineHeight:1.7,color:"#5A4E3E"}}>Nuestras propuestas se personalizan según tu operación. Estas son las capacidades que activamos en tu marca:</p>
+
+    <div className="g3" style={{display:"grid",gridTemplateColumns:"repeat(3,1fr)",gap:24,marginTop:64}}>
+      {[
+        {ic:"🎯",t:"Diagnóstico y estrategia",d:"Auditoría completa de tu operación en delivery. Identificamos oportunidades de crecimiento y cuellos de botella específicos de tu marca."},
+        {ic:"👥",t:"Growth Manager dedicado",d:"Un especialista se encarga de operar tu presencia en todas las plataformas. Tú te enfocas en la cocina, nosotros en las ventas."},
+        {ic:"🍽️",t:"Optimización de menú",d:"Fotos, descripciones, precios y arquitectura del menú optimizada por bloque horario, día y plataforma."},
+        {ic:"📣",t:"Campañas y publicidad",d:"Gestión de campañas pagadas en Rappi Ads, PedidosYa Ads y otras plataformas. Con seguimiento del ROAS real."},
+        {ic:"🚀",t:"Setup en nuevas plataformas",d:"Entrada negociada a Rappi, PedidosYa, Didi Food. Con activación completa: perfil, menú, promociones iniciales."},
+        {ic:"📊",t:"Acceso al Growth Engine",d:"Nuestra plataforma de análisis con dashboards de patrones, precios, combos, promos, retención y roadmap 90 días."},
+        {ic:"📅",t:"Plan comercial mensual",d:"Cada mes armamos un plan de acción con objetivos y tácticas basadas en los resultados del período anterior."},
+        {ic:"🔁",t:"Reporte mensual",d:"Análisis detallado con KPIs, comparativas mes a mes y recomendaciones accionables por sucursal y plataforma."},
+        {ic:"🏢",t:"Multi-marca y multi-local",d:"Soporte para operaciones complejas: cadenas, dark kitchens, marcas virtuales. Con equipo dedicado exclusivo."},
+      ].map((s,i)=>(
+        <div key={i} className="rv" style={{background:"#F5EFE0",padding:"32px 28px",borderTop:"3px solid #C8392B"}}>
+          <div style={{fontSize:"2rem",marginBottom:14}}>{s.ic}</div>
+          <div className="pf" style={{fontSize:"1.05rem",fontWeight:700,marginBottom:10,color:"#1A1A1A"}}>{s.t}</div>
+          <div style={{fontSize:".85rem",lineHeight:1.6,color:"#5A4E3E"}}>{s.d}</div>
         </div>
       ))}
     </div>
-    <p className="rv" style={{textAlign:"center",marginTop:28,fontSize:".82rem",color:"#5A4E3E"}}>Todos los planes incluyen onboarding sin costo. Sin permanencia minima los primeros 30 dias.</p>
+
+    <div className="rv" style={{marginTop:64,textAlign:"center",padding:"48px 32px",background:"#1A1A1A",color:"white"}}>
+      <p className="pf" style={{fontSize:"clamp(1.4rem,2.2vw,2rem)",fontWeight:700,marginBottom:14,lineHeight:1.3}}>Tu propuesta se arma según tu operación.</p>
+      <p style={{fontSize:".95rem",color:"rgba(255,255,255,.7)",marginBottom:28,maxWidth:560,margin:"0 auto 28px",lineHeight:1.6}}>Cada marca es diferente. Coordinamos una llamada corta para entender tu negocio y armarte una propuesta específica.</p>
+      <a href="#contact" style={{display:"inline-block",padding:"16px 40px",background:"#C8392B",color:"white",fontSize:".95rem",fontWeight:700,textDecoration:"none",textTransform:"uppercase",letterSpacing:"1.5px"}}>Consulta tu plan personalizado →</a>
+    </div>
   </section>
 
-  {/* ═══ PRODUCTOS AUTOMATIZADOS ═══ */}
-  <section id="productos" style={{padding:"clamp(60px,9vw,110px) clamp(20px,6vw,80px)",background:"#1A1A1A"}}>
+  <section id="productos" style={{padding:"110px 80px",background:"#1A1A1A"}}>
     <p className="rv" style={{fontSize:".7rem",fontWeight:500,textTransform:"uppercase",letterSpacing:3,color:"#D4A547",marginBottom:18}}>Sistema operativo de delivery</p>
     <h2 className="pf rv" style={{fontSize:"clamp(2.2rem,3.5vw,3.4rem)",lineHeight:1.1,color:"white",marginBottom:12}}>Automatización que<br/>trabaja las 24 horas.</h2>
     <p className="rv" style={{fontSize:"1rem",lineHeight:1.7,color:"rgba(255,255,255,.45)",maxWidth:560,marginBottom:64}}>Cada servicio que ofrecemos corre sobre un sistema que elimina el trabajo manual. Tú creces, nosotros escalamos sin agregar costo.</p>
@@ -836,17 +866,45 @@ function App() {
       ))}
     </div>
 
+    {/* Arquitectura de automatización */}
+    <div className="rv" style={{marginTop:2,background:"rgba(200,57,43,.08)",border:"1px solid rgba(200,57,43,.2)",padding:"36px 40px",display:"flex",gap:48,alignItems:"center",flexWrap:"wrap"}}>
+      <div style={{flex:1,minWidth:240}}>
+        <p style={{fontSize:".7rem",fontWeight:500,textTransform:"uppercase",letterSpacing:3,color:"#C8392B",marginBottom:12}}>Nivel de automatización actual</p>
+        <div className="pf" style={{fontSize:"4rem",fontWeight:900,color:"white",lineHeight:1}}>87<span style={{color:"#C8392B"}}>%</span></div>
+        <p style={{fontSize:".82rem",color:"rgba(255,255,255,.4)",marginTop:8}}>de operaciones sin intervención humana</p>
+      </div>
+      <div style={{flex:2,minWidth:280}}>
+        {[
+          {l:"Captación y cierre de ventas",    v:100, c:"#C8392B"},
+          {l:"Reportes y dashboards",            v:100, c:"#C8392B"},
+          {l:"Gestión de reseñas",               v:85,  c:"#D4A547"},
+          {l:"Campañas y optimización",           v:80,  c:"#D4A547"},
+          {l:"Optimización de menú",              v:75,  c:"#D4A547"},
+          {l:"Setup de marcas nuevas en plataformas", v:72, c:"var(--gold)"},
+        ].map((bar,i)=>(
+          <div key={i} style={{marginBottom:12}}>
+            <div style={{display:"flex",justifyContent:"space-between",marginBottom:4}}>
+              <span style={{fontSize:".78rem",color:"rgba(255,255,255,.55)"}}>{bar.l}</span>
+              <span style={{fontSize:".78rem",fontWeight:700,color:bar.c}}>{bar.v}%</span>
+            </div>
+            <div style={{height:4,background:"rgba(255,255,255,.08)",borderRadius:100,overflow:"hidden"}}>
+              <div style={{height:"100%",width:bar.v+"%",background:bar.c,borderRadius:100,transition:"width 1s ease"}}/>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
   </section>
 
   {/* ═══ WHY ═══ */}
   <section id="why" className="g2" style={{background:"#1A1A1A",display:"grid",gridTemplateColumns:"1fr 1fr"}}>
-    <div className="sec rv" style={{padding:"clamp(60px,9vw,110px) clamp(20px,6vw,80px)",borderRight:"1px solid rgba(255,255,255,.07)"}}>
+    <div className="sec rv" style={{padding:"110px 80px",borderRight:"1px solid rgba(255,255,255,.07)"}}>
       <p style={{fontSize:".7rem",fontWeight:500,textTransform:"uppercase",letterSpacing:3,color:"#D4A547",marginBottom:18}}>Resultados reales</p>
       <div className="pf" style={{fontSize:"clamp(5rem,10vw,9rem)",fontWeight:900,lineHeight:1,color:"white",marginBottom:20}}>+40<span style={{color:"#C8392B"}}>%</span></div>
       <p style={{fontSize:"1rem",lineHeight:1.7,color:"rgba(255,255,255,.45)",maxWidth:360}}>Incremento promedio en ventas en los primeros 90 dias de trabajo conjunto.</p>
       <div style={{marginTop:20,color:"rgba(255,255,255,.3)",fontSize:".78rem",textTransform:"uppercase",letterSpacing:"1.5px"}}>Basado en 16+ restaurantes activos</div>
     </div>
-    <div className="sec rv" style={{padding:"clamp(60px,9vw,110px) clamp(20px,6vw,80px)"}}>
+    <div className="sec rv" style={{padding:"110px 80px"}}>
       <p style={{fontSize:".7rem",fontWeight:500,textTransform:"uppercase",letterSpacing:3,color:"#D4A547",marginBottom:18}}>Por que Sazon</p>
       <h2 className="pf" style={{fontSize:"clamp(2rem,3vw,3rem)",lineHeight:1.1,color:"white",marginBottom:48}}>Los ingredientes<br/>de nuestro exito.</h2>
       <div style={{display:"flex",flexDirection:"column",gap:2}}>
@@ -861,7 +919,7 @@ function App() {
   </section>
 
   {/* ═══ CLIENTS ═══ */}
-  <section id="clients" className="sec" style={{padding:"clamp(60px,9vw,110px) clamp(20px,6vw,80px)",background:"#F5EFE0"}}>
+  <section id="clients" className="sec" style={{padding:"110px 80px",background:"#F5EFE0"}}>
     <p className="rv" style={{fontSize:".7rem",fontWeight:500,textTransform:"uppercase",letterSpacing:3,color:"#C8392B",marginBottom:18}}>Clientes</p>
     <h2 className="pf rv" style={{fontSize:"clamp(2.2rem,3.5vw,3.4rem)",lineHeight:1.1}}>Restaurantes que ya le<br/>pusieron sazon a su delivery.</h2>
     <div style={{display:"grid",gridTemplateColumns:"repeat(5,1fr)",gap:2,marginTop:64}} className="g5">
@@ -879,15 +937,55 @@ function App() {
   </section>
 
   {/* ═══ CONTACT ═══ */}
-  <section id="contact" className="sec" style={{padding:"clamp(60px,9vw,110px) clamp(20px,6vw,80px)",background:"#F5EFE0"}}>
+  <section id="contact" className="sec" style={{padding:"110px 80px",background:"#F5EFE0"}}>
     <div className="g2" style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:80}}>
       <div>
         <p className="rv" style={{fontSize:".7rem",fontWeight:500,textTransform:"uppercase",letterSpacing:3,color:"#C8392B",marginBottom:18}}>Contacto</p>
-        <h2 className="pf rv" style={{fontSize:"clamp(2.2rem,3.5vw,3.4rem)",lineHeight:1.1}}>Listo para que tu<br/>delivery despegue?</h2>
+        <h2 className="pf rv" style={{fontSize:"clamp(2.2rem,3.5vw,3.4rem)",lineHeight:1.1}}>Consulta tu plan<br/>personalizado.</h2>
         <div className="rv" style={{width:56,height:3,background:"#C8392B",margin:"28px 0"}}/>
-        <p className="rv" style={{fontSize:"1rem",lineHeight:1.7,color:"#5A4E3E",maxWidth:380,marginBottom:32}}>Completa el formulario y nuestro equipo te contacta en menos de 24 horas para una sesion de diagnostico gratuita.</p>
+        <p className="rv" style={{fontSize:"1rem",lineHeight:1.7,color:"#5A4E3E",maxWidth:380,marginBottom:32}}>Cuentanos sobre tu operacion y armamos una propuesta especifica para tu marca. Sin compromiso.</p>
 
-        
+        {/* ROI CALCULATOR */}
+        <div className="rv" style={{background:"#EDE4CE",border:"1px solid rgba(0,0,0,.1)",padding:"24px 28px",marginBottom:32}}>
+          <p style={{fontSize:".7rem",fontWeight:700,textTransform:"uppercase",letterSpacing:"2px",color:"#C8392B",marginBottom:12}}>Calculadora de ROI</p>
+          <p style={{fontSize:".8rem",color:"#5A4E3E",marginBottom:14,lineHeight:1.5}}><strong>Formula:</strong> pedidos x ticket x 28% = ingreso extra mensual</p>
+          <div style={{display:"grid",gridTemplateColumns:"1fr 1fr",gap:12,marginBottom:14}}>
+            <div>
+              <label style={lbl}>Pedidos/mes</label>
+              <select name="pedidos" value={form.pedidos} onChange={hi} style={inp} onFocus={e=>e.target.style.borderColor="#C8392B"} onBlur={e=>e.target.style.borderColor="rgba(0,0,0,.12)"}>
+                <option value="50-100">50 a 100</option><option value="100-300">100 a 300</option>
+                <option value="300-1000">300 a 1000</option><option value="1000+">Mas de 1000</option>
+              </select>
+            </div>
+            <div>
+              <label style={lbl}>Ticket promedio S/</label>
+              <input type="number" name="ticket" value={form.ticket} onChange={hi} placeholder="Ej: 42" style={inp} onFocus={e=>e.target.style.borderColor="#C8392B"} onBlur={e=>e.target.style.borderColor="rgba(0,0,0,.12)"}/>
+            </div>
+          </div>
+          <div style={{background:"#C8392B",color:"white",padding:"16px 20px",display:"flex",justifyContent:"space-between",alignItems:"center"}}>
+            <span style={{fontSize:".78rem",textTransform:"uppercase",letterSpacing:"1px"}}>Crecimiento proyectado</span>
+            <span className="pf" style={{fontSize:"1.6rem",fontWeight:700}}>S/ {roiM.toLocaleString()}/mes</span>
+          </div>
+          {roiDesglose && (
+            <div style={{marginTop:10,display:"grid",gridTemplateColumns:"1fr 1fr 1fr",gap:6}}>
+              {[
+                {l:"Ahorro comisiones",v:roiDesglose.ahorroComis,ic:"🤝"},
+                {l:"Uplift de menú",    v:roiDesglose.menuUplift, ic:"🍽️"},
+                {l:"Campañas",          v:roiDesglose.campIncome, ic:"📣"},
+              ].map((d,i)=>(
+                <div key={i} style={{background:"#EDE4CE",padding:"10px 8px",borderRadius:2,textAlign:"center"}}>
+                  <div style={{fontSize:".72rem",marginBottom:3}}>{d.ic}</div>
+                  <div style={{fontSize:".78rem",fontWeight:700,color:"#C8392B"}}>+S/{d.v.toLocaleString()}</div>
+                  <div style={{fontSize:".62rem",color:"#5A4E3E",marginTop:2}}>{d.l}</div>
+                </div>
+              ))}
+            </div>
+          )}
+          <div style={{display:"flex",justifyContent:"space-between",marginTop:8}}>
+            <p style={{fontSize:".72rem",color:"#5A4E3E"}}>S/ {roiA.toLocaleString()} al año · ROI {roiPct}%</p>
+            <p style={{fontSize:".72rem",color:"#5A4E3E"}}>Recuperas inversión en ~{roiPayback} días</p>
+          </div>
+        </div>
 
         {/* CONTACT ACTIONS — sin numero visible */}
         <div style={{display:"flex",flexDirection:"column",gap:10}}>
@@ -922,7 +1020,8 @@ function App() {
             </div>
             {[
               {l:"Plataformas activas",n:"plataformas",opts:["Solo Rappi","Rappi + PedidosYa","3 o mas plataformas","Ninguna aun"]},
-              {l:"Plan de interes",n:"plan",opts:["Starter - S/2,890/mes","Growth - S/3,790/mes","Pro - Cotizacion","Quiero que me recomienden"]},
+              {l:"Numero de sucursales",n:"sucursales",opts:["1 local","2 a 5 locales","6 o mas locales","Marca nueva - sin locales aun"]},
+              {l:"Facturacion mensual en delivery",n:"facturacion",opts:["Menos de S/5,000","S/5,000 a S/15,000","S/15,000 a S/50,000","Mas de S/50,000","Prefiero no decirlo"]},
             ].map(f=>(
               <div key={f.n} style={{display:"flex",flexDirection:"column",gap:6}}>
                 <label style={lbl}>{f.l}</label>
@@ -936,7 +1035,7 @@ function App() {
               <textarea name="mensaje" value={form.mensaje} onChange={hi} placeholder="En que plataformas estas? Cuantos pedidos? Cual es tu mayor desafio?" rows={4} style={inp} onFocus={e=>e.target.style.borderColor="#C8392B"} onBlur={e=>e.target.style.borderColor="rgba(0,0,0,.12)"}/>
             </div>
             {formErr&&<div style={{fontSize:".85rem",color:"#C8392B",padding:"10px 14px",background:"rgba(200,57,43,.08)",border:"1px solid rgba(200,57,43,.2)",borderRadius:2}}>{formErr}</div>}
-            <button type="submit" style={{background:"#C8392B",color:"white",border:"none",padding:"18px 40px",fontSize:".85rem",fontWeight:500,textTransform:"uppercase",letterSpacing:"1.5px",cursor:"pointer",fontFamily:"DM Sans,sans-serif",alignSelf:"flex-start",borderRadius:2,transition:"background .2s"}} onMouseEnter={e=>e.currentTarget.style.background="#9B2335"} onMouseLeave={e=>e.currentTarget.style.background="#C8392B"}>Solicitar diagnostico gratuito →</button>
+            <button type="submit" style={{background:"#C8392B",color:"white",border:"none",padding:"18px 40px",fontSize:".85rem",fontWeight:500,textTransform:"uppercase",letterSpacing:"1.5px",cursor:"pointer",fontFamily:"DM Sans,sans-serif",alignSelf:"flex-start",borderRadius:2,transition:"background .2s"}} onMouseEnter={e=>e.currentTarget.style.background="#9B2335"} onMouseLeave={e=>e.currentTarget.style.background="#C8392B"}>Descubre como aumentar tus ventas →</button>
             <p style={{fontSize:".75rem",color:"#5A4E3E"}}>Al enviar, nuestro equipo te contacta en menos de 24 horas.</p>
           </form>
         ) : (
@@ -988,7 +1087,7 @@ function App() {
     target="_blank" rel="noopener noreferrer"
     title="Escríbenos por WhatsApp"
     style={{
-      position:"fixed", bottom:24, left:24, zIndex:998,
+      position:"fixed", bottom:108, right:28, zIndex:998,
       width:50, height:50, borderRadius:"50%",
       background:"#25D366", color:"white",
       display:"flex", alignItems:"center", justifyContent:"center",
@@ -1105,5 +1204,3 @@ function App() {
   </div>
   </>);
 }
-
-export default App;
