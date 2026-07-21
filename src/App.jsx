@@ -11,17 +11,6 @@ const CONTACT_EMAIL = "comercial@sazonpartner.com";
 const MP_STARTER = ""; // deprecated
 const MP_GROWTH  = ""; // deprecated
 
-// ── OPCION 1 (GRATIS): Google Gemini — console.cloud.google.com
-//    Crear proyecto → habilitar Gemini API → Credentials → Create API Key
-//    Netlify env var: VITE_GEMINI_KEY
-//    Limite gratuito: 1,500 requests/dia, sin tarjeta de credito
-const GEMINI_KEY = import.meta.env.VITE_GEMINI_KEY || "";
-
-// ── OPCION 2 (PAGO): Anthropic Claude — console.anthropic.com
-//    Netlify env var: VITE_ANTHROPIC_KEY
-//    Sin clave, Carlos usa fallback inteligente (funciona sin costo)
-const ANTHROPIC_KEY = import.meta.env.VITE_ANTHROPIC_KEY || "";
-
 // ─── PAGO: abre el link de MP evitando el link-expander de Netlify ───────────
 // El error "resource /expand/..." ocurre porque Netlify intenta resolver
 // shortlinks de mpago.la en el servidor. Soluciones:
@@ -47,120 +36,20 @@ function openPayment(url) {
   setTimeout(() => { try { document.body.removeChild(a); } catch{} }, 200);
 }
 
-// ─── CARLOS: SYSTEM PROMPT ───────────────────────────────────────────────────
-const CARLOS_SYSTEM = `Eres Carlos, Growth Executive del equipo de Sazón Growth Partner. Sazón ayuda a restaurantes a crecer sus ventas en plataformas de delivery (Rappi, PedidosYa, Didi Food, Glovo y más).
-
-SOBRE SAZÓN:
-- Equipo especializado que gestiona la presencia de restaurantes en apps de delivery
-- Optimizamos menus digitales, ejecutamos campanas, setup en plataformas para marcas nuevas
-- Los restaurantes crecen +38% en pedidos en los primeros 90 días en promedio
-- Planes personalizados según operación (no comunicamos precios públicos)
-- Nuestro equipo comercial arma la propuesta específica para cada marca
-- Sin contratos de largo plazo, cancelable cuando quieran
-- Todos los planes incluyen: gestión de plataformas, optimización de menú, campañas, reporte mensual
-- Planes superiores agregan: Growth Manager dedicado, setup en nuevas plataformas, multi-marca
-
-TU MISIÓN: Entender la situación del restaurante, calcular su ROI personalizado y cerrar la venta directamente en este chat.
-
-REGLAS CRÍTICAS:
-1. NUNCA menciones IA, bots, automatización ni tecnología interna. Siempre di "nuestro equipo" o "nuestros especialistas"
-2. NO menciones llamadas ni citas. Si quieren coordinar directamente, diles que pueden escribir por WhatsApp al equipo
-3. Respuestas CORTAS y conversacionales — máximo 3 oraciones
-4. No compartas números de teléfono directos ni información interna
-5. Responde SIEMPRE en español latinoamericano natural y cálido
-6. No seas vendedor agresivo — sé consultivo, como un amigo experto
-
-CÓMO CALCULAR EL ROI (hazlo siempre que tengas los datos):
-Formula: pedidos_mes × ticket_promedio × 0.28 = ingreso_extra_mensual
-Ejemplo: 200 pedidos × S/42 ticket = S/2,352 extras al mes
-
-FLUJO NATURAL DE VENTAS:
-1. Saludo → preguntar en qué plataformas están
-2. Entender volumen → pedidos/mes y ticket promedio
-3. Calcular ROI proyectado → mostrar el ingreso extra proyectado
-4. NO menciones precios de planes específicos. Di que armamos una propuesta personalizada
-5. Manejar objeciones → siempre con el ROI proyectado como argumento
-6. Cerrar → Cuando estén listos, di exactamente: "[AGENDAR_LLAMADA]" para que nuestro equipo comercial los contacte por WhatsApp
-
-OBJECIONES COMUNES:
-- "cuánto cuesta" → "Los planes son personalizados según tu operación. Con tus datos, nuestro equipo te arma una propuesta específica. Basado en tu volumen, proyectamos S/X extra al mes — la inversión se define en la llamada"
-- "voy a pensarlo" → "¿Qué te genera dudas? Te lo resuelvo ahora mismo"
-- "ya tenemos alguien" → "¿Están logrando +38% de crecimiento? Si no, algo se puede mejorar"
-- "no sé si funciona" → mencion resultados: restaurantes que crecieron 40-55%
-
-CUANDO EL CHAT NO SEA SOBRE VENTAS:
-- Si preguntan por el email de contacto: ${CONTACT_EMAIL}
-- Si preguntan algo que no puedes responder: "Déjame consultarlo con el equipo y te confirmo"`;
-
-// ─── CARLOS: GEMINI API (GRATIS) ────────────────────────────────────────────
-// google.com/aistudio → Get API Key → sin tarjeta, 1500 requests/dia gratis
-async function callGeminiAPI(history) {
-  if (!GEMINI_KEY) return null;
-  try {
-    // Convertir historial al formato de Gemini (user/model en vez de user/assistant)
-    const contents = history.map(m => ({
-      role: m.role === "assistant" ? "model" : "user",
-      parts: [{ text: m.content }]
-    }));
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${GEMINI_KEY}`,
-      {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          system_instruction: { parts: [{ text: CARLOS_SYSTEM }] },
-          contents,
-          generationConfig: { maxOutputTokens: 280, temperature: 0.75 }
-        })
-      }
-    );
-    const data = await res.json();
-    return data.candidates?.[0]?.content?.parts?.[0]?.text || null;
-  } catch {
-    return null;
-  }
-}
-
-// ─── CARLOS: ANTHROPIC API (PAGO) ────────────────────────────────────────────
-async function callAnthropicAPI(history) {
-  if (!ANTHROPIC_KEY) return null;
-  try {
-    const res = await fetch("https://api.anthropic.com/v1/messages", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json",
-        "x-api-key": ANTHROPIC_KEY,
-        "anthropic-version": "2023-06-01",
-        "anthropic-dangerous-direct-browser-access": "true"
-      },
-      body: JSON.stringify({
-        model: "claude-haiku-4-5-20251001",
-        max_tokens: 280,
-        system: CARLOS_SYSTEM,
-        messages: history
-      })
-    });
-    const data = await res.json();
-    return data.content?.[0]?.text || null;
-  } catch {
-    return null;
-  }
-}
-
-// ─── CARLOS: ROUTER — Gemini gratis → Anthropic → Fallback inteligente ────────
+// ─── CARLOS: NETLIFY FUNCTION → Fallback inteligente ─────────────────────────
 async function callCarlosAPI(history) {
-  // 1. Intentar Gemini (gratis, sin tarjeta)
-  if (GEMINI_KEY) {
-    const r = await callGeminiAPI(history);
-    if (r) return r;
+  try {
+    const res = await fetch("/.netlify/functions/carlos", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ history })
+    });
+    if (!res.ok) return null;
+    const data = await res.json();
+    return typeof data.reply === "string" ? data.reply : null;
+  } catch {
+    return null;
   }
-  // 2. Intentar Anthropic (si configurado)
-  if (ANTHROPIC_KEY) {
-    const r = await callAnthropicAPI(history);
-    if (r) return r;
-  }
-  // 3. Fallback inteligente local (siempre funciona)
-  return null;
 }
 
 // ─── CARLOS: FALLBACK INTELIGENTE (sin API) ───────────────────────────────────
